@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="100px" height="100px" viewBox="0 0 100 100" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <image width="81" height="81" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAABRCAYAAACqj0o2AAAABHNCSVQICAgIfAhkiAAAAYhJREFUeJzt3d9NwlAcR/EvxAHYwI7QDXAD3QBHcAMdwRFkBDZwA2UCcALZQB+oiWJj0nLKn+v5JDy05HfbnBSeuGGU/qokl3vMn6K3JOtDXaxO8lHg6z3bh6OTcdeBxk3PuVM3SXLbdahvRH1zAa0zzwG/S2BVktk+C1ARn5I8Q2sd2lX2jOjHGWBEgBEBRgQYEWBEgBEBRgQYEWBEgBEBRgQYEWBEgBEBRgQYEWBEgBEBRgQYEWBEgBEBRgQYEWBEgBEBRgQYEWBEgBEBRgQYEVBaxDrJS37vClg17w2itIgPaY9VJXkc6qKlRfzLZqiFS4t4l2TRcn6R7VM6CGr3wKlY5wgblUp7Eo/CiAAjAowIMCLAiAAjAowIMCLAiAAjAowIMCLAiAAjAowIMCLAiAAjAowIMCLAiAAjAowIMCLAiAAjAowIMCLAiAAjAowIMCLg65eydZLrDnPTneNZy7lzUe0cT5Pcd5ifj5pFVtAN/UebcXr864N+mIyTvCZZHvtOztjyE6j1ULgE18dRAAAAAElFTkSuQmCC" id="img_1" />
+  </defs>
+  <g>
+    <use xlink:href="#img_1" fill="#FFFFFF" stroke="none" transform="scale(1.2345679 1.2345679)" />
+    <path d="M0 0L100 0L100 100L0 100L0 0Z" stroke="none" fill="#000000" />
+  </g>
+</svg>
