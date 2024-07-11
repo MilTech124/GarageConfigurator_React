@@ -37,19 +37,19 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
   } = selectedOptions;
 
   const gateColor = [
-    { name: "Złoty Dąb Jasny", url: "./konfigurator/jasny-dab.webp" },
-    { name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png" },
+    { name: "Złoty Dąb", url: "./konfigurator/jasny-dab.webp" },
+    { name: "Ocynk", url: "./konfigurator/ocynk.png"},
+    // { name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png" },
     { name: "Orzech", url: "./konfigurator/orzech.png" },
-    { name: "Antracyt", ral: "#272C38" },
-    { name: "Ciemny Brąz 8017", ral: "#2F1D1D" },
-    { name: "Brąz Jasny 8004", ral: "#85392C" },
-    { name: "Ciemna Zieleń 6029", ral: "#0B3821" },
-    { name: "Jasna Zieleń 6029", ral: "#117825" },
-    { name: "Grafit 7016", ral: "#262F38" },
     { name: "Biały 9010", ral: "#FBFFFF" },
     { name: "Szary 9002", ral: "#F2EFE8" },
     { name: "Srebrny 9006", ral: "#A7ABB6" },
     { name: "Piaskowy 1002", ral: "#D7B075" },
+    { name: "Antracyt 7016", ral: "#272C38" },
+    { name: "Ciemny Brąz 8017", ral: "#2F1D1D" },
+    { name: "Brąz Jasny 8004", ral: "#85392C" },
+    { name: "Ciemna Zieleń 6029", ral: "#0B3821" },
+    { name: "Jasna Zieleń 6029", ral: "#117825" },    
     { name: "Czerwony 3011", ral: "#781416" },
     { name: "Wisniowy 3005", ral: "#4F121A" },
     { name: "Czarny 9005", ral: "#2C2C2C" },
@@ -116,36 +116,32 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
   }, [gateCount]);
 
   return (
-    <div>
-      <h4 className="bg-slate-900 p-2">Bramy</h4>
-
+    <div>      
       <div className="relative">
-      <p className="text-red-500 text-xs py-2">
-          Maksymalna szerokość bramy <b>dwuskrzydłowej</b> oraz <b>uchylnej</b> to 3.5m
+      <p className="text-red-500 text-center text-xl pb-5">
+          Min. szerokość garażu 6m aby dodać bramę.
         </p>
-        <div className="flex justify-around">
-          <img src="./konfigurator/gate.svg" />
+        <div className="flex justify-around p-2">
+          {/* <img src="./konfigurator/gate.svg" /> */}
           <div className="  flex flex-col justify-center items-center">
             <p className="text-2xl font-bold">{gateCount}</p>
             <div className="flex gap-2">
               <button
-                className="bg-slate-900 text-white px-2 py-1 rounded-md"
+                className="bg-slate-900 text-white h-16 w-16 rounded-full"
                 onClick={() => handleGates("-")}
               >
-                -
+                Usuń
               </button>
               <button
-                className="bg-slate-900 text-white px-2 py-1 rounded-md"
+                className="bg-slate-900 text-white h-16 w-16 rounded-full"
                 onClick={() => handleGates("+")}
               >
-                +
+                Dodaj
               </button>
             </div>
           </div>
         </div>
-        <p className="text-red-500 text-xs pb-5">
-          Aby dodać więćej bram potrzebujesz min <b>6m</b> szerokośći garażu
-        </p>
+        
         <div className="flex pb-3 gap-5 max-md:flex-wrap">
           <FormControl fullWidth>
             <InputLabel>Przetłoczenia bram</InputLabel>
@@ -181,7 +177,21 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         {/* //first gate  */}
         {selectedOptions.gateCount >= 1 ? (
           <div>
-            <FormControl fullWidth>
+          <FormControl className=" mt-3" fullWidth>
+              <InputLabel>Kolorystyka</InputLabel>
+              <Select
+                value={gateColor1}
+                label="Kolorystyka"
+                onChange={changeColor("gateColor1", "gateColorRal1")}
+              >
+                {gateColor.map((color) => (
+                  <MenuItem key={color.name} value={color.name}>
+                    {color.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl className="!mt-5" fullWidth>
               <InputLabel>Pierwsza brama</InputLabel>
               <Select
                 value={gateType1}
@@ -236,20 +246,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
             </div>
-            <FormControl className="py-3 mt-3" fullWidth>
-              <InputLabel>Kolorystyka</InputLabel>
-              <Select
-                value={gateColor1}
-                label="Kolorystyka"
-                onChange={changeColor("gateColor1", "gateColorRal1")}
-              >
-                {gateColor.map((color) => (
-                  <MenuItem key={color.name} value={color.name}>
-                    {color.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          
             {/* Slider*/}
             <h5 className="text-sm text-center pt-2 text-slate-900">
               Pozycja bramy
@@ -276,7 +273,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         {/* //second gate  */}
         {gateCount >= 2 ? (
           <div className="py-5 relative">
-            <h4 className="bg-slate-600 text-sm p-2 mb-2">Druga brama</h4>
+            <h4 className="bg-slate-400 text-sm p-2 mb-2">Druga brama</h4>
             {/* //gateCount -1 button to remove gate */}
             <button
               className="absolute top-0 right-0 bg-slate-900 hover:bg-slate-500 text-white px-3 py-1 rounded-md"
@@ -339,7 +336,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
             </div>
-            <FormControl className="py-3 mt-3" fullWidth>
+            {/* <FormControl className="py-3 mt-3" fullWidth>
               <InputLabel>Kolorystyka</InputLabel>
               <Select
                 value={gateColor2}
@@ -352,7 +349,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                   </MenuItem>
                 ))}
               </Select>
-            </FormControl>
+            </FormControl> */}
             {/* Slider 2*/}
             <h5 className="text-sm text-center pt-2 text-slate-900">
               Pozycja bramy
@@ -380,7 +377,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         {/* //third gate  */}
         {gateCount >= 3 ? (
           <div className="py-5 relative">
-            <h4 className="bg-slate-600 text-sm p-2 mb-2">Trzecia brama</h4>
+            <h4 className="bg-slate-400 text-sm p-2 mb-2">Trzecia brama</h4>
             {/* //gateCount -1 button to remove gate */}
             <button
               className="absolute top-0 right-0 bg-slate-900 hover:bg-slate-500 text-white px-3 py-1 rounded-md"
@@ -439,7 +436,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
             </div>
-            <FormControl className="py-3 mt-3" fullWidth>
+            {/* <FormControl className="py-3 mt-3" fullWidth>
               <InputLabel>Kolorystyka</InputLabel>
               <Select
                 value={gateColor3}
@@ -452,7 +449,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                   </MenuItem>
                 ))}
               </Select>
-            </FormControl>
+            </FormControl> */}
             {/* Slider*/}
             <h5 className="text-sm text-center pt-2 text-slate-900">
               Pozycja bramy

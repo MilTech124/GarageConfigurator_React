@@ -2,6 +2,8 @@ import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
 import { MeshStandardMaterial } from "three";
 import * as THREE from "three";
+import { DoubleSide } from 'three'
+ 
 
 function Materials(selectedOptions) {
   const {
@@ -33,14 +35,20 @@ function Materials(selectedOptions) {
     if (colorRal === null || colorRal === undefined) {
       wallMaterial = new MeshStandardMaterial({
         map:
-          color === "Złoty Dąb Jasny"
+            color === "Ocynk"
+            ? ocynkTexture
+            :color === "Złoty Dąb"
             ? wallTexture
             : color === "Złoty Dąb Ciemny"
             ? wallTextureDabDark
             : wallTextureOrzech,
         normalMap: direction === "poziom" ? normalWall : normalwall90,
-        roughness: 0.8,
+        roughness: 0.8,        
         metalness: 1,
+        bumpScale: -1,
+        bumpMap: direction === "poziom" ? normalWall : normalwall90,
+        side:DoubleSide
+        
       });
     } else {
       wallMaterial = new MeshStandardMaterial({
@@ -48,6 +56,9 @@ function Materials(selectedOptions) {
         normalMap: direction === "poziom" ? normalWall : normalwall90,
         roughness: 0.9,
         metalness: 0.2,
+        bumpScale: -1,
+        bumpMap: direction === "poziom" ? normalWall : normalwall90,
+        side:DoubleSide
       });
     }
     return wallMaterial;
@@ -61,7 +72,7 @@ function Materials(selectedOptions) {
         if (gateColorRal1 === null || gateColorRal1 === undefined) {
           gateMaterial = new MeshStandardMaterial({
             map:
-              gateColor1 === "Złoty Dąb Jasny"
+              gateColor1 === "Złoty Dąb"
                 ? wallTexture
                 : gateColor1 === "Złoty Dąb Ciemny"
                 ? wallTextureDabDark
@@ -69,6 +80,7 @@ function Materials(selectedOptions) {
             normalMap: gateDirection === "poziom" ? normalGate : normalGate90,
             roughness: 0.8,
             metalness: 1,
+            
           });
         } else {
           gateMaterial = new MeshStandardMaterial({
@@ -82,7 +94,7 @@ function Materials(selectedOptions) {
         if (gateColorRal1 === null || gateColorRal1 === undefined) {
           gateMaterial = new MeshStandardMaterial({
             map:
-              gateColor1 === "Złoty Dąb Jasny"
+              gateColor1 === "Złoty Dąb"
                 ? wallTexture
                 : gateColor1 === "Złoty Dąb Ciemny"
                 ? wallTextureDabDark
@@ -106,7 +118,7 @@ function Materials(selectedOptions) {
         if (gateColorRal2 === null || gateColorRal2 === undefined) {
           gateMaterial = new MeshStandardMaterial({
             map:
-              gateColor2 === "Złoty Dąb Jasny"
+              gateColor2 === "Złoty Dąb"
                 ? wallTexture
                 : gateColor2 === "Złoty Dąb Ciemny"
                 ? wallTextureDabDark
@@ -127,7 +139,7 @@ function Materials(selectedOptions) {
         if (gateColorRal2 === null || gateColorRal2 === undefined) {
           gateMaterial = new MeshStandardMaterial({
             map:
-              gateColor2 === "Złoty Dąb Jasny"
+              gateColor2 === "Złoty Dąb"
                 ? wallTexture
                 : gateColor2 === "Złoty Dąb Ciemny"
                 ? wallTextureDabDark
@@ -151,7 +163,7 @@ function Materials(selectedOptions) {
         if (gateColorRal3 === null || gateColorRal3 === undefined) {
           gateMaterial = new MeshStandardMaterial({
             map:
-              gateColor3 === "Złoty Dąb Jasny"
+              gateColor3 === "Złoty Dąb"
                 ? wallTexture
                 : gateColor3 === "Złoty Dąb Ciemny"
                 ? wallTextureDabDark
@@ -172,7 +184,7 @@ function Materials(selectedOptions) {
         if (gateColorRal3 === null || gateColorRal3 === undefined) {
           gateMaterial = new MeshStandardMaterial({
             map:
-              gateColor3 === "Złoty Dąb Jasny"
+              gateColor3 === "Złoty Dąb"
                 ? wallTexture
                 : gateColor3 === "Złoty Dąb Ciemny"
                 ? wallTextureDabDark
@@ -211,14 +223,14 @@ function Materials(selectedOptions) {
       if (colorRal === null || colorRal === undefined) {
         doorMaterial = new MeshStandardMaterial({
           map:
-            color === "Złoty Dąb Jasny"
+            color === "Złoty Dąb"
               ? wallTexture
               : color === "Złoty Dąb Ciemny"
               ? wallTextureDabDark
               : wallTextureOrzech,
           normalMap: gateDirection === "poziom" ? normalGate : normalGate90,
           roughness: 0.8,
-          metalness: 1,
+          metalness: 1,         
         });
       } else {
         doorMaterial = new MeshStandardMaterial({
@@ -236,9 +248,10 @@ function Materials(selectedOptions) {
   const roofTexture = useLoader(TextureLoader, "/model/roof.jpg");
   const roofTrapezTexture = useLoader(TextureLoader, "/model/trapez2.jpg");
 
+  const ocynkTexture = useLoader(TextureLoader, "./model/ocynk.jpg");
   const wallTexture = useLoader(TextureLoader, "/model/jasny-dab-2.jpg");
   const wallTextureDabDark = useLoader(TextureLoader, "/model/dab-2.jpg");
-  const wallTextureOrzech = useLoader(TextureLoader, "/model/orzech-2.jpg");
+  const wallTextureOrzech = useLoader(TextureLoader, "/model/orzech-2-kopia.jpg");
   const normalWall = useLoader(TextureLoader, "/model/normal-big-90.jpg");
   const normalwall90 = useLoader(TextureLoader, "/model/normal-big.jpg");
 
@@ -248,11 +261,15 @@ function Materials(selectedOptions) {
   const gateSegment = useLoader(TextureLoader, "/model/segmentowa.jpg");
 
   //textures uv
+  ocynkTexture.repeat.set(2*(3*width/6), 1);
+  ocynkTexture.wrapS = THREE.RepeatWrapping;
+  ocynkTexture.wrapT = THREE.RepeatWrapping;
+  
   roofTexture.repeat.set(1.5, 1.5);
   roofTexture.wrapS = THREE.RepeatWrapping;
   roofTexture.wrapT = THREE.RepeatWrapping;
 
-  roofTrapezTexture.repeat.set(1.8, 1);
+  roofTrapezTexture.repeat.set(1.8*(width/6), 1);
   roofTrapezTexture.wrapS = THREE.RepeatWrapping;
   roofTrapezTexture.wrapT = THREE.RepeatWrapping;
 
@@ -270,14 +287,14 @@ function Materials(selectedOptions) {
 
   normalWall.repeat.set(
     1,
-    emboss === "wąskie" ? 6 * (height / 213) : 3.5 * (height / 213)
+    emboss === "wąskie" ? 5 * (height / 213) : 3.5 * (height / 213)
   );
   normalWall.wrapS = THREE.RepeatWrapping;
   normalWall.wrapT = THREE.RepeatWrapping;
 
   normalwall90.repeat.set(
     emboss === "wąskie" ? (11 * width) / 6 : (6 * width) / 6,
-    1
+    6
   );
   normalwall90.wrapS = THREE.RepeatWrapping;
   normalwall90.wrapT = THREE.RepeatWrapping;
@@ -310,8 +327,10 @@ function Materials(selectedOptions) {
 
   const wallMaterial = mainColor();
   const gateMaterial1 = gateColor(1);
-  const gateMaterial2 = gateColor(2);
-  const gateMaterial3 = gateColor(3);
+  const gateMaterial2 = gateColor(1);
+  const gateMaterial3 = gateColor(1);
+  // const gateMaterial2 = gateColor(2);
+  // const gateMaterial3 = gateColor(3);
 
   let doorMaterial1;
   let doorMaterial2;

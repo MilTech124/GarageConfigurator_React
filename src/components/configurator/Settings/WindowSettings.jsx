@@ -44,26 +44,26 @@ function WindowSettings({ selectedOptions, setSelectedOptions }) {
   }
 
   return (
-    <div>
-      <h4 className="bg-slate-900 p-2 mt-5">Dodatkowe okno</h4>
-      <div className="flex justify-around">
-        <figure>          
+    <div>      
+      <div className="flex flex-col justify-center">
+        {/* <figure>          
           <img className="w-20 pt-5" src="./konfigurator/window.png" />
-        </figure>
+        </figure> */}
+        <p className="text-center">Dodaj lub usuń okno</p>
         <div className="  flex flex-col justify-center items-center">
           <p className="text-2xl font-bold">{countWindow}</p>
           <div className="flex gap-2">
             <button
-              className="bg-slate-900 text-white px-2 py-1 rounded-md"
+              className="bg-slate-900 text-white w-14 h-14 font-bold rounded-full hover:bg-slate-600"
               onClick={() => handleWindow("-")}
             >
-              -
+              usuń
             </button>
             <button
-              className="bg-slate-900 text-white px-2 py-1 rounded-md"
+              className="bg-slate-900 text-white w-14 h-14 font-bold rounded-full hover:bg-slate-600"
               onClick={() => handleWindow("+")}
             >
-              +
+              dodaj
             </button>
           </div>
         </div>

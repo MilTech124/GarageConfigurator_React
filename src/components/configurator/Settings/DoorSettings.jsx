@@ -14,8 +14,8 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
   const { width, depth, height } = selectedOptions;
 
    const doorColor = [
-    { name: "Złoty Dąb Jasny", url: "./konfigurator/jasny-dab.webp" },
-    { name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png" },
+    { name: "Złoty Dąb", url: "./konfigurator/jasny-dab.webp" },
+    // { name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png" },
     { name: "Orzech", url: "./konfigurator/orzech.png" },
     { name: "Antracyt", ral: "#272C38" },
     { name: "Ciemny Brąz 8017", ral: "#2F1D1D" },
@@ -39,7 +39,7 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
   const handleDoor = (action) => {
     if (action === "+" && countDoor < 5) {
       setCountDoor(countDoor + 1);
-      const newDoor = new door("100x190", "lewe", "Złoty Dąb Jasny");
+      const newDoor = new door("100x190", "lewe", "Złoty Dąb");
       setSelectedOptions({
         ...selectedOptions,
         door: [...selectedOptions.door, newDoor],
@@ -67,27 +67,27 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
   }
 
   return (
-    <div>
-      <h4 className="bg-slate-900 p-2 mt-5">Dodatkowe drzwi</h4>
-      <div className="flex justify-around">
-        <figure>
+    <div>    
+      <div className="flex flex-col justify-center">
+              <p className="text-center">Dodaj lub usuń drzwi</p>
+        {/* <figure>
           {" "}
           <img className="w-20 pt-5" src="./konfigurator/door.png" />
-        </figure>
+        </figure> */}
         <div className="  flex flex-col justify-center items-center">
           <p className="text-2xl font-bold">{countDoor}</p>
           <div className="flex gap-2">
             <button
-              className="bg-slate-900 text-white px-2 py-1 rounded-md"
+              className="bg-slate-900 text-white w-14 h-14 font-bold rounded-full hover:bg-slate-600"
               onClick={() => handleDoor("-")}
             >
-              -
+              usuń
             </button>
             <button
-              className="bg-slate-900 text-white px-2 py-1 rounded-md"
+              className="bg-slate-900 text-white w-14 h-14 font-bold rounded-full hover:bg-slate-600"
               onClick={() => handleDoor("+")}
             >
-              +
+              dodaj
             </button>
           </div>
 
@@ -122,7 +122,7 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
               </Select>
             </FormControl>
 
-            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+            {/* <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
               <InputLabel id="demo-simple-select-standard-label">
                 Typ
               </InputLabel>
@@ -144,7 +144,7 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
                   <MenuItem key={type} value={type}>{type}</MenuItem>
                 ))}
               </Select>
-            </FormControl>
+            </FormControl> */}
             <div className="flex w-full justify-between">
               <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
                 <InputLabel id="demo-simple-select-standard-label">

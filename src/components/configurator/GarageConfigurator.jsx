@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import MainGarage from "./Settings/MainSetting";
-import TypeGarage from "./TypeGarage";
+import TypeGarage from "./Settings/TypeGarage";
 import RoofSetting from "./Settings/RoofSetting";
 import GateSetting2 from "./Settings/GateSetting2";
 import DoorSettings from "./Settings/DoorSettings";

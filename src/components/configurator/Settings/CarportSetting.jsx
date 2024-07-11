@@ -1,23 +1,27 @@
-import React, { use, useEffect } from "react";
+import React from "react";
 import { Select, InputLabel, FormControl, MenuItem, Menu } from "@mui/material";
 import { variable } from "../Variable";
 import { toast } from "react-toastify";
+import Button from '@mui/material/Button';
 
 
 function CarportSetting({ selectedOptions, setSelectedOptions }) {
-  useEffect(() => {
-    if (selectedOptions.carport) {
-      toast.success("Dodano wiatę");
-    }
-  }
-  , [selectedOptions.carport]);
+  const setCarportSides = (e) => { // Accept event parameter
+    const carportSides = selectedOptions.carportSides; // Access carportSides from selectedOptions
+    console.log("carportSides", carportSides);
+    setSelectedOptions({
+      ...selectedOptions,
+      carportSides: { ...carportSides, [e.target.name]: !carportSides[e.target.name] }
+    });
+  };
+
   return (
-    <div>
-      <h4 className="bg-slate-900 p-2">Wiata</h4>
+    <div className="flex flex-col">
+      <h4 className=" text-center text-xl p-2">Dodaj wiatę</h4>
       <div className="flex items-center">
-        <img src="/konfigurator/carport.png" className="w-40 h-40" alt="" />
-        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-          <InputLabel id="demo-simple-select-standard-label">Wiata</InputLabel>
+        {/* <img src="/konfigurator/carport.png" className="w-40 h-40" alt="" /> */}
+        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }} >
+          <InputLabel id="demo-simple-select-standard-label">Dodaj wiatę</InputLabel>
           <Select
             labelId="demo-simple-select-standard-label"
             id="demo-simple-select-standard"
@@ -28,13 +32,14 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
                 carport: e.target.value,
               });
             }}
-            label="Wiaty"
+            label="Dodaj wiatę"
           >
             <MenuItem value={false}>Nie</MenuItem>
             <MenuItem value={true}>Tak</MenuItem>
           </Select>
         </FormControl>
-      </div>
+        
+      </div>     
 
       {selectedOptions.carport && (
         <>
@@ -171,8 +176,28 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
               }
           
           </FormControl>
+
+          
         </>
       )}
+      <div className="flex flex-col items-center justify-center ">
+      
+      <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+          <Button variant={selectedOptions.carportSides.przod ? "contained":"outlined"} name="przod" onClick={(e) => setCarportSides(e)}>Przod</Button>
+      </FormControl>
+      <div className="flex">
+        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+            <Button variant={selectedOptions.carportSides.lewo ? "contained":"outlined"} name="lewo" onClick={(e) => setCarportSides(e)} >Lewo</Button>
+        </FormControl>
+        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+            <Button variant={selectedOptions.carportSides.prawo ? "contained":"outlined"} name="prawo" onClick={(e) => setCarportSides(e)} >Prawo</Button>
+        </FormControl>
+      </div>
+        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+            <Button variant={selectedOptions.carportSides.tyl ? "contained":"outlined"} name="tyl" onClick={(e) => setCarportSides(e)} >Tył</Button>
+        </FormControl>
+      </div>
+     
     </div>
   );
 }

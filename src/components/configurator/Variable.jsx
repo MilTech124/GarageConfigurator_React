@@ -7,11 +7,11 @@ export const variable={
     garageSizes:{
         width: [3,3.5,4,5,6,7,8,9,10,11,12],     
         depth: [3,4,5,5.5,6,7,8,9,10,11,12],
-        height: [213,223,233,243,253,263,273,283,293,303,313,323,333,343,353,363],
+        height: [213,223,233,243,253,263,273,283,293,303,313],
     },
 
     roof:["spad tył","spad przód","spad w prawo", "spad w lewo", "dwuspad","dwuspad przod-tył"],
-    roofColors:["Antracyt","Ciemny Brąz 8017","Brąz Jasny 8004","Ciemna Zieleń 6005","Jasna Zieleń 6029","Grafit 7016","Biały 9010","Szary 9002","Srebrny 9006","Piaskowy 1002","Czerwony 3011", "Wisniowy 3005", "Czarny 9005"],
+    roofColors:["Antracyt 7016","Ciemny Brąz 8017","Brąz Jasny 8004","Ciemna Zieleń 6005","Jasna Zieleń 6029","Biały 9010","Szary 9002","Srebrny 9006","Piaskowy 1002","Czerwony 3011", "Wisniowy 3005", "Czarny 9005"],
     roofType:["blachodachówka","trapezowa"],
     
    

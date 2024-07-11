@@ -9,7 +9,7 @@ import LeftSettings from "./LeftSettings/LeftSettings";
 
 function Main() {
   const [selectedOptions, setSelectedOptions] = useState({
-    color: "Złoty Dąb Jasny",
+    color: "Złoty Dąb",
     colorRal: null,
     width: 6,
     depth: 6,
@@ -27,21 +27,21 @@ function Main() {
 
     gateCount: 2,
     gateType1: "uchylna",
-    gateColor1: "Złoty Dąb Jasny",
+    gateColor1: "Złoty Dąb",
     gateColorRal1: null,
     gateWidth1: 3,
     gateHeight1: 200,
     gatePositionValue1: 150,
 
     gateType2: "uchylna",
-    gateColor2: "Złoty Dąb Jasny",
+    gateColor2: "Złoty Dąb",
     gateColorRal2: null,
     gateWidth2: 3,
     gateHeight2: 200,
     gatePositionValue2: 300,
 
     gateType3: "uchylna",
-    gateColor3: "Złoty Dąb Jasny",
+    gateColor3: "Złoty Dąb",
     gateColorRal3: null,
     gateWidth3: 3,
     gateHeight3: 200,
@@ -54,6 +54,7 @@ function Main() {
     carportWidth: 3,
     carportSide: "lewo",
     carportType: "brak",
+    carportSides:{lewo:true,prawo:true,przod:false,tyl:true},
 
     gutter: false,
     automatic: false,
@@ -62,6 +63,17 @@ function Main() {
   const [modal, setModal] = useState(false);
   const [capture, setCapture] = useState(false);
   const [imageURL, setImageURL] = useState(null);
+
+
+  //use effects helpers
+
+  useEffect(() => {
+    if (selectedOptions.color ==="Ocynk") {
+      selectedOptions.direction = "pion";
+      selectedOptions.emboss = "wąskie";
+    }
+  }, [selectedOptions.color]);
+
 
   // const user = process.env.NEXT_PUBLIC_USER_WP;
   // const password = process.env.NEXT_PUBLIC_PASSWORD_WP;
@@ -99,23 +111,30 @@ function Main() {
  
   return (
     <div className="bg-slate-200 relative w-screen h-screen flex max-sm:flex-col">
-      <LeftSettings  />
+      <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}  />
       <Modal selectedOptions={selectedOptions} modal={modal} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
-      <div id='capture' className="w-full h-full relative max-sm:h-1/2 ">
+      <div id='capture' className="w-full h-3/4 relative max-sm:h-1/2 ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
-        <button
+        <div className="pl-[10%] p-10 border-2 border-slate-800">
+          <h4 className="text-4xl text-slate-700 font-bold underline underline-offset-4 pb-5">Cena: 12400 zł</h4>
+         <button className="btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-600 text-white rounded-md">Wyślij wycenę</button>
+        </div>
+
+
+
+        {/* <button
           onClick={() => (setModal(true))}
           className="fixed z-50 btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-900 text-white rounded-md"
         >
           Wyślij wycenę
-        </button>
+        </button> */}
       </div>
-      <div className=" p-5 md:w-[600px] h- bg-slate-300 overflow-auto ">
+      {/* <div className=" p-5 md:w-[600px] h- bg-slate-300 overflow-auto ">
         <GarageConfigurator
           selectedOptions={selectedOptions}
           setSelectedOptions={setSelectedOptions}
         />
-      </div>
+      </div> */}
     </div>
   );
 }

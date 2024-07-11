@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Canvas, extend, useThree } from '@react-three/fiber'
 import { Environment } from "@react-three/drei";
-import { OrbitControls, ContactShadows } from "@react-three/drei";
+import { OrbitControls, ContactShadows,Sky } from "@react-three/drei";
 import { Model } from "./Model";
 import { useRef, useEffect } from "react";
 
@@ -36,24 +36,26 @@ function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
 
   return (  
     <Canvas gl={{ preserveDrawingBuffer: true }} 
-      camera={{ position: [20, 5, 5], fov: 25,}}
+      camera={{ position: [20, 0, 5], fov: 30,}}
       style={{
-        background: "url(/logo-black.png)",
+        // background: "url(/logo-black.png)",
         backgroundRepeat: "repeat",
-        backgroundSize: "50% 50%",
+        backgroundSize: "50% 50%",        
       }}
+      className="cursor-all-scroll"
     >
+    {/* <Sky azimuth={1} inclination={0.6} distance={1000} /> */}
       <CaptureScreenshot setCaptureFunction={captureScreenshot} capture={capture} />
       <OrbitControls
         minPolarAngle={Math.PI / 2.8}
         maxPolarAngle={Math.PI / 2.2}
-        minDistance={15} // minimum zoom level
-        maxDistance={30} // maximum zoom level            
+        minDistance={0} // minimum zoom level
+        maxDistance={100} // maximum zoom level            
       />
-      {/* <ambientLight intensity={0.5} /> */}
-      <directionalLight position={[20, 20, 5]} intensity={1} />
+      <ambientLight intensity={1} />
+      <directionalLight position={[20, 20, 5]} intensity={0.5} />
       <ContactShadows
-        frames={1}
+        // frames={1}
         position={[0, -0.5, 0]}
         blur={1}
         opacity={0.75}
@@ -61,7 +63,7 @@ function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
       
 
       <Model selectedOptions={selectedOptions}/>
-      <Environment  preset="city"/> 
+      <Environment preset="city"  /> 
     </Canvas>
    
   );
