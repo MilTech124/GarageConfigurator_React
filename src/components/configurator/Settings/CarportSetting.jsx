@@ -163,12 +163,12 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
               label="Typ Poszycia Wiaty"
             >
               <MenuItem value={"brak"}>Brak</MenuItem>
-              <MenuItem value={"Oblachowane"}>Oblachowane</MenuItem>
-              <MenuItem value={"Ażury"}>Ażury</MenuItem>
+              <MenuItem value={"oblachowane"}>Oblachowane</MenuItem>
+              <MenuItem value={"azury"}>Ażury</MenuItem>
             </Select>
              {selectedOptions.carportType === "brak" ? (
               <></>
-            ) : selectedOptions.carportType === "Oblachowane" ? (
+            ) : selectedOptions.carportType === "oblachowane" ? (
               <img className="pt-2"  src="/konfigurator/blacha.jpg" width={500} height={300} alt="" />
             ) : (
               <img className="pt-2"  src="/konfigurator/azury.jpg" width={500} height={300} alt="" />

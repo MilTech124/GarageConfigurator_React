@@ -15,7 +15,7 @@ export const variable={
     roofType:["blachodachówka","trapezowa"],
     
    
-    gateTypes:["dwuskrzydłowa", "uchylna", "segmentowa",],
+    gateTypes:["dwuskrzydłowa", "uchylna"],   //"segmentowa" dodatkowa
     gateColors:["Złoty Dąb Jasny","Złoty Dąb Ciemny","Antracyt","Ciemny Brąz 8017","Brąz Jasny 8004","Ciemna Zieleń 6005","Jasna Zieleń 6029","Grafit 7016","Biały 9010","Szary 9002","Srebrny 9006","Piaskowy 1002","Czerwony 3011", "Wisniowy 3005", "Czarny 9005"],
     gateSizes:{
         width: [3,3.5,4,4.5,5,5.5,6],     

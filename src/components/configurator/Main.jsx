@@ -6,6 +6,7 @@ import GarageViewer from "./GarageViewer";
 import Modal from "./Modal";
 import axios from 'axios';
 import LeftSettings from "./LeftSettings/LeftSettings";
+import CalcMain from "./calculate/CalcMain";
 
 function Main() {
   const [selectedOptions, setSelectedOptions] = useState({
@@ -63,6 +64,7 @@ function Main() {
   const [modal, setModal] = useState(false);
   const [capture, setCapture] = useState(false);
   const [imageURL, setImageURL] = useState(null);
+  const [price, setPrice] = useState(0);
 
 
   //use effects helpers
@@ -115,13 +117,10 @@ function Main() {
       <Modal selectedOptions={selectedOptions} modal={modal} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
       <div id='capture' className="w-full h-3/4 relative max-sm:h-1/2 ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
-        <div className="pl-[10%] p-10 border-2 border-slate-800">
-          <h4 className="text-4xl text-slate-700 font-bold underline underline-offset-4 pb-5">Cena: 12400 zł</h4>
+        <div className="pl-[10%] p-5 border-2 border-slate-800">
+          <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
          <button className="btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-600 text-white rounded-md">Wyślij wycenę</button>
         </div>
-
-
-
         {/* <button
           onClick={() => (setModal(true))}
           className="fixed z-50 btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-900 text-white rounded-md"

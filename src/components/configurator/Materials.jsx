@@ -27,6 +27,7 @@ function Materials(selectedOptions) {
     door,
     height,
     width,
+    carportType,
   } = selectedOptions;
 
   //helpers
@@ -260,6 +261,9 @@ function Materials(selectedOptions) {
   const normalGate90 = useLoader(TextureLoader, "/model/normal-big-gate.jpg");
   const gateSegment = useLoader(TextureLoader, "/model/segmentowa.jpg");
 
+  const azuryTexture = useLoader(TextureLoader, "/model/azury.png");
+  const alphatexture = useLoader(TextureLoader, "/model/alpha-azury.png");
+
   //textures uv
   ocynkTexture.repeat.set(2*(3*width/6), 1);
   ocynkTexture.wrapS = THREE.RepeatWrapping;
@@ -284,6 +288,11 @@ function Materials(selectedOptions) {
   wallTextureOrzech.repeat.set(1, 1);
   wallTextureOrzech.wrapS = THREE.RepeatWrapping;
   wallTextureOrzech.wrapT = THREE.RepeatWrapping;
+
+  azuryTexture.repeat.set(1, 1);
+  azuryTexture.wrapS = THREE.RepeatWrapping;
+  azuryTexture.wrapT = THREE.RepeatWrapping;
+  
 
   normalWall.repeat.set(
     1,
@@ -325,12 +334,57 @@ function Materials(selectedOptions) {
     bumpMap: roofType === "blachodachówka" ? roofTexture : roofTrapezTexture,
   });
 
+
+  const azuryMaterialChose = () => {
+    let material;
+    if (carportType==="azury"){
+      if (colorRal === null || colorRal === undefined)  {
+        material = new MeshStandardMaterial({
+          map:
+          color === "Ocynk"
+          ? ocynkTexture
+          :color === "Złoty Dąb"
+          ? wallTexture
+          // : color === "Złoty Dąb Ciemny"
+          // ? wallTextureDabDark
+          : color === "Orzech"
+          ? wallTextureOrzech    
+          : null,
+          alphaMap: alphatexture,
+          color: colorRal,
+          roughness: 0.8,        
+          metalness: 1,
+          bumpScale: -1,  
+          transparent: true,
+          side:DoubleSide
+        });
+      } else {
+        material = new MeshStandardMaterial({
+          color: colorRal,
+          alphaMap: alphatexture,
+          color: colorRal,
+          roughness: 0.9,        
+          metalness: .2,
+          bumpScale: -1,  
+          transparent: true,
+          side:DoubleSide   
+        });
+      }  
+      return material
+    }
+    if (carportType ==="oblachowane"){
+      return mainColor()
+     }     
+  }
+
   const wallMaterial = mainColor();
   const gateMaterial1 = gateColor(1);
   const gateMaterial2 = gateColor(1);
   const gateMaterial3 = gateColor(1);
+  const azuryMaterial = azuryMaterialChose();
   // const gateMaterial2 = gateColor(2);
   // const gateMaterial3 = gateColor(3);
+  
 
   let doorMaterial1;
   let doorMaterial2;
@@ -351,6 +405,7 @@ function Materials(selectedOptions) {
     doorMaterial2,
     doorMaterial3,
     doorMaterial4,
+    azuryMaterial
   };
 }
 

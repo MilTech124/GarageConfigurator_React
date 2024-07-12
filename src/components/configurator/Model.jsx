@@ -41,7 +41,8 @@ export function Model(props) {
     carport,
     carportWidth,
     carportSide,
-    carportSides
+    carportSides,
+    carportType
   } = props.selectedOptions;
 
   const { nodes, materials } = useGLTF("/model/garaz.glb");
@@ -56,6 +57,7 @@ export function Model(props) {
     doorMaterial3,
     doorMaterial4,
     doorMaterial5,
+    azuryMaterial
   } = Materials(props.selectedOptions);
 
   const Gate = ({ gateMaterial, position, scale, type }) => {
@@ -308,9 +310,12 @@ export function Model(props) {
             position={[-2.958, 1.069, 3]}
             scale={[0.025, 1.064, 0.025]}
           />
-           <group 
+
+                                                 {/* //oblachowanie */}
+           <group             
               name="wiata-blacha-spady-boczne"
               position={[0, 0, -1.7]}
+              visible ={carportType==="oblachowane" || carportType==="azury"}
             >
               <mesh
                 visible= { (carportSide==="lewo" || carportSide==="prawo") && (carportSides.lewo || carportSides.prawo) ? true
@@ -319,7 +324,7 @@ export function Model(props) {
                 castShadow
                 receiveShadow
                 geometry={nodes['wiata-blacha-bok'].geometry}
-                material={wallMaterial}
+                material={azuryMaterial}
                 position={[0, 1.06, 4.739]}
                 rotation={[Math.PI / 2, 0, 0]}
                 scale={[3, 1, 1.06]}
@@ -329,7 +334,7 @@ export function Model(props) {
                 castShadow
                 receiveShadow
                 geometry={nodes['wiata-blacha-tyl'].geometry}
-                material={wallMaterial}
+                material={azuryMaterial}
                 position={carportSide==="lewo" ? [2.99, 1.064, 3.001]:carportSide==="prawo" ? [-2.99, 1.064, 3.001]:[2.99, 1.064, 3.001]}   //LEWO PRAWO ,POZYCJA PRZOD BLACHA
                 rotation={[Math.PI / 2, 0, -Math.PI / 2]}
                 scale={[1.761, 1.57, 1.062]}
@@ -340,7 +345,7 @@ export function Model(props) {
                 castShadow
                 receiveShadow
                 geometry={nodes['wiata-blacha-tyl'].geometry}
-                material={wallMaterial}
+                material={azuryMaterial}
                 position={carportSide==="lewo" ? [-2.99, 1.064, 3.001]:carportSide==="prawo" ? [2.99, 1.064, 3.001]:[-2.99, 1.064, 3.001]}        //PRAWO LEWO ,POZYCJA TYL BLACHA
                 rotation={[Math.PI / 2, 0, -Math.PI / 2]}
                 scale={[1.761, 1.57, 1.062]}
@@ -388,23 +393,22 @@ export function Model(props) {
     );
   };
 
-  const CarportDirection = () =>{
+  const CarportDirectionMetal = () =>{  
     return(
-      <>
+      <group visible={carportType==="oblachowane"||carportType==="azury"}>
         <group name="wiata-spad-bok-lewy" 
           position={
             [0,0,-1.7+carportWidth]
             }
           scale={[0.99,1*(height/213),1]} 
           visible={carportSide==="lewo"}
-          
           >
             <mesh
               visible= {carportSides.lewo||carportSides.prawo}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-bok'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={ [0, 1.131, 1.751] }
               scale={[3, 1.102, 2.994]}
             />
@@ -413,7 +417,7 @@ export function Model(props) {
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-tyl'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={[0, 1.131, 1.751]}
               scale={[3, 1.102, 2.994]}
             />
@@ -422,7 +426,7 @@ export function Model(props) {
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-przod'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={[0.024, 1.131, 1.755]}
               scale={[3, 1.102, 2.994]}
             />
@@ -440,7 +444,7 @@ export function Model(props) {
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-bok'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={ [0, 1.131, 1.751] }
               scale={[3, 1.102, 2.994]}
             />
@@ -449,7 +453,7 @@ export function Model(props) {
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-tyl'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={[0, 1.131, 1.751]}
               scale={[3, 1.102, 2.994]}
             />
@@ -458,26 +462,37 @@ export function Model(props) {
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-przod'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={[0.024, 1.131, 1.755]}
               scale={[3, 1.102, 2.994]}
             />
         </group> 
-        <group name="wiata-spad-bok-tyl" 
+        <group name="wiata-spad-bok-tyl-przod" 
           position={
-            [0,0,1.7-carportWidth]
+            carportSide==="tyl" ?[0-carportWidth,0,1.78] : carportSide==="przod" ?[0+carportWidth,0,1.78]:null
+            
             }
-          scale={[0.99,1*(height/213),-1]} 
-          visible={carportSide==="tyl"}
+          scale={carportSide==="tyl" ?[1.01,1*(height/213)-(carportWidth)*0.04,-1] : carportSide==="przod" ?[1.01,1*(height/213)+(carportWidth)*0.035,-1]:null}    //skalowanie wysokosci w zaleznosci od szerokosci carportu
+          visible={carportSide==="tyl" || carportSide==="przod"}
           
           >
             <mesh
-              visible= {carportSides.lewo||carportSides.prawo}
+              visible= {carportSides.prawo}
+              name=""
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-bok'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={ [0, 1.131, 1.751] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {carportSides.lewo}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial}
+              position={ [0, 1.131, -4.2] }
               scale={[3, 1.102, 2.994]}
             />
             <mesh
@@ -485,7 +500,7 @@ export function Model(props) {
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-tyl'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={[0, 1.131, 1.751]}
               scale={[3, 1.102, 2.994]}
             />
@@ -494,12 +509,12 @@ export function Model(props) {
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-przod'].geometry}
-              material={wallMaterial}
+              material={azuryMaterial}
               position={[0.024, 1.131, 1.755]}
               scale={[3, 1.102, 2.994]}
             />
         </group> 
-      </>
+      </group>
     )
   }
 
@@ -720,7 +735,7 @@ export function Model(props) {
       <mesh 
         name="spadtyl"
         geometry={nodes.spadtyl.geometry}
-        material={roofMaterial}
+        material={roofMaterial}        
         position={[
           carport && carportSide==="tyl" ? 0-carportWidth/2 
           : carportSide==="przod" ? 0+carportWidth/2 
@@ -741,13 +756,13 @@ export function Model(props) {
           }    
       />
             
-        <CarportDirection/>
+       {carport ?<CarportDirectionMetal/> :null} 
             
    
 
       {/* //PODPORY DLA TYL I PRZOD START  */}
       <group   
-       visible={carport && carportSide === "przod"^carportSide === "tyl"}
+       visible={carport && (carportSide === "przod"^carportSide === "tyl")}
           name="podpory tyl"
           rotation={
             carportSide==="przod" ? [0, Math.PI/2, 0]
@@ -761,8 +776,8 @@ export function Model(props) {
             : null
           }
           scale={
-            carportSide==="przod" ? [1,1.0+(carportWidth*0.03),1 ]
-            : carportSide==="tyl" ? [1,0.8-(carportWidth*0.03),1 ]
+            carportSide==="przod" ? [0.97,1.0+(carportWidth*0.03),1 ]
+            : carportSide==="tyl" ? [0.99,0.8-(carportWidth*0.03),1 ]
             : null
             
           }
@@ -935,11 +950,5 @@ export function Model(props) {
 
 useGLTF.preload("/model/garaz.glb");
 
-    function CarportDirection({carportWidth, height, wallMaterial}) {
-      return (<group name="wiata-spad-tyl-bok-przod" position={[0, 0, -1.7 + carportWidth]} scale={[0.99, 1 * (height / 213), 1]} visible={true}>
-          <mesh visible={carportSides.lewo || carportSides.prawo} castShadow receiveShadow geometry={nodes['wiata-spad-bok'].geometry} material={wallMaterial} position={[0, 1.131, 1.751]} scale={[3, 1.102, 2.994]} />
-          <mesh visible={carportSides.tyl} castShadow receiveShadow geometry={nodes['wiata-spad-tyl'].geometry} material={wallMaterial} position={[0, 1.131, 1.751]} scale={[3, 1.102, 2.994]} />
-          <mesh visible={carportSides.przod} castShadow receiveShadow geometry={nodes['wiata-spad-przod'].geometry} material={wallMaterial} position={[0.024, 1.131, 1.755]} scale={[3, 1.102, 2.994]} />
-        </group>);
-    }
+
   
