@@ -10,7 +10,7 @@ import {
 import { variable } from "../Variable";
 
 function GateSetting2({ selectedOptions, setSelectedOptions }) {
-  const [gateCount, setGateCount] = useState(1);
+  const [gateCount, setGateCount] = useState(2);
   const {
     
     width,
@@ -38,9 +38,10 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
 
   const gateColor = [
     { name: "Złoty Dąb", url: "./konfigurator/jasny-dab.webp" },
+    { name: "Orzech", url: "./konfigurator/orzech.png" },
     { name: "Ocynk", url: "./konfigurator/ocynk.png"},
     // { name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png" },
-    { name: "Orzech", url: "./konfigurator/orzech.png" },
+    
     { name: "Biały 9010", ral: "#FBFFFF" },
     { name: "Szary 9002", ral: "#F2EFE8" },
     { name: "Srebrny 9006", ral: "#A7ABB6" },
@@ -60,20 +61,21 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
       if (
         gateCount === 1 &&
         width < gateWidth2 + gateWidth1 + gatePositionValue1 / 100
-      ) {
-        return toast.info(
-          "Nie mozna dodac drugiej bramy zmień rozmiar pierwszej lub pozycje."
+      ){
+        return toast.warning(
+          "Zmień rozmiar lub pozycję pierwszej."
         );
       }
       if (
         gateCount === 2 &&
         width < gateWidth3 + gateWidth2 + gatePositionValue2 / 100
       ) {
-        return toast.info(
-          "Nie mozna dodac trzeciej bramy bramy zmień rozmiary."
+        return toast.warning(
+          "Zmień rozmiary."
         );
       }
       setGateCount(gateCount + 1);
+      toast.info("Dodano bramę");
     } else if (action === "-" && gateCount > 1) {
       setGateCount(gateCount - 1);
     }
@@ -115,6 +117,18 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
     }
   }, [gateCount]);
 
+  useEffect(() => {
+    if(width < 6){
+      setSelectedOptions({
+        ...selectedOptions,
+        gateCount: 1,
+      });
+      setGateCount(1);
+    }
+  }, [width]);
+ 
+
+
   return (
     <div>      
       <div className="relative">
@@ -144,7 +158,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         
         <div className="flex pb-3 gap-5 max-md:flex-wrap">
           <FormControl fullWidth>
-            <InputLabel>Przetłoczenia bram</InputLabel>
+            <InputLabel>Przetłoczenia</InputLabel>
             <Select
               value={selectedOptions.gateEmbose}
               onChange={handleChange("gateEmbose")}
@@ -271,7 +285,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
           </div>
         ) : null}
         {/* //second gate  */}
-        {gateCount >= 2 ? (
+        {(gateCount >= 2) && (width>6) ? (
           <div className="py-5 relative">
             <h4 className="bg-slate-400 text-sm p-2 mb-2">Druga brama</h4>
             {/* //gateCount -1 button to remove gate */}

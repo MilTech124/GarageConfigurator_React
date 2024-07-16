@@ -75,6 +75,8 @@ function Materials(selectedOptions) {
             map:
               gateColor1 === "Złoty Dąb"
                 ? wallTexture
+                :gateColor1 === "Ocynk"
+                ? ocynkTexture
                 : gateColor1 === "Złoty Dąb Ciemny"
                 ? wallTextureDabDark
                 : wallTextureOrzech,

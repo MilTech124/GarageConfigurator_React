@@ -28,13 +28,13 @@ function Main() {
     gateEmbose: "wąskie",
     gateDirection: "poziom",
 
-    gateCount: 1,   //2 wczesniej
+    gateCount: 2,   //2 wczesniej
     gateType1: "uchylna",
     gateColor1: "Złoty Dąb",
     gateColorRal1: null,
     gateWidth1: 3,
     gateHeight1: 200,
-    gatePositionValue1: 150,
+    gatePositionValue1: 0,
 
     gateType2: "uchylna",
     gateColor2: "Złoty Dąb",
@@ -78,9 +78,17 @@ function Main() {
     }
   }, [selectedOptions.color]);
 
+  useEffect(() => {
+    if(selectedOptions.color === "Ocynk") {
+    
+      setSelectedOptions({...selectedOptions, roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
+    }}
+  ,[selectedOptions.color])
 
-  // const user = process.env.NEXT_PUBLIC_USER_WP;
-  // const password = process.env.NEXT_PUBLIC_PASSWORD_WP;
+
+
+  // const user = process.env.REACT_APP_USER_WP;
+  // const password = process.env.REACT_APP_PASSWORD_WP;
 
   const captureScreenshot = async (image) => {
 
@@ -121,7 +129,7 @@ function Main() {
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
         <div className="pl-[10%] p-5 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
-          <Button variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
+          <Button onClick={() => (setModal(true))} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
         </div>
         {/* <button
           onClick={() => (setModal(true))}

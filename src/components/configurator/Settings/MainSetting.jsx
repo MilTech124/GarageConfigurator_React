@@ -1,6 +1,7 @@
-import React,{useState} from 'react';
+import React,{useState}from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Grid, Card, CardActionArea, CardMedia } from '@mui/material';
 import { variable } from '../Variable';
+
 
 
 const MainGarage = ({ selectedOptions, setSelectedOptions }) => {
@@ -26,7 +27,7 @@ const MainGarage = ({ selectedOptions, setSelectedOptions }) => {
   ];
 
   const handleChange = (optionType) => (event) => {
-    setSelectedOptions({ ...selectedOptions, [optionType]: event.target.value });
+        setSelectedOptions({ ...selectedOptions, [optionType]: event.target.value });
   };
 
   const handleSelectColor = (color,colorRal) => {

@@ -19,7 +19,7 @@ function CalcMain({selectedOptions, price, setPrice}) {
         const StandardWith = 1
         const StandardPaidWith= 0.5
         const pricePerMeter = 500
-        const typePrice = carportType ==="brak" ? 100 : carportType=== "oblachowane" ?  2000 :carportType=== "lamele" ?  3000 : null
+        const typePrice = carportType ==="brak" ? 100 : carportType=== "oblachowane" ?  2000 :carportType=== "azury" ?  3000 : null
 
         if(carport) {
             resault = (carportWidth-StandardWith)/StandardPaidWith* pricePerMeter +typePrice           
@@ -59,8 +59,9 @@ function CalcMain({selectedOptions, price, setPrice}) {
 calculatePrice();
 
     return (
-        <div>
-            <p className='text-4xl py-5 text-red-800 font-bold'>Cena:<span className='underline ml-5 font-black'>{price} zł</span></p>
+        <div >            
+            <p className='text-4xl pt-5 text-red-800 font-bold'>Cena:<span className='underline ml-5 font-black'>{price} zł</span></p>
+            <p className="text-sm pb-2">Proszę pamiętać, że podana cena jest orientacyjna i nie stanowi oferty wiążącej. </p>
         </div>
     );
 }

@@ -63,8 +63,8 @@ function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
   const [onPlay, setOnPlay] = useState(false);
 
   const zoomIntensity = 2;
-  const maxZoom = 16;
-  const minZoom = 10;
+  const maxZoom = 20;
+  const minZoom = 12;
 
   // Funkcja do płynnego zbliżania kamery
   const zoomIn = () => {
@@ -111,10 +111,10 @@ function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
     >
     <PerspectiveCamera makeDefault   position={cameraPosition} fov={30} />
 
-    {onPlay ? <CameraOrbit onPlay={onPlay} center={[0, 0, 0]} radius={10} /> : null} 
+    {onPlay ? <CameraOrbit onPlay={onPlay} center={[0, 0, 0]} radius={15} /> : null} 
     
 
-    <Sky azimuth={1} inclination={0.7} distance={50} />
+    {/* <Sky azimuth={1} inclination={0.7} distance={50} /> */}
       <CaptureScreenshot setCaptureFunction={captureScreenshot} capture={capture} />
       <OrbitControls
         minPolarAngle={Math.PI / 2.8}
@@ -124,13 +124,8 @@ function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
                
       />
       <ambientLight intensity={1} />
-      <directionalLight position={[20, 20, 5]} intensity={0.5} />
-      <ContactShadows
-        // frames={1}
-        position={[0, -0.5, 0]}
-        blur={1}
-        opacity={0.75}
-      />
+      <directionalLight position={[10, 20, 5]} intensity={1} />
+     
       
 
       <Model selectedOptions={selectedOptions}/>

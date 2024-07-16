@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import SendEmail from "../../utils/SendMail";
 import { toast } from "react-toastify";
+import Checkbox from '@mui/material/Checkbox';
 
 const style = {
   position: "absolute",
@@ -28,7 +29,7 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
     email: "",
     phone: "",
     address: "",
-    message: "",
+    zgoda: false,      
   });
 
   React.useEffect(() => {
@@ -64,7 +65,10 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
 
  const sendData = async (e) =>{
     e.preventDefault();
-
+    if(contact.email !== contact.email2){
+      toast.error("Adresy email nie są takie same");
+      return;
+    }
     if(contact.name === "" || contact.email === "" || contact.phone === "" || contact.address === ""){
       toast.error("Wypełnij wszystkie pola");
       return;
@@ -88,7 +92,7 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}  >
-          <h4 className="text-black">Formularz kontaktowy</h4>
+          <h4 className="text-black">Kontakt</h4>
           <form className="flex flex-col gap-2" onSubmit={sendData}>
             <input
               type="text"
@@ -97,14 +101,8 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
               onChange={handleChange}
               className="p-2 border border-gray-400 rounded-md"
             />
-
-            <input
-              type="tel"
-              name="phone"
-              placeholder="Telefon"
-              onChange={handleChange}
-              className="p-2 border border-gray-400 rounded-md"
-            />
+        
+           
             <input
               type="email"
               name="email"
@@ -113,29 +111,41 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
               className="p-2 border border-gray-400 rounded-md"
             />
             <input
+              type="email2"
+              name="email2"
+              placeholder="Potwierdz Email"
+              onChange={handleChange}
+              className="p-2 border border-gray-400 rounded-md"
+              style={{borderColor: contact.email !== contact.email2 ? "red" : "green"}}
+            
+            />
+            <input
               type="text"
               name="address"
               onChange={handleChange}
               placeholder="Adres dostawy"
               className="p-2 border border-gray-400 rounded-md"
             />
-            <textarea
-              name="message"
-              placeholder="Informacje dodatkowe"
-              onChange={handleChange}
-              className="p-2 border text-black border-gray-400 rounded-md"
-            />
-            <p className="text-black text-xs">
-              Przesyłając ten formularz, wyrażam zgodę na przetwarzanie moich
-              danych osobowych w celu udzielenia odpowiedzi na moje zapytanie
-              oraz na otrzymywanie informacji handlowych i marketingowych drogą
-              elektroniczną od AcelGarage. Więcej informacji na temat
-              przetwarzania danych osobowych można znaleźć w Polityce
-              Prywatności.
-            </p>
-            <button className="bg-slate-900 text-white p-2 rounded-md">
+            <div className="flex">
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Telefon"
+                onChange={handleChange}
+                className="p-2 border border-gray-400 rounded-md"
+              />
+              <div className="flex items-center">
+                <Checkbox onChange={(e) => setContact({...contact, transport: e.target.checked})} defaultChecked />
+                <p>Zgoda na kontakt</p>
+              </div>
+            
+            </div>
+           
+           
+         
+            <Button variant="contained"  className="bg-slate-900 text-white p-2 rounded-md">
               Wyślij
-            </button>
+            </Button>
           </form>
         </Box>
       </Modal>

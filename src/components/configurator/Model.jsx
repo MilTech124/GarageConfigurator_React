@@ -96,6 +96,15 @@ export function Model(props) {
               position={[(3.05 * depth) / 6, 1.035, -0.1]}
               scale={[0.025, 0.02, 0.025]}
             />
+            <mesh
+              name="drzwi-klamka"
+              visible={type === "dwuskrzydłowa"}
+              geometry={nodes["drzwi-klamka"].geometry}
+              material={materials.czarna}
+              position={[(3.05 * depth) / 6, 1.035, +0.1]}
+              scale={[0.025, 0.02, 0.025]}
+              rotation={[0, Math.PI / 1, 0]}
+            />
           </group>
 
           <mesh

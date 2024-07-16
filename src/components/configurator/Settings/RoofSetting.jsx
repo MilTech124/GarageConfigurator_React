@@ -1,4 +1,5 @@
 import { FormControl, InputLabel, Select, MenuItem, Grid, Card, CardActionArea, CardMedia } from '@mui/material';
+import { useEffect } from 'react';
 
 
 function RoofSetting({selectedOptions, setSelectedOptions}) { 
@@ -27,7 +28,9 @@ function RoofSetting({selectedOptions, setSelectedOptions}) {
       const handleSelectColor = (roofColor,roofColorRal) => {
         setSelectedOptions({ ...selectedOptions, roofColor,roofColorRal });
       };
-  
+
+    
+      
 
   return (
     <div className='py-2'>

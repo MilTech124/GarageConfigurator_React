@@ -65,11 +65,7 @@ export default function LeftSettings({selectedOptions, setSelectedOptions}) {
         </AccordionSummary>
         <AccordionDetails>
           <WindowSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} />
-        </AccordionDetails>
-        <AccordionActions>
-          <Button>Cancel</Button>
-          <Button>Agree</Button>
-        </AccordionActions>
+        </AccordionDetails>     
       </Accordion>
       <Accordion >
         <AccordionSummary
@@ -81,11 +77,7 @@ export default function LeftSettings({selectedOptions, setSelectedOptions}) {
         </AccordionSummary>
         <AccordionDetails>
           <CarportSetting selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} />
-        </AccordionDetails>
-        <AccordionActions>
-          <Button>Cancel</Button>
-          <Button>Agree</Button>
-        </AccordionActions>
+        </AccordionDetails>       
       </Accordion>
       <Accordion >
         <AccordionSummary
@@ -97,11 +89,7 @@ export default function LeftSettings({selectedOptions, setSelectedOptions}) {
         </AccordionSummary>
         <AccordionDetails>
           <Accessories selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} />
-        </AccordionDetails>
-        <AccordionActions>
-          <Button>Cancel</Button>
-          <Button>Agree</Button>
-        </AccordionActions>
+        </AccordionDetails>      
       </Accordion>
       {/* <Accordion >
         <AccordionSummary
