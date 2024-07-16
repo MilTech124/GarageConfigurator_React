@@ -166,21 +166,22 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
               <MenuItem value={"oblachowane"}>Oblachowane</MenuItem>
               <MenuItem value={"azury"}>Ażury</MenuItem>
             </Select>
-             {selectedOptions.carportType === "brak" ? (
+             {/* {selectedOptions.carportType === "brak" ? (
               <></>
             ) : selectedOptions.carportType === "oblachowane" ? (
               <img className="pt-2"  src="/konfigurator/blacha.jpg" width={500} height={300} alt="" />
             ) : (
               <img className="pt-2"  src="/konfigurator/azury.jpg" width={500} height={300} alt="" />
             )
-              }
+              } */}
           
           </FormControl>
 
           
         </>
       )}
-      <div className="flex flex-col items-center justify-center ">
+      {selectedOptions.carport && (
+        <div className="flex flex-col items-center justify-center ">
       
       <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
           <Button variant={selectedOptions.carportSides.przod ? "contained":"outlined"} name="przod" onClick={(e) => setCarportSides(e)}>Przod</Button>
@@ -197,6 +198,9 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
             <Button variant={selectedOptions.carportSides.tyl ? "contained":"outlined"} name="tyl" onClick={(e) => setCarportSides(e)} >Tył</Button>
         </FormControl>
       </div>
+      )
+        }
+    
      
     </div>
   );

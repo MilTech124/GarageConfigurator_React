@@ -2,7 +2,7 @@ import garagePrice from "./garagePrice.js";
 
 function CalcMain({selectedOptions, price, setPrice}) {
     const SoloGaragePrice = garagePrice({selectedOptions});
-    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,carportWidth,gutter} = selectedOptions;
+    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,carportWidth,gutter,carportType} = selectedOptions;
 
 
     //helpers 
@@ -19,9 +19,10 @@ function CalcMain({selectedOptions, price, setPrice}) {
         const StandardWith = 1
         const StandardPaidWith= 0.5
         const pricePerMeter = 500
+        const typePrice = carportType ==="brak" ? 100 : carportType=== "oblachowane" ?  2000 :carportType=== "lamele" ?  3000 : null
 
         if(carport) {
-            resault = (carportWidth-StandardWith)/StandardPaidWith* pricePerMeter +1000           
+            resault = (carportWidth-StandardWith)/StandardPaidWith* pricePerMeter +typePrice           
         }
         return resault
     }

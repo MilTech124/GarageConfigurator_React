@@ -7,6 +7,8 @@ import Modal from "./Modal";
 import axios from 'axios';
 import LeftSettings from "./LeftSettings/LeftSettings";
 import CalcMain from "./calculate/CalcMain";
+import Button from "@mui/material/Button";
+import SendIcon from "@mui/icons-material/Send";
 
 function Main() {
   const [selectedOptions, setSelectedOptions] = useState({
@@ -26,7 +28,7 @@ function Main() {
     gateEmbose: "wąskie",
     gateDirection: "poziom",
 
-    gateCount: 2,
+    gateCount: 1,   //2 wczesniej
     gateType1: "uchylna",
     gateColor1: "Złoty Dąb",
     gateColorRal1: null,
@@ -119,7 +121,7 @@ function Main() {
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
         <div className="pl-[10%] p-5 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
-         <button className="btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-600 text-white rounded-md">Wyślij wycenę</button>
+          <Button variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
         </div>
         {/* <button
           onClick={() => (setModal(true))}

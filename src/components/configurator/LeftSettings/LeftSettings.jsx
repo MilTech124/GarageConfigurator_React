@@ -103,7 +103,7 @@ export default function LeftSettings({selectedOptions, setSelectedOptions}) {
           <Button>Agree</Button>
         </AccordionActions>
       </Accordion>
-      <Accordion >
+      {/* <Accordion >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel3-content"
@@ -119,7 +119,7 @@ export default function LeftSettings({selectedOptions, setSelectedOptions}) {
           <Button>Cancel</Button>
           <Button>Agree</Button>
         </AccordionActions>
-      </Accordion>
+      </Accordion> */}
     </div>
   );
 }

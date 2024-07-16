@@ -13,12 +13,12 @@ function Accessories({ selectedOptions, setSelectedOptions }) {
 
   return (
     <div>
-      <h4 className="bg-slate-900 p-2 mt-5">Akcesoria</h4>
-      <div className="flex justify-around">
-        <div>
-          <img
-            src="/image/rynnaPCV.png"
-            className="w-[100px] flex items-center justify-center"
+      
+      <div className="flex flex-col justify-center items-center">
+        <div className="flex">
+          <img          
+            src="/images/rynnabp.jpg"
+            className="w-[200px] flex items-center justify-center"
             alt=""
           />
           <FormControlLabel
@@ -33,10 +33,10 @@ function Accessories({ selectedOptions, setSelectedOptions }) {
             label="Rynny"
           />
         </div>
-        <div>
+        <div className="flex items-center justify-center">
           <img
-            src="/image/automat.png"
-            className="w-[100px] flex items-center justify-center"
+            src="/images/automat.jpg"
+            className="w-[200px] flex items-center justify-center"
             alt=""
           />
           <FormControlLabel
@@ -52,9 +52,9 @@ function Accessories({ selectedOptions, setSelectedOptions }) {
           />
         </div>        
       </div>
-      <div className="flex flex-col items-center  justify-around">
+      <div className="flex items-center  justify-center">
           <img
-            src="/image/filc.jpg"
+            src="/images/filc.jpeg"
             className="w-[150px] flex items-center justify-center"
             alt=""
           />
