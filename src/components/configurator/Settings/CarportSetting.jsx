@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Select, InputLabel, FormControl, MenuItem, Menu } from "@mui/material";
 import { variable } from "../Variable";
 import { toast } from "react-toastify";
@@ -6,14 +6,42 @@ import Button from '@mui/material/Button';
 
 
 function CarportSetting({ selectedOptions, setSelectedOptions }) {
-  const setCarportSides = (e) => { // Accept event parameter
-    const carportSides = selectedOptions.carportSides; // Access carportSides from selectedOptions
+
+  const carportSides = selectedOptions.carportSides; // Access carportSides from selectedOptions
+  const carportSide = selectedOptions.carportSide; // Access carportSide from selectedOptions
+
+  const setCarportSides = (e) => { 
     console.log("carportSides", carportSides);
     setSelectedOptions({
       ...selectedOptions,
       carportSides: { ...carportSides, [e.target.name]: !carportSides[e.target.name] }
     });
   };
+
+  const setCarportSideName =(name)=>{
+    setSelectedOptions({...selectedOptions,carportSideName:name}); 
+  }
+
+  useEffect(() => {      //Korekcja wyboru strony wiaty w zależności od wyboru dachu
+    if(selectedOptions.roof === "spad przód"){
+      carportSide === "przod" && setCarportSideName("tyl") || carportSide === "tyl" && setCarportSideName("przod") || carportSide === "lewo" && setCarportSideName("prawo") || carportSide === "prawo" && setCarportSideName("lewo");
+    }
+    if(selectedOptions.roof === "spad w lewo"){
+      carportSide === "przod" && setCarportSideName("prawo") || carportSide === "tyl" && setCarportSideName("lewo") || carportSide === "lewo" && setCarportSideName("przod") || carportSide === "prawo" && setCarportSideName("tyl");
+    }
+    if(selectedOptions.roof === "spad w prawo"){
+      carportSide === "przod" && setCarportSideName("lewo") || carportSide === "tyl" && setCarportSideName("prawo") || carportSide === "lewo" && setCarportSideName("tyl") || carportSide === "prawo" && setCarportSideName("przod");
+    }
+    if(selectedOptions.roof === "spad tyl"){
+      carportSide === "przod" && setCarportSideName("przod") || carportSide === "tyl" && setCarportSideName("tyl") || carportSide === "lewo" && setCarportSideName("lewo") || carportSide === "prawo" && setCarportSideName("prawo");
+    }
+      
+
+
+  },[carportSide])
+
+  
+
 
   return (
     <div className="flex flex-col">
@@ -119,7 +147,7 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
                 <MenuItem value={"lewo"}>Lewo</MenuItem>
                 <MenuItem value={"prawo"}>Prawo</MenuItem>
                 <MenuItem value={"przod"}>Przód</MenuItem>
-                <MenuItem value={"tyl"}>Tył</MenuItem>/
+                <MenuItem value={"tyl"}>Tył</MenuItem>
               </Select>
             )}
           </FormControl>
@@ -165,22 +193,14 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
               <MenuItem value={"brak"}>Brak</MenuItem>
               <MenuItem value={"oblachowane"}>Oblachowane</MenuItem>
               <MenuItem value={"azury"}>Ażury</MenuItem>
-            </Select>
-             {/* {selectedOptions.carportType === "brak" ? (
-              <></>
-            ) : selectedOptions.carportType === "oblachowane" ? (
-              <img className="pt-2"  src="/konfigurator/blacha.jpg" width={500} height={300} alt="" />
-            ) : (
-              <img className="pt-2"  src="/konfigurator/azury.jpg" width={500} height={300} alt="" />
-            )
-              } */}
+            </Select>       
           
           </FormControl>
 
           
         </>
       )}
-      {selectedOptions.carport && (
+      {(selectedOptions.carport  && !(selectedOptions.carportType==="brak") ) && (
         <div className="flex flex-col items-center justify-center ">
       
       <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>

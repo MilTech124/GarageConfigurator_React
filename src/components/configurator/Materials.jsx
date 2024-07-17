@@ -271,23 +271,23 @@ function Materials(selectedOptions) {
   ocynkTexture.wrapS = THREE.RepeatWrapping;
   ocynkTexture.wrapT = THREE.RepeatWrapping;
   
-  roofTexture.repeat.set(1.5, 1.5);
+  roofTexture.repeat.set(1.4, 1.4);
   roofTexture.wrapS = THREE.RepeatWrapping;
   roofTexture.wrapT = THREE.RepeatWrapping;
 
-  roofTrapezTexture.repeat.set(1.8*(width/6), 1);
+  roofTrapezTexture.repeat.set(1.4*(width/6), 1);
   roofTrapezTexture.wrapS = THREE.RepeatWrapping;
   roofTrapezTexture.wrapT = THREE.RepeatWrapping;
 
-  wallTexture.repeat.set(1, 1);
+  wallTexture.repeat.set(0.5, 0.5);;
   wallTexture.wrapS = THREE.RepeatWrapping;
   wallTexture.wrapT = THREE.RepeatWrapping;
 
-  wallTextureDabDark.repeat.set(1, 1);
+  wallTextureDabDark.repeat.set(0.5, 0.5);;
   wallTextureDabDark.wrapS = THREE.RepeatWrapping;
   wallTextureDabDark.wrapT = THREE.RepeatWrapping;
 
-  wallTextureOrzech.repeat.set(1, 1);
+  wallTextureOrzech.repeat.set(0.5, 0.5);
   wallTextureOrzech.wrapS = THREE.RepeatWrapping;
   wallTextureOrzech.wrapT = THREE.RepeatWrapping;
 

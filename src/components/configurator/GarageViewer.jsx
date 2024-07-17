@@ -59,7 +59,7 @@ function CameraOrbit({ center = [0, 0, 0], radius = 10 }) {
 function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
 
   const canvasRef = useRef();
-  const [cameraPosition, setCameraPosition] = useState([10, 0, 5]); // Początkowa pozycja kamery
+  const [cameraPosition, setCameraPosition] = useState([15, 8, 4]); // Początkowa pozycja kamery
   const [onPlay, setOnPlay] = useState(false);
 
   const zoomIntensity = 2;

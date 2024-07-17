@@ -132,9 +132,10 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
   return (
     <div>      
       <div className="relative">
-      <p className="text-red-500 text-center text-xl pb-5">
+      {/* <p className="text-red-500 text-center text-xl pb-5">
           Min. szerokość garażu 6m aby dodać bramę.
-        </p>
+        </p> */}
+        <p className="text-center">Dodaj lub usuń bramy</p>
         <div className="flex justify-around p-2">
           {/* <img src="./konfigurator/gate.svg" /> */}
           <div className="  flex flex-col justify-center items-center">

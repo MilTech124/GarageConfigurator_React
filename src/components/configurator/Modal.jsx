@@ -29,7 +29,7 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
     email: "",
     phone: "",
     address: "",
-    zgoda: false,      
+    zgoda: false,     
   });
 
   React.useEffect(() => {
@@ -65,6 +65,12 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
 
  const sendData = async (e) =>{
     e.preventDefault();
+    
+    if(!contact.zgoda){
+      toast.error("Zaznacz zgodę na kontakt");
+      return;
+    }
+
     if(contact.email !== contact.email2){
       toast.error("Adresy email nie są takie same");
       return;
@@ -135,7 +141,7 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
                 className="p-2 border border-gray-400 rounded-md"
               />
               <div className="flex items-center">
-                <Checkbox onChange={(e) => setContact({...contact, transport: e.target.checked})} defaultChecked />
+                <Checkbox onChange={(e) => setContact({...contact, zgoda: e.target.checked})} />
                 <p>Zgoda na kontakt</p>
               </div>
             

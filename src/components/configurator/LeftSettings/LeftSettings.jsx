@@ -15,7 +15,7 @@ import Accessories from '../Settings/Accessories';
 
 export default function LeftSettings({selectedOptions, setSelectedOptions}) {
   return (
-    <div className='overflow-scroll'>
+    <div className='overflow-scroll max-sm:order-2'>
       <Accordion defaultExpanded  >
         <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1-content" id="panel1-header" >
           <h3>Rozmiary oraz kolorystyka</h3>       

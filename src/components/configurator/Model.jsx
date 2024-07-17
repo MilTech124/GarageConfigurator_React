@@ -292,9 +292,11 @@ export function Model(props) {
             roof === "dwuspad"
               ? (1 * depth/6)
               :carportSide === "lewo" && roof === "dwuspad przod-tył"
-              ? (1 * width) / 6 
+              ? 1
+              // ? (1 * width) / 6 
               :carportSide === "prawo" && roof === "dwuspad przod-tył"
-              ? -(1 * width) / 6         
+              ? -1     
+              // ? -(1 * width) / 6         
               : 1,
           ]}          
         >
@@ -403,6 +405,9 @@ export function Model(props) {
   };
 
   const CarportDirectionMetal = () =>{  
+    console.log("roof:",roof);
+    console.log("CarportSide:",carportSide);
+ 
     
     return(
       <group visible={carportType==="oblachowane"||carportType==="azury"}>
@@ -410,11 +415,15 @@ export function Model(props) {
           position={
             [0,0,-1.7+carportWidth]
             }
-          scale={[0.99,1*(height/213),1]} 
+          scale={[0.99,1,1]} 
           visible={carportSide==="lewo"}
           >
             <mesh
-              visible= { carportSides.lewo||carportSides.prawo}
+              visible= {  
+                roof==="spad w lewo" ? carportSides.przod :
+                roof==="spad w prawo" ? carportSides.tyl :
+                carportSides.lewo||carportSides.prawo
+                }
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-bok'].geometry}
@@ -423,7 +432,11 @@ export function Model(props) {
               scale={[3, 1.102, 2.994]}
             />
             <mesh
-              visible= {roof==="spad tyl" ? carportSides.tyl :carportSides.przod}
+              visible= {
+                roof==="spad tył" ? carportSides.tyl :
+                roof==="spad w lewo" ? carportSides.lewo :
+                roof==="spad w prawo" ? carportSides.prawo :
+                carportSides.przod}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-tyl'].geometry}
@@ -432,7 +445,11 @@ export function Model(props) {
               scale={[3, 1.102, 2.994]}
             />
             <mesh
-              visible= {roof==="spad tyl" ?carportSides.przod : carportSides.tyl}
+              visible= {
+                roof==="spad tył" ? carportSides.przod :
+                roof==="spad w lewo" ? carportSides.prawo :
+                roof==="spad w prawo" ? carportSides.lewo :
+                 carportSides.tyl}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-przod'].geometry}
@@ -445,12 +462,15 @@ export function Model(props) {
           position={
             [0,0,1.7-carportWidth]
             }
-          scale={[0.99,1*(height/213),-1]} 
+          scale={[0.99,1,-1]} 
           visible={carportSide==="prawo"}
           
           >
             <mesh
-              visible= {carportSides.lewo||carportSides.prawo}
+              visible= {  
+                roof==="spad w lewo" ? carportSides.tyl :
+                roof==="spad w prawo" ? carportSides.przod :
+                 (carportSides.lewo||carportSides.prawo)}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-bok'].geometry}
@@ -459,7 +479,11 @@ export function Model(props) {
               scale={[3, 1.102, 2.994]}
             />
             <mesh
-              visible= {roof==="spad tyl"?carportSides.tyl :carportSides.przod}
+              visible= {
+                roof==="spad tył" ? carportSides.tyl :
+                roof==="spad w lewo" ? carportSides.lewo :
+                roof==="spad w prawo" ? carportSides.prawo :
+                carportSides.przod}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-tyl'].geometry}
@@ -468,7 +492,11 @@ export function Model(props) {
               scale={[3, 1.102, 2.994]}
             />
             <mesh
-              visible= {roof==="spad tyl"?carportSides.przod:carportSides.tyl}
+              visible= {
+                roof==="spad tył" ? carportSides.przod : 
+                roof==="spad w lewo" ? carportSides.prawo :
+                roof==="spad w prawo" ? carportSides.lewo :
+                carportSides.tyl}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-przod'].geometry}
@@ -482,12 +510,15 @@ export function Model(props) {
             carportSide==="tyl" ?[0-carportWidth,0,1.78] : carportSide==="przod" ?[0+carportWidth,0,1.78]:null
             
             }
-          scale={carportSide==="tyl" ?[1.01,1*(height/213)-(carportWidth)*0.04,-1] : carportSide==="przod" ?[1.01,1*(height/213)+(carportWidth)*0.035,-1]:null}    //skalowanie wysokosci w zaleznosci od szerokosci carportu
+          scale={carportSide==="tyl" ?[1.01,1-(carportWidth)*0.04,-1] : carportSide==="przod" ?[1.01,1+(carportWidth)*0.035,-1]:null}    //skalowanie wysokosci w zaleznosci od szerokosci carportu
           visible={carportSide==="tyl" || carportSide==="przod"}
           
           >
             <mesh
-              visible= {carportSides.prawo}
+              visible= {
+              roof==="spad tył" ? carportSides.prawo :
+               roof==="spad w lewo" ? carportSides.tyl :
+               carportSides.lewo}
               name=""
               castShadow
               receiveShadow
@@ -497,7 +528,10 @@ export function Model(props) {
               scale={[3, 1.102, 2.994]}
             />
             <mesh
-              visible= {carportSides.lewo}
+              visible= {
+                roof==="spad tył" ?carportSides.lewo :
+                roof==="spad w lewo" ?carportSides.przod :
+                carportSides.prawo}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-bok'].geometry}
@@ -506,7 +540,10 @@ export function Model(props) {
               scale={[3, 1.102, 2.994]}
             />
             <mesh
-              visible= {carportSides.tyl}
+              visible= {
+                roof==="spad tył" ?carportSides.tyl :
+                roof==="spad w lewo" ? carportSides.lewo :
+                carportSides.przod}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-tyl'].geometry}
@@ -515,7 +552,10 @@ export function Model(props) {
               scale={[3, 1.102, 2.994]}
             />
             <mesh
-              visible= {carportSides.przod}
+              visible= {
+                roof==="spad tył" ?carportSides.przod :
+                roof==="spad w lewo" ? carportSides.prawo :
+                carportSides.tyl}
               castShadow
               receiveShadow
               geometry={nodes['wiata-spad-przod'].geometry}
@@ -796,22 +836,22 @@ export function Model(props) {
             name="podpora-przod"
             geometry={nodes["podpora-przod"].geometry}
             material={nodes["podpora-przod"].material}
-            position={[3.011, 1.25*height/200, 3]}
-            scale={[0.025, 1.25*height/200, 0.025]}
+            position={[3.011, 1.25, 3]}
+            scale={[0.025, 1.4, 0.025]}
           />
           <mesh
             name="podpora-srodek"
             geometry={nodes["podpora-srodek"].geometry}
             material={nodes["podpora-srodek"].material}
-            position={[0.014, 1.25*height/200,  3]}
-            scale={[0.025, 1.25*height/200, 0.025]}
+            position={[0.014, 1.25,  3]}
+            scale={[0.025, 1.4, 0.025]}
           />
           <mesh
             name="podpora-tyl"
             geometry={nodes["podpora-tyl"].geometry}
             material={nodes["podpora-tyl"].material}
-            position={[-2.958,1.25*height/200, 3]}
-            scale={[.025, 1.25*height/200, 0.025]}
+            position={[-2.958,1.25, 3]}
+            scale={[.025, 1.4, 0.025]}
           />
           
       </group>
@@ -937,23 +977,7 @@ export function Model(props) {
      
       
 
-      {/* <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes['wiata-kwadrat'].geometry}
-        material={wallMaterial}
-        position={[0.01, 1.079, 1.742]}
-        scale={[3, 1.05, 3]}        
-      /> */}
 
-      {/* <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes['wiata-boczna'].geometry}
-        material={wallMaterial}
-        position={[0.01, 1.131, 1.751]}
-        scale={[3, 1.102, 2.994]}
-      /> */}
     </group>
   );
 }

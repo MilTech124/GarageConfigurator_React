@@ -2,7 +2,7 @@ import garagePrice from "./garagePrice.js";
 
 function CalcMain({selectedOptions, price, setPrice}) {
     const SoloGaragePrice = garagePrice({selectedOptions});
-    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,carportWidth,gutter,carportType} = selectedOptions;
+    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,carportWidth,gutter,carportType,transport} = selectedOptions;
 
 
     //helpers 
@@ -19,7 +19,7 @@ function CalcMain({selectedOptions, price, setPrice}) {
         const StandardWith = 1
         const StandardPaidWith= 0.5
         const pricePerMeter = 500
-        const typePrice = carportType ==="brak" ? 100 : carportType=== "oblachowane" ?  2000 :carportType=== "azury" ?  3000 : null
+        const typePrice = carportType ==="brak" ? 1000 : carportType=== "oblachowane" ?  2000 :carportType=== "azury" ?  3000 : null
 
         if(carport) {
             resault = (carportWidth-StandardWith)/StandardPaidWith* pricePerMeter +typePrice           
@@ -50,7 +50,9 @@ function CalcMain({selectedOptions, price, setPrice}) {
         (door.length >= 0 ? (door.length*450) : 0)+
         (window.length >= 0 ? (window.length*450) : 0)+
         (carport ? calcCarportPrice() :0)+
-        (gutter ? calcGutterPrice() :0)
+        (gutter ? calcGutterPrice() :0)+
+        (transport ? 250 : 0)
+
         
         
 
@@ -60,8 +62,8 @@ calculatePrice();
 
     return (
         <div >            
-            <p className='text-4xl pt-5 text-red-800 font-bold'>Cena:<span className='underline ml-5 font-black'>{price} zł</span></p>
-            <p className="text-sm pb-2">Proszę pamiętać, że podana cena jest orientacyjna i nie stanowi oferty wiążącej. </p>
+            <p className='text-4xl max-sm:text-base md:pt-5 text-red-800 font-bold'>Cena:<span className='underline ml-5 font-black'>{price} zł</span></p>
+            <p className="md:text-sm text-xs md:pb-2">Proszę pamiętać, że podana cena jest orientacyjna i nie stanowi oferty wiążącej. </p>
         </div>
     );
 }

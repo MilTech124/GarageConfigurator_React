@@ -5,8 +5,10 @@ import { useEffect } from 'react';
 function RoofSetting({selectedOptions, setSelectedOptions}) { 
  
     const roof =[
-        {name: "blachodachówka", url: "./konfigurator/blachodachowka.png"},
-        {name: "trapezowa", url: "./konfigurator/trapezowa.png"},
+        {name: "blachodachówka", url: "./images/blachodachowka.jpg"},
+        // {name: "blachodachówka", url: "./konfigurator/blachodachowka.png"},
+        {name: "trapezowa", url: "./images/trapezowa.jpg"},
+        // {name: "trapezowa", url: "./konfigurator/trapezowa.png"},
     ]
     const roofColor = [
       {name: "Ocynk", ral: "#A7ABA7"},

@@ -9,6 +9,7 @@ import LeftSettings from "./LeftSettings/LeftSettings";
 import CalcMain from "./calculate/CalcMain";
 import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
+import Checkbox from '@mui/material/Checkbox';
 
 function Main() {
   const [selectedOptions, setSelectedOptions] = useState({
@@ -56,12 +57,14 @@ function Main() {
     carport: false,
     carportWidth: 3,
     carportSide: "lewo",
+    carportSideName: "lewo",
     carportType: "brak",
     carportSides:{lewo:true,prawo:true,przod:false,tyl:true},
 
     gutter: false,
     automatic: false,
     filc: false,
+    transport: false,
   });
   const [modal, setModal] = useState(false);
   const [capture, setCapture] = useState(false);
@@ -87,8 +90,11 @@ function Main() {
 
 
 
-  // const user = process.env.REACT_APP_USER_WP;
-  // const password = process.env.REACT_APP_PASSWORD_WP;
+  const user = import.meta.env.VITE_USER_WP;
+  const password = import.meta.env.VITE_PASSWORD_WP;
+
+
+
 
   const captureScreenshot = async (image) => {
 
@@ -123,13 +129,19 @@ function Main() {
  
   return (
     <div className="bg-slate-200 relative w-screen h-screen flex max-sm:flex-col">
-      <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}  />
+   
+      <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}  />      
       <Modal selectedOptions={selectedOptions} modal={modal} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
-      <div id='capture' className="w-full h-3/4 relative max-sm:h-1/2 ">
+      <div id='capture' className="w-full md:h-3/4 relative max-sm:order-1 max-sm:h-1/3 max-sm:pb-[75px] ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
-        <div className="pl-[10%] p-5 border-2 border-slate-800">
+        <div className="md:pl-[10%] relative flex justify-around md:p-5 p-2 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
+          <div className="flex items-center max-sm:hidden">
+            <Checkbox checked={selectedOptions.transport} onChange={(e) => {setSelectedOptions({...selectedOptions, transport: e.target.checked})}} />
+            <p>Transport</p>
+          </div>
           <Button onClick={() => (setModal(true))} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
+          
         </div>
         {/* <button
           onClick={() => (setModal(true))}
