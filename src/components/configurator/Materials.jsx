@@ -249,7 +249,7 @@ function Materials(selectedOptions) {
 
   //textures loader
   const roofTexture = useLoader(TextureLoader, "/model/roof.jpg");
-  const roofTrapezTexture = useLoader(TextureLoader, "/model/trapez2.jpg");
+  const roofTrapezTexture = useLoader(TextureLoader, "/model/trapez3.jpg");
 
   const ocynkTexture = useLoader(TextureLoader, "./model/ocynk.jpg");
   const wallTexture = useLoader(TextureLoader, "/model/jasny-dab-2.jpg");
@@ -275,7 +275,7 @@ function Materials(selectedOptions) {
   roofTexture.wrapS = THREE.RepeatWrapping;
   roofTexture.wrapT = THREE.RepeatWrapping;
 
-  roofTrapezTexture.repeat.set(1.4*(width/6), 1);
+  roofTrapezTexture.repeat.set(5*(width/6), 1);
   roofTrapezTexture.wrapS = THREE.RepeatWrapping;
   roofTrapezTexture.wrapT = THREE.RepeatWrapping;
 

@@ -143,6 +143,7 @@ function Main() {
           <Button onClick={() => (setModal(true))} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
           
         </div>
+       
         {/* <button
           onClick={() => (setModal(true))}
           className="fixed z-50 btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-900 text-white rounded-md"

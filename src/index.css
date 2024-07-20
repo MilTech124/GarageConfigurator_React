@@ -8,6 +8,8 @@ h3 {
 }
 
 
+
+
 .overflow-scroll::-webkit-scrollbar {
   width: 0px; /* Ukrywa pasek przewijania w WebKit */
   background: transparent; /* Opcjonalnie */
