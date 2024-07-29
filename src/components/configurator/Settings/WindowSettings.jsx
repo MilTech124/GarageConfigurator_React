@@ -71,7 +71,7 @@ function WindowSettings({ selectedOptions, setSelectedOptions }) {
       </div>
       {selectedOptions.window.map((window, index) => (
         <div className="bg-slate-200 mb-4 py-2" key={index}>
-          <FormControl  sx={{ m: 1, minWidth: 120 }}>
+          {/* <FormControl  sx={{ m: 1, minWidth: 120 }}>
             <InputLabel id="demo-simple-select-helper-label">
               Okno {index + 1}
             </InputLabel>
@@ -96,7 +96,7 @@ function WindowSettings({ selectedOptions, setSelectedOptions }) {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
+          </FormControl> */}
           <FormControl sx={{ m: 1, minWidth: 120 }}>
             <InputLabel id="demo-simple-select-helper-label">
               Pozycja

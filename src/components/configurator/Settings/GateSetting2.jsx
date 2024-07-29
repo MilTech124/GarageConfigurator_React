@@ -261,7 +261,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
             </div>
-            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateWidth1*100-25} szerokość , {selectedOptions.gateHeight1-10} wysokość</p>
+            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateHeight1-10} wysokość, {selectedOptions.gateWidth1*100-25} szerokość </p>
           
             {/* Slider*/}
             <h5 className="text-sm text-center pt-2 text-slate-900">
@@ -367,7 +367,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
               </Select>
             </FormControl> */}
             {/* Slider 2*/}
-            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateWidth2*100-25} szerokość , {selectedOptions.gateHeight2-10} wysokość</p>
+            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateHeight2-10} wysokość,{selectedOptions.gateWidth2*100-25} szerokość</p>
             <h5 className="text-sm text-center pt-2 text-slate-900">
               Pozycja bramy
             </h5>
@@ -468,7 +468,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
               </Select>
             </FormControl> */}
             {/* Slider*/}
-            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateWidth3*100-25} szerokość , {selectedOptions.gateHeight3-10} wysokość</p>
+            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateHeight3-10} wysokość ,{selectedOptions.gateWidth3*100-25} szerokość</p>
             <h5 className="text-sm text-center pt-2 text-slate-900">
               Pozycja bramy
             </h5>

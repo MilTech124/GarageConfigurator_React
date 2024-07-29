@@ -5,8 +5,8 @@ export const variable={
     garageEmbose:["szerokie","wąskie"],
     garageDirection:["pion","poziom"],
     garageSizes:{
-        width: [3,3.5,4,5,6,7,8,9,10,11,12],     
-        depth: [3,4,5,5.5,6,7,8,9,10,11,12],
+        width: [3,4,5,6,7,8,9,10,11,12],     
+        depth: [3,4,5,6,7,8,9,10,11,12],
         height: [213,223,233,243,253,263,273,283,293,303,313],
     },
 

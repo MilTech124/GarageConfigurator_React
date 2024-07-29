@@ -98,7 +98,7 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
       <div className="flex flex-col  gap-2">
         {selectedOptions.door.map((door, index) => (
           <div key={index} className="flex flex-wrap gap-2 justify-between p-2 mt-2 bg-slate-200">
-            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+            {/* <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
               <InputLabel id="demo-simple-select-standard-label">
                 Drzwi
               </InputLabel>
@@ -120,9 +120,9 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
                   <MenuItem key={size} value={size}>{size}</MenuItem>
                 ))}
               </Select>
-            </FormControl>
+            </FormControl> */}
 
-            {/* <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
               <InputLabel id="demo-simple-select-standard-label">
                 Typ
               </InputLabel>
@@ -144,7 +144,7 @@ function DoorSettings({ selectedOptions, setSelectedOptions }) {
                   <MenuItem key={type} value={type}>{type}</MenuItem>
                 ))}
               </Select>
-            </FormControl> */}
+            </FormControl>
             <div className="flex w-full justify-between">
               <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
                 <InputLabel id="demo-simple-select-standard-label">

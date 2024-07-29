@@ -7,9 +7,10 @@ import { variable } from '../Variable';
 const MainGarage = ({ selectedOptions, setSelectedOptions }) => {
 
   const garageColors = [
+    {name: "Ocynk", url: "./konfigurator/ocynk.png"},
     {name: "Złoty Dąb", url: "./konfigurator/jasny-dab.webp"},
     // {name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png"},
-    {name: "Ocynk", url: "./konfigurator/ocynk.png"},
+    
     {name: "Orzech", url: "./konfigurator/orzech.png"},
     {name: "Biały 9010", ral: "#FBFFFF"},
     {name: "Szary 9002", ral: "#F2EFE8"},
