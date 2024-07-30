@@ -64,7 +64,8 @@ function Main() {
     gutter: false,
     automatic: false,
     filc: false,
-    transport: false,
+    transport: false,   
+    wojewodztwo: ""
   });
   const [modal, setModal] = useState(false);
   const [capture, setCapture] = useState(false);
@@ -131,15 +132,12 @@ function Main() {
     <div className="bg-slate-200 relative w-screen h-screen flex max-sm:flex-col">
    
       <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}  />      
-      <Modal selectedOptions={selectedOptions} modal={modal} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
+      <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
       <div id='capture' className="w-full md:h-3/4 relative max-sm:order-1 max-sm:h-1/3 max-sm:pb-[75px] ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
         <div className="md:pl-[10%] relative flex justify-around md:p-5 p-2 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
-          <div className="flex items-center max-sm:hidden">
-            <Checkbox checked={selectedOptions.transport} onChange={(e) => {setSelectedOptions({...selectedOptions, transport: e.target.checked})}} />
-            <p>Transport</p>
-          </div>
+    
           <Button onClick={() => (setModal(true))} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
           
         </div>
@@ -150,6 +148,8 @@ function Main() {
         >
           Wyślij wycenę
         </button> */}
+        <p><b>Konstrukcja</b>- Konstrukcja wykonana jest z czarnej stali malowanej farbą podkładową, co chroni przed korozją.
+        <br></br> Wykorzystano <b>profil zamknięty</b>, który zapewnia wysoką wytrzymałość i stabilność. </p>
       </div>
       {/* <div className=" p-5 md:w-[600px] h- bg-slate-300 overflow-auto ">
         <GarageConfigurator
@@ -157,6 +157,8 @@ function Main() {
           setSelectedOptions={setSelectedOptions}
         />
       </div> */}
+
+      
     </div>
   );
 }

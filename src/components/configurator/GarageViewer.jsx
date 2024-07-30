@@ -99,14 +99,11 @@ function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
       <Button variant="contained" color="error" onClick={() => setOnPlay(!onPlay)}><PlayCircleIcon></PlayCircleIcon></Button>
     </div>
  
-  
+    <div className="absolute left-0 top-0 w-full h-full z-20 opacity-10 pointer-events-none ">
+      <img src="https://newgarage.pl/wp-content/uploads/2023/02/cropped-324381852_5741060232673242_7386872066100517510_n-1.jpg" alt="3dgaraz" />
+    </div>
     <Canvas gl={{ preserveDrawingBuffer: true }} 
       // camera={{ position: cameraPosition, fov: 45,} }
-      style={{
-        // background: "url(/logo-black.png)",
-        backgroundRepeat: "repeat",
-        backgroundSize: "50% 50%",        
-      }}
       className="cursor-all-scroll"      
     >
     <PerspectiveCamera makeDefault   position={cameraPosition} fov={30} />

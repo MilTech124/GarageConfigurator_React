@@ -34,6 +34,8 @@ export const variable={
     windowPosition: ["przod","tył","lewo","prawo"],
     
     carportWidth:[1,,1.5,2,3,3.5,4],
+
+    wojewodztwa:["dolnośląskie","kujawsko-pomorskie","lubelskie","lubuskie","łódzkie","małopolskie","mazowieckie","opolskie","podkarpackie","podlaskie","pomorskie","śląskie","świętokrzyskie","warmińsko-mazurskie","wielkopolskie","zachodniopomorskie"],
     
 
 }

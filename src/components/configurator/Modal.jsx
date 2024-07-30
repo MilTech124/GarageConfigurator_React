@@ -6,6 +6,10 @@ import Modal from "@mui/material/Modal";
 import SendEmail from "../../utils/SendMail";
 import { toast } from "react-toastify";
 import Checkbox from '@mui/material/Checkbox';
+import { variable } from "./Variable";
+import { FormControl, Select } from "@mui/material";
+import MenuItem from "@mui/material/MenuItem";
+import InputLabel from "@mui/material/InputLabel";
 
 const style = {
   position: "absolute",
@@ -21,15 +25,19 @@ const style = {
 
 
 
-export default function BasicModal({ selectedOptions, modal, setModal,setCapture, capture,imageURL }) {
+export default function BasicModal({ selectedOptions, setSelectedOptions, modal, setModal,setCapture, capture,imageURL }) {
   const handleOpen = () => setModal(true);
   const handleClose = () => setModal(false);
+  const selectedWojewodztwo = selectedOptions.wojewodztwo;
   const [contact, setContact] = React.useState({
     name: "",
     email: "",
-    phone: "",
+    phone: "", 
     address: "",
-    zgoda: false,     
+    message: "",
+
+    zgoda: false, 
+    marketing: true,    
   });
 
   React.useEffect(() => {
@@ -44,6 +52,7 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
           name: contact.name,
           email: contact.email,
           phone: contact.phone,
+          wojewodztwo: contact.wojewodztwo,
           address: contact.address,
           message: contact.message,
           windowList: selectedOptions.window.length,
@@ -61,6 +70,11 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
 
   function handleChange(e) {
     setContact({ ...contact, [e.target.name]: e.target.value });
+  }
+
+  function setWoj(e){
+    setSelectedOptions({...selectedOptions, wojewodztwo: e.target.value});        
+   
   }
 
  const sendData = async (e) =>{
@@ -125,6 +139,16 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
               style={{borderColor: contact.email !== contact.email2 ? "red" : "green"}}
             
             />
+            <FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">Województwo</InputLabel>
+              <Select value={selectedWojewodztwo} onChange={setWoj}  >
+                {variable.wojewodztwa.map((wojewodztwo) => (
+                  <MenuItem key={wojewodztwo} value={wojewodztwo}>{wojewodztwo}</MenuItem>
+                ))}
+
+              </Select>
+          </FormControl>
+
             <input
               type="text"
               name="address"
@@ -140,11 +164,15 @@ export default function BasicModal({ selectedOptions, modal, setModal,setCapture
                 onChange={handleChange}
                 className="p-2 border border-gray-400 rounded-md"
               />
-              <div className="flex items-center">
-                <Checkbox onChange={(e) => setContact({...contact, zgoda: e.target.checked})} />
-                <p>Zgoda na kontakt</p>
-              </div>
-            
+             
+            </div>
+            <div className="text-xs flex">
+            <Checkbox onChange={(e) => setContact({...contact, zgoda: e.target.checked})} />
+              <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym numeru telefonu, przez NewGarage w celu kontaktu telefonicznego dotyczącego mojego zapytania.</p>
+            </div>
+            <div className="text-xs flex">
+            <Checkbox onChange={(e) => setContact({...contact, marketing: e.target.checked})} />
+              <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym adresu e-mail. W celu przesyłania mi informacji handlowych, ofert promocyjnych oraz innych treści marketingowych związanych z ofertą garaży blaszanych</p>
             </div>
            
            

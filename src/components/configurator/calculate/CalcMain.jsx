@@ -2,7 +2,7 @@ import garagePrice from "./garagePrice.js";
 
 function CalcMain({selectedOptions, price, setPrice}) {
     const SoloGaragePrice = garagePrice({selectedOptions});
-    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,carportWidth,gutter,carportType,transport} = selectedOptions;
+    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,carportWidth,gutter,carportType,wojewodztwo} = selectedOptions;
 
 
     //helpers 
@@ -37,6 +37,17 @@ function CalcMain({selectedOptions, price, setPrice}) {
         return resault
     }
 
+    const transportPrice = (woj) =>{
+        const price = 250
+        if(woj === "dolnośląskie"  || woj === "lubelskie" || woj === "lubuskie" || woj === "łódzkie" || woj === "małopolskie" || woj === "mazowieckie" || woj === "opolskie" || woj === "podkarpackie" ||  woj === "śląskie" || woj === "świętokrzyskie"  || woj === "wielkopolskie" ) {
+            return price
+        }else if(woj === "kujawsko-pomorskie" || woj === "podlaskie" || woj === "pomorskie" || woj === "warmińsko-mazurskie" || woj === "zachodniopomorskie") {
+            return price*2
+        }
+        else return null
+
+    } 
+
     
 
    const calculatePrice = () => {
@@ -50,8 +61,8 @@ function CalcMain({selectedOptions, price, setPrice}) {
         (door.length >= 0 ? (door.length*450) : 0)+
         (window.length >= 0 ? (window.length*450) : 0)+
         (carport ? calcCarportPrice() :0)+
-        (gutter ? calcGutterPrice() :0)+
-        (transport ? 250 : 0)
+        (gutter ? calcGutterPrice() :0)+       
+        (transportPrice(wojewodztwo) )
 
         
         

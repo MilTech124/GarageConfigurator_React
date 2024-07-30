@@ -1253,6 +1253,16 @@ export function Model(props) {
         position={[-1.219, 0.016, -0.653]}
         scale={[10.994, 1, 11.044]}
       />
+        <mesh
+        visible={!carport}
+        castShadow
+        receiveShadow
+        geometry={nodes.fundament.geometry}
+        material={nodes.fundament.material}      
+        position={         
+         [0.012, 0.086, 0.006]}
+        scale={[3.2*depth/6, 3.121, 3.2 *width/6]}
+      />
 
       
      
