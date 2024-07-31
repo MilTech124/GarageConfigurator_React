@@ -42,7 +42,9 @@ export function Model(props) {
     carportWidth,
     carportSide,
     carportSides,
+    carportSides2,
     carportType
+    
   } = props.selectedOptions;
 
   const { nodes, materials } = useGLTF("/model/garaz.glb");
@@ -57,7 +59,10 @@ export function Model(props) {
     doorMaterial3,
     doorMaterial4,
     doorMaterial5,
-    azuryMaterial
+    azuryMaterial,
+ 
+    
+
   } = Materials(props.selectedOptions);
 
   const Gate = ({ gateMaterial, position, scale, type }) => {
@@ -366,12 +371,9 @@ export function Model(props) {
   };
 
   const CarportDirectionMetal = () =>{  
-    console.log("roof:",roof);
-    console.log("CarportSide:",carportSide);
- 
     
     return(
-      <group visible={carportType==="oblachowane"||carportType==="azury"}>
+      <group visible={carportType==="oblachowane"||carportType==="azury" ||carportType=="mix"}>
         <group name="wiata-spad-bok-lewy" 
           position={
             [0,0,-1.7+carportWidth]
@@ -525,9 +527,484 @@ export function Model(props) {
               position={[0.024, 1.131, 1.755]}
               scale={[3, 1.102, 2.994]}
             />
-        </group> 
-      
+        </group>       
       </group>
+    )
+  }
+  const CarportDirectionMetalMix2 = () =>{  
+    
+    return(
+      <group visible={carportType==="oblachowane"||carportType==="azury" ||carportType=="mix"}>
+        <group name="wiata-spad-bok-lewy" 
+          position={
+            [0,0,-1.7+carportWidth]
+            }
+          scale={[0.99,1,1]} 
+          visible={carportSide==="lewo"}
+          >
+            <mesh
+              visible= {  
+                roof==="spad w lewo" ? carportSides.przod :
+                roof==="spad w prawo" ? carportSides.tyl :
+                carportSides.lewo||carportSides.prawo
+                }
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material1}
+              position={ [0, 1.131, 1.751] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides.tyl :
+                roof==="spad w lewo" ? carportSides.lewo :
+                roof==="spad w prawo" ? carportSides.prawo :
+                carportSides.przod}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-tyl'].geometry}
+              material={azuryMaterial.material1}
+              position={[0, 1.131, 1.751]}
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides.przod :
+                roof==="spad w lewo" ? carportSides.prawo :
+                roof==="spad w prawo" ? carportSides.lewo :
+                 carportSides.tyl}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-przod'].geometry}
+              material={azuryMaterial.material1}
+              position={[0.024, 1.131, 1.755]}
+              scale={[3, 1.102, 2.994]}
+            />
+          
+        </group> 
+        <group name="wiata-spad-bok-prawy" 
+          position={
+            [0,0,1.7-carportWidth]
+            }
+          scale={[0.99,1,-1]} 
+          visible={carportSide==="prawo"}
+          
+          >
+            <mesh
+              visible= {  
+                roof==="spad w lewo" ? carportSides.tyl :
+                roof==="spad w prawo" ? carportSides.przod :
+                 (carportSides.lewo||carportSides.prawo)}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material1}
+              position={ [0, 1.131, 1.751] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides.tyl :
+                roof==="spad w lewo" ? carportSides.lewo :
+                roof==="spad w prawo" ? carportSides.prawo :
+                carportSides.przod}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-tyl'].geometry}
+              material={azuryMaterial.material1}
+              position={[0, 1.131, 1.751]}
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides.przod : 
+                roof==="spad w lewo" ? carportSides.prawo :
+                roof==="spad w prawo" ? carportSides.lewo :
+                carportSides.tyl}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-przod'].geometry}
+              material={azuryMaterial.material1}
+              position={[0.024, 1.131, 1.755]}
+              scale={[3, 1.102, 2.994]}
+            />
+        </group> 
+        <group name="wiata-spad-bok-tyl-przod" 
+          position={
+            carportSide==="tyl" ?[0-carportWidth,0,1.78] : carportSide==="przod" ?[0+carportWidth,0,1.78]:null
+            
+            }
+          scale={carportSide==="tyl" ?[1.01,1-(carportWidth)*0.04,-1] : carportSide==="przod" ?[1.01,1+(carportWidth)*0.035,-1]:null}    //skalowanie wysokosci w zaleznosci od szerokosci carportu
+          visible={carportSide==="tyl" || carportSide==="przod"}
+          
+          >
+            <mesh
+              visible= {
+              roof==="spad tył" ? carportSides.prawo :
+               roof==="spad w lewo" ? carportSides.tyl :
+               carportSides.lewo}
+              name=""
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material1}
+              position={ [0, 1.131, 1.751] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ?carportSides.lewo :
+                roof==="spad w lewo" ?carportSides.przod :
+                carportSides.prawo}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material1}
+              position={ [0, 1.131, -4.2] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ?carportSides.tyl :
+                roof==="spad w lewo" ? carportSides.lewo :
+                carportSides.przod}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-tyl'].geometry}
+              material={azuryMaterial.material1}
+              position={[0, 1.131, 1.751]}
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ?carportSides.przod :
+                roof==="spad w lewo" ? carportSides.prawo :
+                carportSides.tyl}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-przod'].geometry}
+              material={azuryMaterial.material1}
+              position={[0.024, 1.131, 1.755]}
+              scale={[3, 1.102, 2.994]}
+            />
+        </group>       
+      </group>
+    )
+  }
+  const CarportDirectionMetalMix = () =>{  
+    
+    return(
+      <group visible={carportType=="mix"}>
+        <group name="wiata-spad-bok-lewy" 
+          position={
+            [0,0,-1.7+carportWidth]
+            }
+          scale={[0.99,1,1]} 
+          visible={carportSide==="lewo"}
+          >
+            <mesh
+              visible= {  
+                roof==="spad w lewo" ? carportSides2.przod :
+                roof==="spad w prawo" ? carportSides2.tyl :
+                carportSides2.lewo||carportSides2.prawo
+                }
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material2}
+              position={ [0, 1.131, 1.751] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides2.tyl :
+                roof==="spad w lewo" ? carportSides2.lewo :
+                roof==="spad w prawo" ? carportSides2.prawo :
+                carportSides2.przod}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-tyl'].geometry}
+              material={azuryMaterial.material2}
+              position={[0, 1.131, 1.751]}
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides2.przod :
+                roof==="spad w lewo" ? carportSides2.prawo :
+                roof==="spad w prawo" ? carportSides2.lewo :
+                 carportSides2.tyl}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-przod'].geometry}
+              material={azuryMaterial.material2}
+              position={[0.024, 1.131, 1.755]}
+              scale={[3, 1.102, 2.994]}
+            />
+          
+        </group> 
+        <group name="wiata-spad-bok-prawy" 
+          position={
+            [0,0,1.7-carportWidth]
+            }
+          scale={[0.99,1,-1]} 
+          visible={carportSide==="prawo"}
+          
+          >
+            <mesh
+              visible= {  
+                roof==="spad w lewo" ? carportSides2.tyl :
+                roof==="spad w prawo" ? carportSides2.przod :
+                 (carportSides2.lewo||carportSides2.prawo)}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material2}
+              position={ [0, 1.131, 1.751] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides2.tyl :
+                roof==="spad w lewo" ? carportSides2.lewo :
+                roof==="spad w prawo" ? carportSides2.prawo :
+                carportSides2.przod}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-tyl'].geometry}
+              material={azuryMaterial.material2}
+              position={[0, 1.131, 1.751]}
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ? carportSides2.przod : 
+                roof==="spad w lewo" ? carportSides2.prawo :
+                roof==="spad w prawo" ? carportSides2.lewo :
+                carportSides2.tyl}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-przod'].geometry}
+              material={azuryMaterial.material2}
+              position={[0.024, 1.131, 1.755]}
+              scale={[3, 1.102, 2.994]}
+            />
+        </group> 
+        <group name="wiata-spad-bok-tyl-przod" 
+          position={
+            carportSide==="tyl" ?[0-carportWidth,0,1.78] : carportSide==="przod" ?[0+carportWidth,0,1.78]:null
+            
+            }
+          scale={carportSide==="tyl" ?[1.01,1-(carportWidth)*0.04,-1] : carportSide==="przod" ?[1.01,1+(carportWidth)*0.035,-1]:null}    //skalowanie wysokosci w zaleznosci od szerokosci carportu
+          visible={carportSide==="tyl" || carportSide==="przod"}
+          
+          >
+            <mesh
+              visible= {
+              roof==="spad tył" ? carportSides2.prawo :
+               roof==="spad w lewo" ? carportSides2.tyl :
+               carportSides2.lewo}
+              name=""
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material2}
+              position={ [0, 1.131, 1.751] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ?carportSides2.lewo :
+                roof==="spad w lewo" ?carportSides2.przod :
+                carportSides2.prawo}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-bok'].geometry}
+              material={azuryMaterial.material2}
+              position={ [0, 1.131, -4.2] }
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ?carportSides2.tyl :
+                roof==="spad w lewo" ? carportSides2.lewo :
+                carportSides2.przod}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-tyl'].geometry}
+              material={azuryMaterial.material2}
+              position={[0, 1.131, 1.751]}
+              scale={[3, 1.102, 2.994]}
+            />
+            <mesh
+              visible= {
+                roof==="spad tył" ?carportSides2.przod :
+                roof==="spad w lewo" ? carportSides2.prawo :
+                carportSides2.tyl}
+              castShadow
+              receiveShadow
+              geometry={nodes['wiata-spad-przod'].geometry}
+              material={azuryMaterial.material2}
+              position={[0.024, 1.131, 1.755]}
+              scale={[3, 1.102, 2.994]}
+            />
+        </group>       
+      </group>
+    )
+  }
+
+  const CarportMetal = () => {
+    return (
+      <group             
+              name="wiata-blacha-spady-boczne"
+              rotation={
+                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0,0] :
+                (carportSide==="przod"&& roof==="dwuspad przod-tył") ?  [0, Math.PI/1,0]  :              
+                carportSide==="lewo" ? [0, Math.PI/1,0]   :[0,0,0]}
+
+              position={
+                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0, -1.7] :
+                (carportSide==="przod"&& roof==="dwuspad przod-tył")? [0, 0, 7.7] :
+                carportSide==="lewo"?[0, 0, 7.7]:[0, 0, -1.7]}
+              visible ={carportType==="oblachowane" || carportType==="azury"}
+            >
+              <mesh
+                visible= { (carportSide==="lewo" || carportSide==="prawo") && (carportSides.lewo || carportSides.prawo) ? true
+                  : (carportSide==="przod" || carportSide==="tyl") && (carportSides.przod || carportSides.tyl) ? true:
+                  false}
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-bok'].geometry}
+                material={azuryMaterial}
+                position={[0, 1.06, 4.739]}
+                rotation={[Math.PI / 2, 0, 0]}
+                scale={[3, 1, 1.06]}
+              />
+              <mesh                                                       //PRZOD BLACHA + korekcja carport slides na dole
+              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides.przod : carportSide==="przod" && carportSides.prawo ? true : carportSide==="tyl" && carportSides.lewo ? true :false}
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-tyl'].geometry}
+                material={azuryMaterial}
+                position={carportSide==="lewo" ? [2.99, 1.064, 3.001]:carportSide==="prawo" ? [-2.99, 1.064, 3.001]:[2.99, 1.064, 3.001]}   //LEWO PRAWO ,POZYCJA PRZOD BLACHA
+                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
+                scale={[1.761, 1.57, 1.062]}
+              />
+              <mesh                                                       //TYL BLACHA    + korekcja carport slides na dole
+              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides.tyl : carportSide==="przod" && carportSides.lewo ? true : carportSide==="tyl" && carportSides.prawo ? true  :false}
+              name="wiata-blacha-przod"
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-tyl'].geometry}
+                material={azuryMaterial}
+                position={carportSide==="lewo" ? [-2.99, 1.064, 3.001]:carportSide==="prawo" ? [2.99, 1.064, 3.001]:[-2.99, 1.064, 3.001]}        //PRAWO LEWO ,POZYCJA TYL BLACHA
+                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
+                scale={[1.761, 1.57, 1.062]}
+              />
+            </group>
+    )
+  }
+  const CarportMetalMix = () => {
+    return (
+      <group             
+              name="wiata-blacha-spady-boczne"
+              rotation={
+                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0,0] :
+                (carportSide==="przod"&& roof==="dwuspad przod-tył") ?  [0, Math.PI/1,0]  :              
+                carportSide==="lewo" ? [0, Math.PI/1,0]   :[0,0,0]}
+
+              position={
+                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0, -1.7] :
+                (carportSide==="przod"&& roof==="dwuspad przod-tył")? [0, 0, 7.7] :
+                carportSide==="lewo"?[0, 0, 7.7]:[0, 0, -1.7]}
+              visible ={carportType==="mix"}
+            >
+              <mesh
+                visible= { (carportSide==="lewo" || carportSide==="prawo") && (carportSides.lewo || carportSides.prawo) ? true
+                  : (carportSide==="przod" || carportSide==="tyl") && (carportSides.przod || carportSides.tyl) ? true:
+                  false}
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-bok'].geometry}
+                material={azuryMaterial.material1}
+                position={[0, 1.06, 4.739]}
+                rotation={[Math.PI / 2, 0, 0]}
+                scale={[3, 1, 1.06]}
+              />
+              <mesh                                                       //PRZOD BLACHA + korekcja carport slides na dole
+              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides.przod : carportSide==="przod" && carportSides.prawo ? true : carportSide==="tyl" && carportSides.lewo ? true :false}
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-tyl'].geometry}
+                material={azuryMaterial.material1}
+                position={carportSide==="lewo" ? [2.99, 1.064, 3.001]:carportSide==="prawo" ? [-2.99, 1.064, 3.001]:[2.99, 1.064, 3.001]}   //LEWO PRAWO ,POZYCJA PRZOD BLACHA
+                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
+                scale={[1.761, 1.57, 1.062]}
+              />
+              <mesh                                                       //TYL BLACHA    + korekcja carport slides na dole
+              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides.tyl : carportSide==="przod" && carportSides.lewo ? true : carportSide==="tyl" && carportSides.prawo ? true  :false}
+              name="wiata-blacha-przod"
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-tyl'].geometry}
+                material={azuryMaterial.material1}
+                position={carportSide==="lewo" ? [-2.99, 1.064, 3.001]:carportSide==="prawo" ? [2.99, 1.064, 3.001]:[-2.99, 1.064, 3.001]}        //PRAWO LEWO ,POZYCJA TYL BLACHA
+                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
+                scale={[1.761, 1.57, 1.062]}
+              />
+            </group>
+    )
+  }
+  const CarportMetalMix2 = () => {
+    return (
+      <group             
+              name="wiata-blacha-spady-boczne"
+              rotation={
+                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0,0] :
+                (carportSide==="przod"&& roof==="dwuspad przod-tył") ?  [0, Math.PI/1,0]  :              
+                carportSide==="lewo" ? [0, Math.PI/1,0]   :[0,0,0]}
+
+              position={
+                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0, -1.7] :
+                (carportSide==="przod"&& roof==="dwuspad przod-tył")? [0, 0, 7.7] :
+                carportSide==="lewo"?[0, 0, 7.7]:[0, 0, -1.7]}
+              visible ={carportType==="mix"}
+            >
+              <mesh
+                visible= { (carportSide==="lewo" || carportSide==="prawo") && (carportSides2.lewo || carportSides2.prawo) ? true
+                  : (carportSide==="przod" || carportSide==="tyl") && (carportSides2.przod || carportSides2.tyl) ? true:
+                  false}
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-bok'].geometry}
+                material={azuryMaterial.material2}
+                position={[0, 1.06, 4.739]}
+                rotation={[Math.PI / 2, 0, 0]}
+                scale={[3, 1, 1.06]}
+              />
+              <mesh                                                       //PRZOD BLACHA + korekcja carport slides na dole
+              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides2.przod : carportSide==="przod" && carportSides2.prawo ? true : carportSide==="tyl" && carportSides2.lewo ? true :false}
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-tyl'].geometry}
+                material={azuryMaterial.material2}
+                position={carportSide==="lewo" ? [2.99, 1.064, 3.001]:carportSide==="prawo" ? [-2.99, 1.064, 3.001]:[2.99, 1.064, 3.001]}   //LEWO PRAWO ,POZYCJA PRZOD BLACHA
+                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
+                scale={[1.761, 1.57, 1.062]}
+              />
+              <mesh                                                       //TYL BLACHA    + korekcja carport slides na dole
+              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides2.tyl : carportSide==="przod" && carportSides2.lewo ? true : carportSide==="tyl" && carportSides2.prawo ? true  :false}
+              name="wiata-blacha-przod"
+                castShadow
+                receiveShadow
+                geometry={nodes['wiata-blacha-tyl'].geometry}
+                material={azuryMaterial.material2}
+                position={carportSide==="lewo" ? [-2.99, 1.064, 3.001]:carportSide==="prawo" ? [2.99, 1.064, 3.001]:[-2.99, 1.064, 3.001]}        //PRAWO LEWO ,POZYCJA TYL BLACHA
+                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
+                scale={[1.761, 1.57, 1.062]}
+              />
+            </group>
     )
   }
 
@@ -967,54 +1444,11 @@ export function Model(props) {
             position={[-2.958, 1.069, 3]}
             scale={[0.025, 1.064, 0.025]}
           />
-             {/* //oblachowanie */}
-             <group             
-              name="wiata-blacha-spady-boczne"
-              rotation={
-                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0,0] :
-                (carportSide==="przod"&& roof==="dwuspad przod-tył") ?  [0, Math.PI/1,0]  :              
-                carportSide==="lewo" ? [0, Math.PI/1,0]   :[0,0,0]}
-
-              position={
-                (carportSide==="lewo"&& roof==="dwuspad przod-tył")? [0, 0, -1.7] :
-                (carportSide==="przod"&& roof==="dwuspad przod-tył")? [0, 0, 7.7] :
-                carportSide==="lewo"?[0, 0, 7.7]:[0, 0, -1.7]}
-              visible ={carportType==="oblachowane" || carportType==="azury"}
-            >
-              <mesh
-                visible= { (carportSide==="lewo" || carportSide==="prawo") && (carportSides.lewo || carportSides.prawo) ? true
-                  : (carportSide==="przod" || carportSide==="tyl") && (carportSides.przod || carportSides.tyl) ? true:
-                  false}
-                castShadow
-                receiveShadow
-                geometry={nodes['wiata-blacha-bok'].geometry}
-                material={azuryMaterial}
-                position={[0, 1.06, 4.739]}
-                rotation={[Math.PI / 2, 0, 0]}
-                scale={[3, 1, 1.06]}
-              />
-              <mesh                                                       //PRZOD BLACHA + korekcja carport slides na dole
-              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides.przod : carportSide==="przod" && carportSides.prawo ? true : carportSide==="tyl" && carportSides.lewo ? true :false}
-                castShadow
-                receiveShadow
-                geometry={nodes['wiata-blacha-tyl'].geometry}
-                material={azuryMaterial}
-                position={carportSide==="lewo" ? [2.99, 1.064, 3.001]:carportSide==="prawo" ? [-2.99, 1.064, 3.001]:[2.99, 1.064, 3.001]}   //LEWO PRAWO ,POZYCJA PRZOD BLACHA
-                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
-                scale={[1.761, 1.57, 1.062]}
-              />
-              <mesh                                                       //TYL BLACHA    + korekcja carport slides na dole
-              visible= {carportSide==="lewo" || carportSide==="prawo" ? carportSides.tyl : carportSide==="przod" && carportSides.lewo ? true : carportSide==="tyl" && carportSides.prawo ? true  :false}
-              name="wiata-blacha-przod"
-                castShadow
-                receiveShadow
-                geometry={nodes['wiata-blacha-tyl'].geometry}
-                material={azuryMaterial}
-                position={carportSide==="lewo" ? [-2.99, 1.064, 3.001]:carportSide==="prawo" ? [2.99, 1.064, 3.001]:[-2.99, 1.064, 3.001]}        //PRAWO LEWO ,POZYCJA TYL BLACHA
-                rotation={[Math.PI / 2, 0, -Math.PI / 2]}
-                scale={[1.761, 1.57, 1.062]}
-              />
-            </group>
+             
+          <CarportMetal/>
+          {carportType === "mix" ? <CarportMetalMix/> :null}
+          {carportType === "mix" ?  <CarportMetalMix2/> :null}
+          
           </group>
 
 
@@ -1083,8 +1517,8 @@ export function Model(props) {
       />
           
        {carport ?<CarportDirectionMetal/> :null} 
-       
-            
+       {carport && carportType==="mix" ?<CarportDirectionMetalMix/> :null} 
+       {carport && carportType==="mix" ?<CarportDirectionMetalMix2/> :null} 
    
 
       {/* //PODPORY DLA TYL I PRZOD START  */}

@@ -376,8 +376,48 @@ function Materials(selectedOptions) {
     }
     if (carportType ==="oblachowane"){
       return mainColor()
-     }     
+     } 
+     if (carportType ==="mix"){
+      if (colorRal === null || colorRal === undefined)  {
+        material = new MeshStandardMaterial({
+          map:
+          color === "Ocynk"
+          ? ocynkTexture
+          :color === "Złoty Dąb"
+          ? wallTexture
+          // : color === "Złoty Dąb Ciemny"
+          // ? wallTextureDabDark
+          : color === "Orzech"
+          ? wallTextureOrzech    
+          : null,
+          alphaMap: alphatexture,
+          color: colorRal,
+          roughness: 0.8,        
+          metalness: 1,
+          bumpScale: -1,  
+          transparent: true,
+          side:DoubleSide
+        });
+      } else {
+        material = new MeshStandardMaterial({
+          color: colorRal,
+          alphaMap: alphatexture,
+          color: colorRal,
+          roughness: 0.9,        
+          metalness: .2,
+          bumpScale: -1,  
+          transparent: true,
+          side:DoubleSide   
+        });
+      }  
+  
+      return {material1:mainColor() ,material2:material}
+     }
   }
+
+
+
+
 
   const wallMaterial = mainColor();
   const gateMaterial1 = gateColor(1);
@@ -386,7 +426,7 @@ function Materials(selectedOptions) {
   const azuryMaterial = azuryMaterialChose();
   // const gateMaterial2 = gateColor(2);
   // const gateMaterial3 = gateColor(3);
-  
+
 
   let doorMaterial1;
   let doorMaterial2;
@@ -407,7 +447,7 @@ function Materials(selectedOptions) {
     doorMaterial2,
     doorMaterial3,
     doorMaterial4,
-    azuryMaterial
+    azuryMaterial,    
   };
 }
 

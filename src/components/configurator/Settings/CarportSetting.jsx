@@ -9,12 +9,19 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
 
   const carportSides = selectedOptions.carportSides; // Access carportSides from selectedOptions
   const carportSide = selectedOptions.carportSide; // Access carportSide from selectedOptions
+  const carportSides2 = selectedOptions.carportSides2; // Access carportSides2 from selectedOptions
 
-  const setCarportSides = (e) => { 
-    console.log("carportSides", carportSides);
+  const setCarportSides = (e) => {     
     setSelectedOptions({
       ...selectedOptions,
       carportSides: { ...carportSides, [e.target.name]: !carportSides[e.target.name] }
+    });
+  };
+
+  const setCarportSides2 = (e) => {    
+    setSelectedOptions({
+      ...selectedOptions,
+      carportSides2: { ...carportSides2, [e.target.name]: !carportSides2[e.target.name] }
     });
   };
 
@@ -193,6 +200,7 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
               <MenuItem value={"brak"}>Brak</MenuItem>
               <MenuItem value={"oblachowane"}>Oblachowane</MenuItem>
               <MenuItem value={"azury"}>Ażury</MenuItem>
+              <MenuItem value={"mix"}>Mix</MenuItem>
             </Select>       
           
           </FormControl>
@@ -201,24 +209,45 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
         </>
       )}
       {(selectedOptions.carport  && !(selectedOptions.carportType==="brak") ) && (
-        <div className="flex flex-col items-center justify-center ">
-      
-      <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-          <Button variant={selectedOptions.carportSides.przod ? "contained":"outlined"} name="przod" onClick={(e) => setCarportSides(e)}>Przod</Button>
-      </FormControl>
-      <div className="flex">
-        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-            <Button variant={selectedOptions.carportSides.lewo ? "contained":"outlined"} name="lewo" onClick={(e) => setCarportSides(e)} >Lewo</Button>
-        </FormControl>
-        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-            <Button variant={selectedOptions.carportSides.prawo ? "contained":"outlined"} name="prawo" onClick={(e) => setCarportSides(e)} >Prawo</Button>
-        </FormControl>
-      </div>
-        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-            <Button variant={selectedOptions.carportSides.tyl ? "contained":"outlined"} name="tyl" onClick={(e) => setCarportSides(e)} >Tył</Button>
-        </FormControl>
+        <div className="flex flex-col items-center justify-center ">      
+          <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+              <Button disabled={selectedOptions.carportSides2.przod } variant={selectedOptions.carportSides.przod ? "contained":"outlined"} name="przod" onClick={(e) => setCarportSides(e)}>Przod</Button>
+          </FormControl>
+          <div className="flex">
+            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                <Button disabled={selectedOptions.carportSides2.lewo} variant={selectedOptions.carportSides.lewo ? "contained":"outlined"} name="lewo" onClick={(e) => setCarportSides(e)} >Lewo</Button>
+            </FormControl>
+            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                <Button disabled={selectedOptions.carportSides2.prawo} variant={selectedOptions.carportSides.prawo ? "contained":"outlined"} name="prawo" onClick={(e) => setCarportSides(e)} >Prawo</Button>
+            </FormControl>
+          </div>
+            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                <Button disabled={selectedOptions.carportSides2.tyl} variant={selectedOptions.carportSides.tyl ? "contained":"outlined"} name="tyl" onClick={(e) => setCarportSides(e)} >Tył</Button>
+            </FormControl>
       </div>
       )
+        }
+
+        {(selectedOptions.carport && selectedOptions.carportType==="mix")
+        
+        && (
+          <div className="flex flex-col items-center justify-center ">      
+            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                <Button disabled={selectedOptions.carportSides.przod} variant={selectedOptions.carportSides2.przod ? "contained":"outlined"} name="przod" onClick={(e) => setCarportSides2(e)}>Przod</Button>
+            </FormControl>
+            <div className="flex">
+              <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                  <Button disabled={selectedOptions.carportSides.lewo} variant={selectedOptions.carportSides2.lewo ? "contained":"outlined"} name="lewo" onClick={(e) => setCarportSides2(e)} >Lewo</Button>
+              </FormControl>
+              <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                  <Button disabled={selectedOptions.carportSides.prawo} variant={selectedOptions.carportSides2.prawo ? "contained":"outlined"} name="prawo" onClick={(e) => setCarportSides2(e)} >Prawo</Button>
+              </FormControl>
+            </div>
+              <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                  <Button disabled={selectedOptions.carportSides.tyl} variant={selectedOptions.carportSides2.tyl ? "contained":"outlined"} name="tyl" onClick={(e) => setCarportSides2(e)} >Tył</Button>
+              </FormControl>
+          </div>
+        )
         }
     
      

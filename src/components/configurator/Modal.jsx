@@ -25,7 +25,7 @@ const style = {
 
 
 
-export default function BasicModal({ selectedOptions, setSelectedOptions, modal, setModal,setCapture, capture,imageURL }) {
+export default function BasicModal({ selectedOptions, setSelectedOptions, modal,price, setModal,setCapture, capture,imageURL }) {
   const handleOpen = () => setModal(true);
   const handleClose = () => setModal(false);
   const selectedWojewodztwo = selectedOptions.wojewodztwo;
@@ -47,12 +47,13 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
   
       let doorList = selectedOptions.door.map((door, index) => `Door ${index + 1}: ${JSON.stringify(door)}`).join('\n');   
       let windowList = selectedOptions.window.map((window, index) => `Window ${index + 1}: ${JSON.stringify(window)}`).join('\n');
+      let carportSides = `Lewo: ${selectedOptions.carportSides.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides.tyl ? "Tak" : "Nie"}`;
       SendEmail(
         {
           name: contact.name,
           email: contact.email,
           phone: contact.phone,
-          wojewodztwo: contact.wojewodztwo,
+          wojewodztwo: selectedOptions.wojewodztwo,
           address: contact.address,
           message: contact.message,
           windowList: selectedOptions.window.length,
@@ -61,8 +62,10 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
           window: windowList,
           data: selectedOptions,
           imageURL: imageURL,
+          price: price,
+          carportSides: carportSides,
         },
-        "template_426bxgo"
+        "template_xkwkwj5"
       );
     }
   }, [imageURL]);
@@ -95,6 +98,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
     }
 
     console.log("sendData");
+
     await setCapture(true);
   
   
@@ -146,7 +150,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
                   <MenuItem key={wojewodztwo} value={wojewodztwo}>{wojewodztwo}</MenuItem>
                 ))}
 
-              </Select>
+              </Select>              
           </FormControl>
 
             <input
@@ -163,21 +167,20 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
                 placeholder="Telefon"
                 onChange={handleChange}
                 className="p-2 border border-gray-400 rounded-md"
-              />
-             
+              />             
             </div>
-            <div className="text-xs flex">
+            <p className="font-light">Cena z transportem :<b className="text-blue-500 font-bold">{price} zł</b> </p>
+            <div className="text-xs flex">            
             <Checkbox onChange={(e) => setContact({...contact, zgoda: e.target.checked})} />
               <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym numeru telefonu, przez NewGarage w celu kontaktu telefonicznego dotyczącego mojego zapytania.</p>
             </div>
             <div className="text-xs flex">
             <Checkbox onChange={(e) => setContact({...contact, marketing: e.target.checked})} />
               <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym adresu e-mail. W celu przesyłania mi informacji handlowych, ofert promocyjnych oraz innych treści marketingowych związanych z ofertą garaży blaszanych</p>
-            </div>
-           
+            </div>           
            
          
-            <Button variant="contained"  className="bg-slate-900 text-white p-2 rounded-md">
+            <Button variant="contained" onClick={sendData}  className="bg-slate-900 text-white p-2 rounded-md">
               Wyślij
             </Button>
           </form>

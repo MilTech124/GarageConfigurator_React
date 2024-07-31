@@ -74,7 +74,7 @@ calculatePrice();
     return (
         <div >            
             <p className='text-4xl max-sm:text-base md:pt-5 text-red-800 font-bold'>Cena:<span className='underline ml-5 font-black'>{price} zł</span></p>
-            <p className="md:text-sm text-xs md:pb-2">Proszę pamiętać, że podana cena jest orientacyjna i nie stanowi oferty wiążącej. </p>
+            <p className="md:text-sm text-xs md:pb-2">Proszę pamiętać, że podana cena jest orientacyjna i nie stanowi oferty wiążącej. </p>          
         </div>
     );
 }

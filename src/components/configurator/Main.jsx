@@ -60,6 +60,7 @@ function Main() {
     carportSideName: "lewo",
     carportType: "brak",
     carportSides:{lewo:true,prawo:true,przod:false,tyl:true},
+    carportSides2:{lewo:false,prawo:false,przod:false,tyl:false},
 
     gutter: false,
     automatic: false,
@@ -91,6 +92,8 @@ function Main() {
 
 
 
+
+
   const user = import.meta.env.VITE_USER_WP;
   const password = import.meta.env.VITE_PASSWORD_WP;
 
@@ -99,43 +102,43 @@ function Main() {
 
   const captureScreenshot = async (image) => {
 
-    // const fetchResponse = await fetch(image);
-    // const blob = await fetchResponse.blob();
+    const fetchResponse = await fetch(image);
+    const blob = await fetchResponse.blob();
 
-    // const formData = new FormData();
-    // formData.append('file', blob, 'screenshot.png');
+    const formData = new FormData();
+    formData.append('file', blob, 'screenshot.png');
     
-    // try {
-    //   const response = await axios.post(
-    //     'https://backend.acelgarage.pl/backend/wp-json/wp/v2/media',
-    //     formData,
-    //     {
-    //       headers: {
-    //         'Content-Type': 'multipart/form-data',
-    //         'Authorization': 'Basic ' + btoa(user + ":" + password),
-    //       },
-    //       withCredentials: true,
-    //     }
-    //   );
-    //   console.log("Response",response.data);        
+    try {
+      const response = await axios.post(
+        'https://newgarage.pl/wp-json/wp/v2/media',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': 'Basic ' + btoa(user + ":" + password),
+          },
+          withCredentials: true,
+        }
+      );
+      console.log("Response",response.data);        
   
-    //   await setImageURL(response.data.guid.rendered)
+      await setImageURL(response.data.guid.rendered)
       
   
     
-    // } catch (error) {
-    //   console.error(error);
-    // }
+    } catch (error) {
+      console.error(error);
+    }
   };
  
   return (
     <div className="bg-slate-200 relative w-screen h-screen flex max-sm:flex-col">
    
       <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}  />      
-      <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
+      <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
       <div id='capture' className="w-full md:h-3/4 relative max-sm:order-1 max-sm:h-1/3 max-sm:pb-[75px] ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
-        <div className="md:pl-[10%] relative flex justify-around md:p-5 p-2 border-2 border-slate-800">
+        <div className="md:pl-[10%] relative flex justify-around p-2 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
     
           <Button onClick={() => (setModal(true))} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
@@ -148,15 +151,17 @@ function Main() {
         >
           Wyślij wycenę
         </button> */}
+        <div className="p-2 border-2 border-slate-800 ">
         <p><b>Konstrukcja</b>- Konstrukcja wykonana jest z czarnej stali malowanej farbą podkładową, co chroni przed korozją.
-        <br></br> Wykorzystano <b>profil zamknięty</b>, który zapewnia wysoką wytrzymałość i stabilność. </p>
+        <br></br> Wykorzystano <b>profil zamknięty</b>, który zapewnia wysoką wytrzymałość i stabilność garażu. </p>
+        <p className="pt-2">
+          <b>Przygotowanie podłoża</b>, <b>fundamentów</b>  leży po stronie klienta.
+          Kotwiczenie garażu we własnym zakresie.
+        </p>
+        </div>
+        
       </div>
-      {/* <div className=" p-5 md:w-[600px] h- bg-slate-300 overflow-auto ">
-        <GarageConfigurator
-          selectedOptions={selectedOptions}
-          setSelectedOptions={setSelectedOptions}
-        />
-      </div> */}
+   
 
       
     </div>

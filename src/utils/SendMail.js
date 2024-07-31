@@ -7,9 +7,9 @@ import { toast } from 'react-toastify';
 function SendEmail(data,idTemplate) {
     // Define the email parameters
     const templateParams = data;
-    const serviceID = process.env.NEXT_PUBLIC_SERVICE_ID;
-    const templateID =idTemplate ? idTemplate : process.env.NEXT_PUBLIC_TEMPLATE_ID;
-    const publicKey = process.env.NEXT_PUBLIC_PUBLIC_KEY;  
+    const serviceID = import.meta.env.VITE_PUBLIC_SERVICE_ID;
+    const templateID =idTemplate ? idTemplate :import.meta.env.VITE_PUBLIC_TEMPLATE_ID;
+    const publicKey = import.meta.env.VITE_PUBLIC_PUBLIC_KEY;  
 
     toast.info('Wysyłanie wiadomości', {
         position: "top-right",
