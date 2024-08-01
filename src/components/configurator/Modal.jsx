@@ -48,6 +48,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
       let doorList = selectedOptions.door.map((door, index) => `Door ${index + 1}: ${JSON.stringify(door)}`).join('\n');   
       let windowList = selectedOptions.window.map((window, index) => `Window ${index + 1}: ${JSON.stringify(window)}`).join('\n');
       let carportSides = `Lewo: ${selectedOptions.carportSides.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides.tyl ? "Tak" : "Nie"}`;
+      let carportSides2 = `Lewo: ${selectedOptions.carportSides2.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides2.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides2.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides2.tyl ? "Tak" : "Nie"}`;
       SendEmail(
         {
           name: contact.name,
@@ -64,6 +65,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
           imageURL: imageURL,
           price: price,
           carportSides: carportSides,
+          carportSides2: carportSides2,
         },
         "template_xkwkwj5"
       );
@@ -82,7 +84,6 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
 
  const sendData = async (e) =>{
     e.preventDefault();
-    
     if(!contact.zgoda){
       toast.error("Zaznacz zgodę na kontakt");
       return;
@@ -100,10 +101,14 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
     console.log("sendData");
 
     await setCapture(true);
+    handleClose();
+
+    
   
   
     
     console.log("imageurl" ,imageURL);    
+ 
     
   }
 
@@ -113,7 +118,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
         open={modal}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+        aria-describedby="modal-modal-description"   
       >
         <Box sx={style}  >
           <h4 className="text-black">Kontakt</h4>

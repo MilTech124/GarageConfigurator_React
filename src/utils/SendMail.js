@@ -11,9 +11,8 @@ function SendEmail(data,idTemplate) {
     const templateID =idTemplate ? idTemplate :import.meta.env.VITE_PUBLIC_TEMPLATE_ID;
     const publicKey = import.meta.env.VITE_PUBLIC_PUBLIC_KEY;  
 
-    toast.info('Wysyłanie wiadomości', {
-        position: "top-right",
-        autoClose: 5000,
+    toast.info('Wysyłanie wiadomości', {       
+        autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,     
@@ -21,9 +20,8 @@ function SendEmail(data,idTemplate) {
     // Send the email using EmailJS
     emailjs.send(serviceID, templateID, templateParams, publicKey)
         .then((response) => {
-            toast.done('Wysłano wiadomość', {
-                position: "top-right",
-                autoClose: 5000,
+            toast.done('Wysłano wiadomość', {                
+                autoClose: 3000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: true,     
@@ -31,8 +29,8 @@ function SendEmail(data,idTemplate) {
             console.log('SUCCESS!', response.status, response.text);
 
             setTimeout(() => {
-                window.location.href = '/';
-             }, 5000);        
+                window.location.href = 'https://newgarage.pl/';
+             }, 3000);        
             
         }, (error) => {
             console.log('FAILED...', error);

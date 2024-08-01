@@ -11,7 +11,9 @@ import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
 import Checkbox from '@mui/material/Checkbox';
 
+
 function Main() {
+
   const [selectedOptions, setSelectedOptions] = useState({
     color: "Złoty Dąb",
     colorRal: null,
@@ -101,14 +103,54 @@ function Main() {
 
 
 
-  const captureScreenshot = async (image) => {
+  const captureScreenshot = async (image) => {   
 
     const fetchResponse = await fetch(image);
     const blob = await fetchResponse.blob();
-
+  
+    const resizeImage = (blob, maxWidth, maxHeight) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(blob);
+  
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+  
+          // Calculate the new dimensions while maintaining the aspect ratio
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height *= maxWidth / width));
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width *= maxHeight / height));
+              height = maxHeight;
+            }
+          }
+  
+          canvas.width = width;
+          canvas.height = height;
+  
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+  
+          canvas.toBlob((resizedBlob) => {
+            resolve(resizedBlob);
+          }, 'image/png');
+        };
+       
+      });
+      
+    };
+  
+    const resizedBlob = await resizeImage(blob, 800, 600); // Set your desired max width and height
+  
     const formData = new FormData();
-    formData.append('file', blob, 'screenshot.png');
-    
+    formData.append('file', resizedBlob, 'screenshot.png');
+  
     try {
       const response = await axios.post(
         'https://newgarage.pl/wp-json/wp/v2/media',
@@ -121,19 +163,25 @@ function Main() {
           withCredentials: true,
         }
       );
-      console.log("Response",response.data);        
+      console.log("Response", response.data);
   
-      await setImageURL(response.data.guid.rendered)
-      
-  
-    
+      await setImageURL(response.data.guid.rendered);
     } catch (error) {
       console.error(error);
     }
+   
   };
  
   return (
     <div className="bg-slate-200 relative w-screen h-screen flex max-sm:flex-col">
+   
+   {capture && <div class="absolute top-0 left-0 w-full h-full flex-col gap-4  flex items-center justify-center !z-50 bg-black/50 ">
+        <div class="w-28 h-28 border-8 text-blue-400 text-4xl animate-spin border-gray-300 flex items-center justify-center border-t-blue-400 rounded-full">
+          <svg viewBox="0 0 24 24" fill="currentColor" height="1em" width="1em" class="animate-ping">
+            <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.337 6.182 14.976 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.337 13.382 8.976 12 6.001 12z"></path>
+          </svg>
+        </div>
+      </div> }
    
       <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}  />      
       <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
