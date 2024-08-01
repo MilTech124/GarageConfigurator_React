@@ -38,6 +38,9 @@ function CalcMain({selectedOptions, price, setPrice}) {
             resault = width*2*pricePerMeter
         }else {
             resault = width*pricePerMeter
+            if(carport) {
+                resault = (width+carportWidth)*pricePerMeter
+            }
         }
         return resault
     }
