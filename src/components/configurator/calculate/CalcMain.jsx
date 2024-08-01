@@ -62,6 +62,18 @@ function CalcMain({selectedOptions, price, setPrice}) {
         return resault
     }
 
+    const filcPrice = () => {
+        if(filc) {
+            if(carport){
+                return depth * (width+carportWidth)  * 25
+            }
+            return depth * width  * 25
+        }else return 0
+        
+        
+    }
+
+
 
     
 
@@ -73,7 +85,7 @@ function CalcMain({selectedOptions, price, setPrice}) {
         gatePrice()+
         (automatic ? 1300*countAutomatic : 0)+
         (roofType === "blachodachówka" ? (depth*width*65) : 0)+
-        (filc ? (depth * width * 25) : 0)+
+        filcPrice()+
         (door.length >= 0 ? (door.length*450) : 0)+
         (window.length >= 0 ? (window.length*450) : 0)+
         (carport ? calcCarportPrice() :0)+
