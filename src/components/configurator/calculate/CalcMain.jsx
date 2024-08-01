@@ -32,8 +32,8 @@ function CalcMain({selectedOptions, price, setPrice}) {
         let resault =0 
         const pricePerMeter = 100
         if(roof === "dwuspad" || roof === "dwuspad przod-tył") {
-            if(carport && (carportSide==="przod"||carportSide==="tyl")) {
-                resault = (width+carportWidth)*2*pricePerMeter
+            if(carport && (carportSide==="przod" || carportSide==="tyl")) {
+               return resault = (width+carportWidth)*2*pricePerMeter
             }
             resault = width*2*pricePerMeter
         }else {
