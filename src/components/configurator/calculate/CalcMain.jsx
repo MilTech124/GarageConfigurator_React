@@ -3,7 +3,8 @@ import garagePrice from "./garagePrice.js";
 function CalcMain({selectedOptions, price, setPrice}) {
     const SoloGaragePrice = garagePrice({selectedOptions});
     const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,
-        carportWidth,gutter,carportType,wojewodztwo,countAutomatic,gateType1,gateType2,gateType3, gateCount} = selectedOptions;
+        carportWidth,gutter,carportType,wojewodztwo,countAutomatic,gateType1,gateType2,gateType3, gateCount,
+        carportSide} = selectedOptions;
 
 
     //helpers 
@@ -31,6 +32,9 @@ function CalcMain({selectedOptions, price, setPrice}) {
         let resault =0 
         const pricePerMeter = 100
         if(roof === "dwuspad" || roof === "dwuspad przod-tył") {
+            if(carport && (carportSide==="przód"||carportSide==="tył")) {
+                resault = (width+carportWidth)*2*pricePerMeter
+            }
             resault = width*2*pricePerMeter
         }else {
             resault = width*pricePerMeter
