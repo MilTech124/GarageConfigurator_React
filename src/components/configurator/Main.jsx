@@ -59,11 +59,12 @@ function Main() {
     carportSide: "lewo",
     carportSideName: "lewo",
     carportType: "brak",
-    carportSides:{lewo:true,prawo:true,przod:false,tyl:true},
+    carportSides:{lewo:false,prawo:false,przod:false,tyl:true},
     carportSides2:{lewo:false,prawo:false,przod:false,tyl:false},
 
     gutter: false,
     automatic: false,
+    countAutomatic: 1,
     filc: false,
     transport: false,   
     wojewodztwo: ""

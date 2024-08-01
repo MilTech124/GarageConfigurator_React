@@ -1,5 +1,5 @@
 import React from "react";
-import { Checkbox, FormControlLabel } from "@mui/material";
+import { Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
 
 function Accessories({ selectedOptions, setSelectedOptions }) {
   const { filc, gutter, automatic } = selectedOptions;
@@ -39,6 +39,20 @@ function Accessories({ selectedOptions, setSelectedOptions }) {
             className="w-[200px] flex items-center justify-center"
             alt=""
           />
+            <Select
+            value={selectedOptions.countAutomatic}
+            onChange={(e) =>
+              setSelectedOptions({
+                ...selectedOptions,
+                countAutomatic: e.target.value,
+              })
+            }
+            >
+              <MenuItem value={1}>1.szt</MenuItem>
+              <MenuItem value={2}>2.szt</MenuItem>
+              <MenuItem value={3}>3.szt</MenuItem>
+
+            </Select>
           <FormControlLabel
             control={
               <Checkbox
@@ -58,6 +72,8 @@ function Accessories({ selectedOptions, setSelectedOptions }) {
             className="w-[150px] flex items-center justify-center"
             alt=""
           />
+         
+          
           <FormControlLabel
             control={
               <Checkbox

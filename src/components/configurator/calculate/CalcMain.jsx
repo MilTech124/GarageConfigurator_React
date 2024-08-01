@@ -2,7 +2,8 @@ import garagePrice from "./garagePrice.js";
 
 function CalcMain({selectedOptions, price, setPrice}) {
     const SoloGaragePrice = garagePrice({selectedOptions});
-    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,carportWidth,gutter,carportType,wojewodztwo} = selectedOptions;
+    const {width,depth,roof,height,automatic,roofType,filc,door,window,carport,
+        carportWidth,gutter,carportType,wojewodztwo,countAutomatic,gateType1,gateType2,gateType3, gateCount} = selectedOptions;
 
 
     //helpers 
@@ -48,6 +49,20 @@ function CalcMain({selectedOptions, price, setPrice}) {
 
     } 
 
+    const gatePrice = () => {
+        let resault = 0
+        const gateType = [gateType1,gateType2,gateType3]    
+    
+        for(let i = 0; i<=gateCount; i++) {
+    
+            if(gateType[i] === "dwuskrzydłowa") {
+                 resault -= 400  
+            }
+        }
+        return resault
+    }
+
+
     
 
    const calculatePrice = () => {
@@ -55,7 +70,8 @@ function CalcMain({selectedOptions, price, setPrice}) {
         SoloGaragePrice + 
         (roof === "spad tył" ? -500 : 0) +
         (calcHeightPrice())+
-        (automatic ? 1300 : 0)+
+        gatePrice()+
+        (automatic ? 1300*countAutomatic : 0)+
         (roofType === "blachodachówka" ? (depth*width*65) : 0)+
         (filc ? (depth * width * 25) : 0)+
         (door.length >= 0 ? (door.length*450) : 0)+
