@@ -20,7 +20,7 @@ function CalcMain({selectedOptions, price, setPrice}) {
         const StandardWith = 1
         const StandardPaidWith= 0.5
         const pricePerMeter = 500
-        const typePrice = carportType ==="brak" ? 1000 : carportType=== "oblachowane" ?  2000 :carportType=== "azury" ?  2500 : null
+        const typePrice = carportType ==="brak" ? 1000 : carportType=== "oblachowane" ?  2000 :(carportType=== "azury"||carportType==="mix") ?  2500 : null
 
         if(carport) {
             resault = (carportWidth-StandardWith)/StandardPaidWith* pricePerMeter +typePrice           
