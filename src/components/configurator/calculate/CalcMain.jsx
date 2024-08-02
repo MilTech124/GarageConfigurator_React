@@ -32,14 +32,24 @@ function CalcMain({selectedOptions, price, setPrice}) {
         let resault =0 
         const pricePerMeter = 100
         if(roof === "dwuspad" || roof === "dwuspad przod-tył") {
-            if(carport&& (carportSide === "przód"||carportSide === "tył")) {
-               return resault = (width+carportWidth)*2*pricePerMeter
-            }
+            if(carpor && (roof === "dwuspad") && (carportSide === "przód"||carportSide === "tył")) {
+               return resault = (depth+carportWidth)*2*pricePerMeter
+            }            
             resault = width*2*pricePerMeter
+            if(carport && (roof === "dwuspad przod-tył") && (carportSide === "lewo"||carportSide === "prawo")) {
+                resault = (width+carportWidth)*2*pricePerMeter
+            }
         }else {
-            resault = width*pricePerMeter
-            if(carport) {
-                resault = (width+carportWidth)*pricePerMeter
+            if(carportSide ==="lewo" || carportSide ==="prawo") {
+                if(carport) {
+                    return resault = (depth+carportWidth)*pricePerMeter
+                }
+                return resault = depth*pricePerMeter
+            }else{
+                if(carport) {
+                    return resault = width*pricePerMeter
+                }
+                return resault = width*pricePerMeter
             }
         }
         return resault
