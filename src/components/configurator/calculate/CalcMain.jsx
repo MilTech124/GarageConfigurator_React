@@ -1,3 +1,4 @@
+import { log } from "three/examples/jsm/nodes/Nodes.js";
 import garagePrice from "./garagePrice.js";
 
 function CalcMain({selectedOptions, price, setPrice}) {
@@ -32,11 +33,14 @@ function CalcMain({selectedOptions, price, setPrice}) {
         let resault =0 
         const pricePerMeter = 100
         if(roof === "dwuspad" || roof === "dwuspad przod-tył") {
-            if(carport && (roof === "dwuspad") && (carportSide === "przód"||carportSide === "tył")) {
+            if(carport && (roof === "dwuspad") && (carportSide === "przod" || carportSide === "tyl")) {
+                console.log(roof,carportSide)
                return resault = (depth+carportWidth)*2*pricePerMeter
+              
             }            
             resault = width*2*pricePerMeter
             if(carport && (roof === "dwuspad przod-tył") && (carportSide === "lewo"||carportSide === "prawo")) {
+                console.log(roof,carportSide)
                 resault = (width+carportWidth)*2*pricePerMeter
             }
         }else {

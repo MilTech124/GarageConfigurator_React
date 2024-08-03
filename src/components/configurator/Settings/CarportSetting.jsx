@@ -213,7 +213,7 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
       {(selectedOptions.carport  && !(selectedOptions.carportType==="brak") ) && (
         <div className="flex flex-col items-center justify-center ">      
           <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-              <Button disabled={carportSides2.przod ||((roof==="dwuspad" || roof==="spad tyl") && carportSide==="tyl") } variant={selectedOptions.carportSides.przod ? "contained":"outlined"} name="przod" onClick={(e) => setCarportSides(e)}>Przod</Button>
+              <Button disabled={carportSides2.przod ||((roof==="dwuspad" || roof==="spad tyl") && carportSide==="przod") } variant={selectedOptions.carportSides.przod ? "contained":"outlined"} name="przod" onClick={(e) => setCarportSides(e)}>Przod</Button>
           </FormControl>
           <div className="flex">
             <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
@@ -224,7 +224,7 @@ function CarportSetting({ selectedOptions, setSelectedOptions }) {
             </FormControl>
           </div>
             <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-                <Button disabled={carportSides2.tyl ||((roof==="dwuspad" || roof==="spad tyl") && carportSide==="przod") } variant={selectedOptions.carportSides.tyl ? "contained":"outlined"} name="tyl" onClick={(e) => setCarportSides(e)} >Tył</Button>
+                <Button disabled={carportSides2.tyl ||((roof==="dwuspad" || roof==="spad tyl") && carportSide==="tyl") } variant={selectedOptions.carportSides.tyl ? "contained":"outlined"} name="tyl" onClick={(e) => setCarportSides(e)} >Tył</Button>
             </FormControl>
       </div>
       )
