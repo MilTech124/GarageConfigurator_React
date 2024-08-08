@@ -102,6 +102,7 @@ function GarageViewer({ selectedOptions ,captureScreenshot,capture }) {
     <div className="absolute left-0 top-0 md:w-[250px] w-20   z-20  pointer-events-none ">
       <img src="https://newgarage.pl/wp-content/uploads/2023/02/cropped-324381852_5741060232673242_7386872066100517510_n-1.jpg" alt="3dgaraz" />
     </div>
+    <p className="absolute font-semibold bottom-20 max-sm:text-xs md:bottom-5 md:right-10 right-2 text-slate-800 z-20 hover:text-red-800 hover:cursor-pointer">Realizacja <a className="font-bold" target="_blank" href="https://www.mil-tech.pl/">MIL-TECH</a></p>
     <Canvas gl={{ preserveDrawingBuffer: true }} 
       // camera={{ position: cameraPosition, fov: 45,} }
       className="cursor-all-scroll"      
