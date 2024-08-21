@@ -1,4 +1,3 @@
-import { log } from "three/examples/jsm/nodes/Nodes.js";
 import garagePrice from "./garagePrice.js";
 
 function CalcMain({selectedOptions, price, setPrice}) {
@@ -13,8 +12,8 @@ function CalcMain({selectedOptions, price, setPrice}) {
     const calcHeightPrice = () => {
         const standardHeight = 213;
         const heightPrice = 700;
-       const heightPrize = height - standardHeight
-         return heightPrize/10 * heightPrice
+        const heightPrize = height - standardHeight
+            return heightPrize/10 * heightPrice
     }
 
     const calcCarportPrice = () => {

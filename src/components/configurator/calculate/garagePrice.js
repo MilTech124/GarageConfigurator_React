@@ -11,7 +11,7 @@ const garagePrice = ({ selectedOptions }) => {
       console.error("No matching garage found");
       return null; // or return a default value or throw an error
     }
-    return garagePrice.price;
+    return garagePrice.price+500+400;
   }
   const garagePrice = data.find((garage) => garage.width === width && garage.depth === depth);
 

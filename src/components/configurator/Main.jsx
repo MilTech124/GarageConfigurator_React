@@ -9,7 +9,6 @@ import LeftSettings from "./LeftSettings/LeftSettings";
 import CalcMain from "./calculate/CalcMain";
 import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
-import Checkbox from '@mui/material/Checkbox';
 
 
 function Main() {
@@ -89,7 +88,7 @@ function Main() {
   useEffect(() => {
     if(selectedOptions.color === "Ocynk") {
     
-      setSelectedOptions({...selectedOptions, roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
+      setSelectedOptions({...selectedOptions, gateType1:"dwuskrzydłowa",gateType2:"dwuskrzydłowa", roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
     }}
   ,[selectedOptions.color])
 
