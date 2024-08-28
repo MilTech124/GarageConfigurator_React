@@ -46,9 +46,9 @@ function CalcMain({selectedOptions, price, setPrice}) {
         }else {
             if(carportSide ==="lewo" || carportSide ==="prawo") {
                 if(carport) {
-                    return resault = (width+carportWidth)*pricePerMeter
+                    return resault = (depth+carportWidth)*pricePerMeter   //zmiana
                 }
-                return resault = width*pricePerMeter
+                return resault = depth*pricePerMeter        //zmiana
             }else{
                 if(carport) {
                     return resault = width*pricePerMeter
