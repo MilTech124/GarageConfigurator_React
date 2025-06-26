@@ -199,7 +199,7 @@ function Main() {
         >
           Wyślij wycenę
         </button> */}
-        <div className="p-2 border-2 border-slate-800 ">
+        <div className="p-2 border-2 border-slate-800 max-sm:hidden ">
         <p><b>Konstrukcja</b>- Konstrukcja wykonana jest z czarnej stali malowanej farbą podkładową, co chroni przed korozją.
         <br></br> Wykorzystano <b>profil zamknięty</b>, który zapewnia wysoką wytrzymałość i stabilność garażu. </p>
         <p className="pt-2">

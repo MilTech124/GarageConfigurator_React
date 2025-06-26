@@ -10,6 +10,7 @@ import { variable } from "./Variable";
 import { FormControl, Select } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
+import { validateForm } from "../../utils/validation";
 
 const style = {
   position: "absolute",
@@ -27,18 +28,48 @@ const style = {
 
 export default function BasicModal({ selectedOptions, setSelectedOptions, modal,price, setModal,setCapture, capture,imageURL }) {
   const handleOpen = () => setModal(true);
-  const handleClose = () => setModal(false);
+  const handleClose = () => {
+    setModal(false);
+    // Reset form state and validation when modal closes
+    setContact({
+      name: "",
+      email: "",
+      email2: "",
+      phone: "", 
+      address: "",
+      message: "",
+      honeypot: "",
+      zgoda: false, 
+      marketing: true,    
+    });
+    setValidationErrors({});
+    setFormStartTime(null);
+  };
   const selectedWojewodztwo = selectedOptions.wojewodztwo;
   const [contact, setContact] = React.useState({
     name: "",
     email: "",
+    email2: "",
     phone: "", 
     address: "",
     message: "",
-
+    honeypot: "", // Hidden field for bot detection
     zgoda: false, 
     marketing: true,    
   });
+
+  // State for validation errors
+  const [validationErrors, setValidationErrors] = React.useState({});
+  
+  // Timer for form filling detection
+  const [formStartTime, setFormStartTime] = React.useState(null);
+
+  // Initialize form start time when modal opens
+  React.useEffect(() => {
+    if (modal && !formStartTime) {
+      setFormStartTime(Date.now());
+    }
+  }, [modal]);
 
   React.useEffect(() => {
     if (imageURL) {
@@ -82,34 +113,54 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
    
   }
 
- const sendData = async (e) =>{
+ const sendData = async (e) => {
     e.preventDefault();
-    if(!contact.zgoda){
+    
+    // Clear previous validation errors
+    setValidationErrors({});
+
+    // Basic required field validation
+    if (!contact.zgoda) {
       toast.error("Zaznacz zgodę na kontakt");
       return;
     }
 
-    if(contact.email !== contact.email2){
+    if (contact.email !== contact.email2) {
       toast.error("Adresy email nie są takie same");
       return;
     }
-    if(contact.name === "" || contact.email === "" || contact.phone === "" || contact.address === ""){
+
+    if (contact.name === "" || contact.email === "" || contact.phone === "" || contact.address === "") {
       toast.error("Wypełnij wszystkie pola");
       return;
     }
 
-    console.log("sendData");
+    // Advanced spam protection validation
+    const validation = validateForm(contact, formStartTime);
+    
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      
+      // Show general error if exists
+      if (validation.errors.general) {
+        toast.error(validation.errors.general);
+        return;
+      }
+      
+      // Show first field-specific error
+      const firstError = Object.values(validation.errors)[0];
+      if (firstError) {
+        toast.error(firstError);
+        return;
+      }
+    }
+
+    console.log("sendData - validation passed");
 
     await setCapture(true);
     handleClose();
-
     
-  
-  
-    
-    console.log("imageurl" ,imageURL);    
- 
-    
+    console.log("imageurl", imageURL);    
   }
 
   return (
@@ -123,56 +174,99 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
         <Box sx={style}  >
           <h4 className="text-black">Kontakt</h4>
           <form className="flex flex-col gap-2" onSubmit={sendData}>
+            {/* Honeypot field - hidden from users, visible to bots */}
             <input
               type="text"
-              name="name"
-              placeholder="Imię i nazwisko"
+              name="honeypot"
+              value={contact.honeypot}
               onChange={handleChange}
-              className="p-2 border border-gray-400 rounded-md"
+              style={{ display: 'none' }}
+              tabIndex="-1"
+              autoComplete="off"
             />
-        
-           
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              onChange={handleChange}
-              className="p-2 border border-gray-400 rounded-md"
-            />
-            <input
-              type="email2"
-              name="email2"
-              placeholder="Potwierdz Email"
-              onChange={handleChange}
-              className="p-2 border border-gray-400 rounded-md"
-              style={{borderColor: contact.email !== contact.email2 ? "red" : "green"}}
             
-            />
+            <div>
+              <input
+                type="text"
+                name="name"
+                placeholder="Imię i nazwisko"
+                value={contact.name}
+                onChange={handleChange}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.name ? 'border-red-500' : 'border-gray-400'
+                }`}
+              />
+              {validationErrors.name && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
+              )}
+            </div>
+        
+            <div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={contact.email}
+                onChange={handleChange}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.email ? 'border-red-500' : 'border-gray-400'
+                }`}
+              />
+              {validationErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
+              )}
+            </div>
+            <div>
+              <input
+                type="email"
+                name="email2"
+                placeholder="Potwierdz Email"
+                value={contact.email2}
+                onChange={handleChange}
+                className="p-2 border rounded-md w-full"
+                style={{borderColor: contact.email !== contact.email2 ? "red" : "green"}}
+              />
+            </div>
+            
             <FormControl fullWidth>
               <InputLabel id="demo-simple-select-label">Województwo</InputLabel>
-              <Select value={selectedWojewodztwo} onChange={setWoj}  >
+              <Select value={selectedWojewodztwo} onChange={setWoj}>
                 {variable.wojewodztwa.map((wojewodztwo) => (
                   <MenuItem key={wojewodztwo} value={wojewodztwo}>{wojewodztwo}</MenuItem>
                 ))}
-
               </Select>              
-          </FormControl>
+            </FormControl>
 
-            <input
-              type="text"
-              name="address"
-              onChange={handleChange}
-              placeholder="Adres dostawy"
-              className="p-2 border border-gray-400 rounded-md"
-            />
-            <div className="flex">
+            <div>
+              <input
+                type="text"
+                name="address"
+                placeholder="Adres dostawy"
+                value={contact.address}
+                onChange={handleChange}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.address ? 'border-red-500' : 'border-gray-400'
+                }`}
+              />
+              {validationErrors.address && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.address}</p>
+              )}
+            </div>
+            
+            <div>
               <input
                 type="tel"
                 name="phone"
                 placeholder="Telefon"
+                value={contact.phone}
                 onChange={handleChange}
-                className="p-2 border border-gray-400 rounded-md"
-              />             
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.phone ? 'border-red-500' : 'border-gray-400'
+                }`}
+              />
+              {validationErrors.phone && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
+              )}
             </div>
             <p className="font-light">Cena z transportem :<b className="text-blue-500 font-bold">{price} zł</b> </p>
             <div className="text-xs flex">            
