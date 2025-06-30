@@ -9,6 +9,7 @@ import LeftSettings from "./LeftSettings/LeftSettings";
 import CalcMain from "./calculate/CalcMain";
 import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
+import TagManager from 'react-gtm-module';
 
 
 function Main() {
@@ -99,10 +100,19 @@ function Main() {
   const user = import.meta.env.VITE_USER_WP;
   const password = import.meta.env.VITE_PASSWORD_WP;
 
+  // Funkcja do wysyłania zdarzenia do GTM
+  const sendGTMEvent = () => {
+    TagManager.dataLayer({
+      dataLayer: {
+        event: 'order_button_click',
+        eventCategory: 'Configurator',
+        eventAction: 'Click',
+        eventLabel: 'Zamów Button',      
+      }
+    });
+  };
 
-
-
-  const captureScreenshot = async (image) => {   
+  const captureScreenshot = async (image) => {
 
     const fetchResponse = await fetch(image);
     const blob = await fetchResponse.blob();
@@ -189,7 +199,10 @@ function Main() {
         <div className="md:pl-[10%] relative flex justify-around p-2 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
     
-          <Button onClick={() => (setModal(true))} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
+          <Button onClick={() => {
+            sendGTMEvent();
+            setModal(true);
+          }} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
           
         </div>
        
