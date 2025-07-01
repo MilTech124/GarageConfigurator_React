@@ -1,16 +1,13 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
-import SendEmail from "../../utils/SendMail";
-import { toast } from "react-toastify";
 import Checkbox from '@mui/material/Checkbox';
-import { variable } from "./Variable";
-import { FormControl, Select } from "@mui/material";
-import MenuItem from "@mui/material/MenuItem";
-import InputLabel from "@mui/material/InputLabel";
+import { toast } from "react-toastify";
+import { FormControl, Select, MenuItem, InputLabel } from "@mui/material";
+import SendEmail from "../../utils/SendMail";
 import { validateForm } from "../../utils/validation";
+import { variable } from "./Variable";
 
 const style = {
   position: "absolute",
@@ -24,13 +21,9 @@ const style = {
   p: 4,
 };
 
-
-
-export default function BasicModal({ selectedOptions, setSelectedOptions, modal,price, setModal,setCapture, capture,imageURL }) {
-  const handleOpen = () => setModal(true);
+export default function BasicModal({ selectedOptions, setSelectedOptions, modal, price, setModal, setCapture, imageURL }) {
   const handleClose = () => {
     setModal(false);
-    // Reset form state and validation when modal closes
     setContact({
       name: "",
       email: "",
@@ -45,6 +38,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
     setValidationErrors({});
     setFormStartTime(null);
   };
+
   const selectedWojewodztwo = selectedOptions.wojewodztwo;
   const [contact, setContact] = React.useState({
     name: "",
@@ -53,18 +47,15 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
     phone: "", 
     address: "",
     message: "",
-    honeypot: "", // Hidden field for bot detection
+    honeypot: "",
     zgoda: false, 
     marketing: true,    
   });
 
-  // State for validation errors
   const [validationErrors, setValidationErrors] = React.useState({});
-  
-  // Timer for form filling detection
   const [formStartTime, setFormStartTime] = React.useState(null);
+  const [pendingEmailData, setPendingEmailData] = React.useState(null);
 
-  // Initialize form start time when modal opens
   React.useEffect(() => {
     if (modal && !formStartTime) {
       setFormStartTime(Date.now());
@@ -72,14 +63,14 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
   }, [modal]);
 
   React.useEffect(() => {
-    if (imageURL) {
-      console.log("imageurl" ,imageURL);
-      toast.success("Zrobiono zrzut ekranu");
-  
+    if (imageURL && pendingEmailData) {
+      const { contact, selectedOptions, price } = pendingEmailData;
+
       let doorList = selectedOptions.door.map((door, index) => `Door ${index + 1}: ${JSON.stringify(door)}`).join('\n');   
       let windowList = selectedOptions.window.map((window, index) => `Window ${index + 1}: ${JSON.stringify(window)}`).join('\n');
       let carportSides = `Lewo: ${selectedOptions.carportSides.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides.tyl ? "Tak" : "Nie"}`;
       let carportSides2 = `Lewo: ${selectedOptions.carportSides2.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides2.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides2.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides2.tyl ? "Tak" : "Nie"}`;
+
       SendEmail(
         {
           name: contact.name,
@@ -100,26 +91,23 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
         },
         "template_xkwkwj5"
       );
+
+      setPendingEmailData(null);
     }
   }, [imageURL]);
-  
 
   function handleChange(e) {
     setContact({ ...contact, [e.target.name]: e.target.value });
   }
 
-  function setWoj(e){
+  function setWoj(e) {
     setSelectedOptions({...selectedOptions, wojewodztwo: e.target.value});        
-   
   }
 
- const sendData = async (e) => {
+  const sendData = async (e) => {
     e.preventDefault();
-    
-    // Clear previous validation errors
     setValidationErrors({});
 
-    // Basic required field validation
     if (!contact.zgoda) {
       toast.error("Zaznacz zgodę na kontakt");
       return;
@@ -135,19 +123,14 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
       return;
     }
 
-    // Advanced spam protection validation
     const validation = validateForm(contact, formStartTime);
-    
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
-      
-      // Show general error if exists
+
       if (validation.errors.general) {
         toast.error(validation.errors.general);
         return;
       }
-      
-      // Show first field-specific error
       const firstError = Object.values(validation.errors)[0];
       if (firstError) {
         toast.error(firstError);
@@ -157,11 +140,19 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
 
     console.log("sendData - validation passed");
 
-    await setCapture(true);
+    const contactSnapshot = { ...contact }; // snapshot danych
+    const selectedOptionsSnapshot = { ...selectedOptions };
+
+    setPendingEmailData({
+      contact: contactSnapshot,
+      selectedOptions: selectedOptionsSnapshot,
+      price: price,
+    });
+
+    await setCapture(true); // robi screenshot
+
     handleClose();
-    
-    console.log("imageurl", imageURL);    
-  }
+  };
 
   return (
     <div>
@@ -171,10 +162,9 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"   
       >
-        <Box sx={style}  >
+        <Box sx={style}>
           <h4 className="text-black">Kontakt</h4>
           <form className="flex flex-col gap-2" onSubmit={sendData}>
-            {/* Honeypot field - hidden from users, visible to bots */}
             <input
               type="text"
               name="honeypot"
@@ -184,7 +174,6 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
               tabIndex="-1"
               autoComplete="off"
             />
-            
             <div>
               <input
                 type="text"
@@ -192,15 +181,12 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
                 placeholder="Imię i nazwisko"
                 value={contact.name}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${
-                  validationErrors.name ? 'border-red-500' : 'border-gray-400'
-                }`}
+                className={`p-2 border rounded-md w-full ${validationErrors.name ? 'border-red-500' : 'border-gray-400'}`}
               />
               {validationErrors.name && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
               )}
             </div>
-        
             <div>
               <input
                 type="email"
@@ -208,9 +194,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
                 placeholder="Email"
                 value={contact.email}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${
-                  validationErrors.email ? 'border-red-500' : 'border-gray-400'
-                }`}
+                className={`p-2 border rounded-md w-full ${validationErrors.email ? 'border-red-500' : 'border-gray-400'}`}
               />
               {validationErrors.email && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
@@ -220,23 +204,21 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
               <input
                 type="email"
                 name="email2"
-                placeholder="Potwierdz Email"
+                placeholder="Potwierdź Email"
                 value={contact.email2}
                 onChange={handleChange}
                 className="p-2 border rounded-md w-full"
                 style={{borderColor: contact.email !== contact.email2 ? "red" : "green"}}
               />
             </div>
-            
             <FormControl fullWidth>
-              <InputLabel id="demo-simple-select-label">Województwo</InputLabel>
-              <Select value={selectedWojewodztwo} onChange={setWoj}>
+              <InputLabel id="woj-label">Województwo</InputLabel>
+              <Select labelId="woj-label" value={selectedWojewodztwo} onChange={setWoj}>
                 {variable.wojewodztwa.map((wojewodztwo) => (
                   <MenuItem key={wojewodztwo} value={wojewodztwo}>{wojewodztwo}</MenuItem>
                 ))}
               </Select>              
             </FormControl>
-
             <div>
               <input
                 type="text"
@@ -244,15 +226,12 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
                 placeholder="Adres dostawy"
                 value={contact.address}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${
-                  validationErrors.address ? 'border-red-500' : 'border-gray-400'
-                }`}
+                className={`p-2 border rounded-md w-full ${validationErrors.address ? 'border-red-500' : 'border-gray-400'}`}
               />
               {validationErrors.address && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.address}</p>
               )}
             </div>
-            
             <div>
               <input
                 type="tel"
@@ -260,26 +239,22 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
                 placeholder="Telefon"
                 value={contact.phone}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${
-                  validationErrors.phone ? 'border-red-500' : 'border-gray-400'
-                }`}
+                className={`p-2 border rounded-md w-full ${validationErrors.phone ? 'border-red-500' : 'border-gray-400'}`}
               />
               {validationErrors.phone && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
               )}
             </div>
-            <p className="font-light">Cena z transportem :<b className="text-blue-500 font-bold">{price} zł</b> </p>
-            <div className="text-xs flex">            
-            <Checkbox onChange={(e) => setContact({...contact, zgoda: e.target.checked})} />
+            <p className="font-light">Cena z transportem: <b className="text-blue-500 font-bold">{price} zł</b></p>
+            <div className="text-xs flex">
+              <Checkbox onChange={(e) => setContact({...contact, zgoda: e.target.checked})} />
               <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym numeru telefonu, przez NewGarage w celu kontaktu telefonicznego dotyczącego mojego zapytania.</p>
             </div>
             <div className="text-xs flex">
-            <Checkbox onChange={(e) => setContact({...contact, marketing: e.target.checked})} />
-              <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym adresu e-mail. W celu przesyłania mi informacji handlowych, ofert promocyjnych oraz innych treści marketingowych związanych z ofertą garaży blaszanych</p>
-            </div>           
-           
-         
-            <Button variant="contained" onClick={sendData}  className="bg-slate-900 text-white p-2 rounded-md">
+              <Checkbox onChange={(e) => setContact({...contact, marketing: e.target.checked})} />
+              <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym adresu e-mail, w celu przesyłania mi informacji handlowych, ofert promocyjnych oraz innych treści marketingowych związanych z ofertą garaży blaszanych.</p>
+            </div>
+            <Button type="submit" variant="contained" className="bg-slate-900 text-white p-2 rounded-md">
               Wyślij
             </Button>
           </form>
