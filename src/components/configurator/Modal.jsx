@@ -5,7 +5,7 @@ import Modal from "@mui/material/Modal";
 import Checkbox from '@mui/material/Checkbox';
 import { toast } from "react-toastify";
 import { FormControl, Select, MenuItem, InputLabel } from "@mui/material";
-import SendEmail from "../../utils/SendMail";
+import SendEmailWP from "../../utils/SendMailWP";
 import { validateForm } from "../../utils/validation";
 import { variable } from "./Variable";
 
@@ -71,7 +71,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
       let carportSides = `Lewo: ${selectedOptions.carportSides.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides.tyl ? "Tak" : "Nie"}`;
       let carportSides2 = `Lewo: ${selectedOptions.carportSides2.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides2.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides2.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides2.tyl ? "Tak" : "Nie"}`;
 
-      SendEmail(
+      SendEmailWP(
         {
           name: contact.name,
           email: contact.email,
@@ -89,7 +89,7 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
           carportSides: carportSides,
           carportSides2: carportSides2,
         },
-        "template_xkwkwj5"
+        "configurator"
       );
 
       setPendingEmailData(null);
