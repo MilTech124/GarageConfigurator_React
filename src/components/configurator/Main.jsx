@@ -161,22 +161,46 @@ function Main() {
     formData.append('file', resizedBlob, 'screenshot.png');
   
     try {
+      // Use the custom upload endpoint instead of WordPress media endpoint
       const response = await axios.post(
-        'https://newgarage.pl/wp-json/wp/v2/media',
+        'https://newgarage.pl/wp-json/newgarage/v1/upload-image',
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization': 'Basic ' + btoa(user + ":" + password),
           },
-          withCredentials: true,
         }
       );
       console.log("Response", response.data);
   
-      await setImageURL(response.data.guid.rendered);
+      if (response.data.success) {
+        await setImageURL(response.data.url);
+      } else {
+        console.error("Upload failed:", response.data.message);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error uploading image:", error);
+      
+      // Fallback - try the original WordPress media endpoint with Basic Auth
+      if (user && password) {
+        console.log("Trying WordPress media endpoint as fallback...");
+        try {
+          const fallbackResponse = await axios.post(
+            'https://newgarage.pl/wp-json/wp/v2/media',
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': 'Basic ' + btoa(user + ":" + password),
+              },
+            }
+          );
+          console.log("Fallback Response", fallbackResponse.data);
+          await setImageURL(fallbackResponse.data.guid.rendered);
+        } catch (fallbackError) {
+          console.error("Fallback also failed:", fallbackError);
+        }
+      }
     }
    
   };

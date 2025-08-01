@@ -11,15 +11,140 @@ add_action('rest_api_init', function () {
         'callback' => 'newgarage_send_email',
         'permission_callback' => '__return_true',
     ));
+    
+    // Custom endpoint dla upload obrazów bez autoryzacji
+    register_rest_route('newgarage/v1', '/upload-image', array(
+        'methods' => 'POST',
+        'callback' => 'newgarage_upload_image',
+        'permission_callback' => '__return_true',
+    ));
 });
 
-// Dodanie nagłówków CORS
+// Dodanie nagłówków CORS dla wszystkich WordPress REST API endpoints
 add_action('rest_pre_serve_request', function() {
-    header('Access-Control-Allow-Origin: *'); // Zezwól na żądania z dowolnej domeny
-    header('Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    header('Access-Control-Allow-Credentials: true');
+    // Pobierz origin z requestu
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+    
+    // Lista dozwolonych domen
+    $allowed_origins = array(
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'https://newgarage.pl',
+        'https://www.newgarage.pl'
+    );
+    
+    // Sprawdź czy origin jest na liście dozwolonych
+    if (in_array($origin, $allowed_origins)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+    } else {
+        // Dla innych domen bez credentials
+        header('Access-Control-Allow-Origin: *');
+    }
+    
+    header('Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, PATCH');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-WP-Nonce');
+    header('Access-Control-Expose-Headers: X-WP-Total, X-WP-TotalPages');
+    
+    // Obsługa preflight requests
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        exit();
+    }
 }, 15);
+
+// Dodatkowe nagłówki CORS dla wszystkich żądań (nie tylko REST API)
+add_action('init', function() {
+    // Pobierz origin z requestu
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+    
+    // Lista dozwolonych domen
+    $allowed_origins = array(
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'https://newgarage.pl',
+        'https://www.newgarage.pl'
+    );
+    
+    // Sprawdź czy origin jest na liście dozwolonych
+    if (in_array($origin, $allowed_origins)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+    }
+    
+    // Obsługa preflight requests dla wszystkich żądań
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        header('Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, PATCH');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-WP-Nonce');
+        http_response_code(200);
+        exit();
+    }
+});
+
+/**
+ * Funkcja obsługująca upload obrazów z konfiguratora
+ */
+function newgarage_upload_image($request) {
+    // Sprawdź czy plik został przesłany
+    $files = $request->get_file_params();
+    if (empty($files['file'])) {
+        return new WP_Error('no_file', 'Nie przesłano pliku', array('status' => 400));
+    }
+    
+    $file = $files['file'];
+    
+    // Walidacja typu pliku
+    $allowed_types = array('image/jpeg', 'image/jpg', 'image/png', 'image/gif');
+    if (!in_array($file['type'], $allowed_types)) {
+        return new WP_Error('invalid_file_type', 'Nieprawidłowy typ pliku. Dozwolone: JPG, PNG, GIF', array('status' => 400));
+    }
+    
+    // Walidacja rozmiaru pliku (max 5MB)
+    $max_size = 5 * 1024 * 1024; // 5MB
+    if ($file['size'] > $max_size) {
+        return new WP_Error('file_too_large', 'Plik jest za duży. Maksymalny rozmiar: 5MB', array('status' => 400));
+    }
+    
+    // Przygotowanie nazwy pliku
+    $filename = 'garage-config-' . time() . '-' . sanitize_file_name($file['name']);
+    
+    // Upload pliku do WordPress
+    $upload_overrides = array('test_form' => false);
+    $movefile = wp_handle_upload($file, $upload_overrides);
+    
+    if ($movefile && !isset($movefile['error'])) {
+        // Plik został przesłany pomyślnie
+        $attachment = array(
+            'guid' => $movefile['url'],
+            'post_mime_type' => $file['type'],
+            'post_title' => preg_replace('/\.[^.]+$/', '', $filename),
+            'post_content' => '',
+            'post_status' => 'inherit'
+        );
+        
+        // Dodaj załącznik do biblioteki mediów
+        $attach_id = wp_insert_attachment($attachment, $movefile['file']);
+        
+        if ($attach_id) {
+            // Generuj metadane dla obrazu
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            $attach_data = wp_generate_attachment_metadata($attach_id, $movefile['file']);
+            wp_update_attachment_metadata($attach_id, $attach_data);
+            
+            return array(
+                'success' => true,
+                'message' => 'Obraz został przesłany pomyślnie',
+                'id' => $attach_id,
+                'url' => $movefile['url'],
+                'guid' => array('rendered' => $movefile['url'])
+            );
+        }
+    }
+    
+    return new WP_Error('upload_failed', 'Błąd podczas przesyłania pliku: ' . (isset($movefile['error']) ? $movefile['error'] : 'Nieznany błąd'), array('status' => 500));
+}
 
 /**
  * Funkcja obsługująca wysyłanie emaili z konfiguratora
@@ -58,7 +183,7 @@ function newgarage_send_email($request) {
     );
     
     // Adres docelowy (można ustawić w opcjach WordPress)
-    $to_email = get_option('newgarage_email', 'biuro.newgarage@gmail.com');
+    $to_email = get_option('newgarage_email', 'jaroslawmatusiak124@gmail.com');
     
     // Wysłanie emaila
     $sent = wp_mail($to_email, $subject, $message, $headers);
@@ -234,14 +359,14 @@ add_action('admin_init', function() {
         'type' => 'string',
         'description' => 'Email do otrzymywania zapytań z konfiguratora',
         'sanitize_callback' => 'sanitize_email',
-        'default' => 'biuro.newgarage@gmail.com'
+        'default' => 'jaroslawmatusiak124@gmail.com'
     ));
     
     add_settings_field(
         'newgarage_email',
         'Email konfiguratora garażu',
         function() {
-            $value = get_option('newgarage_email', 'biuro.newgarage@gmail.com');
+            $value = get_option('newgarage_email', 'jaroslawmatusiak124@gmail.com');
             echo '<input type="email" name="newgarage_email" value="' . esc_attr($value) . '" class="regular-text" />';
             echo '<p class="description">Adres email, na który będą wysyłane zapytania z konfiguratora garażu.</p>';
         },
