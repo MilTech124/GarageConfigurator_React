@@ -102,9 +102,9 @@ function SendEmailWP(data, templateType = 'default') {
             });
             console.log('SUCCESS!', result);
 
-            // setTimeout(() => {
-            //     window.location.href = 'https://newgarage.pl/';
-            // }, 3000);
+            setTimeout(() => {
+                window.location.href = 'https://newgarage.pl/';
+            }, 4000);
         } else {
             throw new Error(result.message || 'Błąd wysyłania');
         }

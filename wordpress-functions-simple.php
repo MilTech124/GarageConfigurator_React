@@ -29,7 +29,7 @@ add_action('rest_pre_serve_request', function() {
     $allowed_origins = array(
         'http://localhost:5173',
         'http://localhost:3000',
-        'http://localhost:8080',
+        'https://garage-configurator-react.vercel.app',
         'https://newgarage.pl',
         'https://www.newgarage.pl'
     );
@@ -64,6 +64,7 @@ add_action('init', function() {
         'http://localhost:5173',
         'http://localhost:3000',
         'http://localhost:8080',
+        'https://garage-configurator-react.vercel.app',
         'https://newgarage.pl',
         'https://www.newgarage.pl'
     );
@@ -183,7 +184,7 @@ function newgarage_send_email($request) {
     );
     
     // Adres docelowy (można ustawić w opcjach WordPress)
-    $to_email = get_option('newgarage_email', 'jaroslawmatusiak124@gmail.com');
+    $to_email = get_option('newgarage_email', 'biuro.newgarage@gmail.com');
     
     // Wysłanie emaila
     $sent = wp_mail($to_email, $subject, $message, $headers);
@@ -359,14 +360,14 @@ add_action('admin_init', function() {
         'type' => 'string',
         'description' => 'Email do otrzymywania zapytań z konfiguratora',
         'sanitize_callback' => 'sanitize_email',
-        'default' => 'jaroslawmatusiak124@gmail.com'
+        'default' => 'biuro.newgarage@gmail.com'
     ));
     
     add_settings_field(
         'newgarage_email',
         'Email konfiguratora garażu',
         function() {
-            $value = get_option('newgarage_email', 'jaroslawmatusiak124@gmail.com');
+            $value = get_option('newgarage_email', 'biuro.newgarage@gmail.com');
             echo '<input type="email" name="newgarage_email" value="' . esc_attr($value) . '" class="regular-text" />';
             echo '<p class="description">Adres email, na który będą wysyłane zapytania z konfiguratora garażu.</p>';
         },
