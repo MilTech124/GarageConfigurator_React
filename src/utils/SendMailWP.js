@@ -103,7 +103,8 @@ function SendEmailWP(data, templateType = 'default') {
             console.log('SUCCESS!', result);
 
             setTimeout(() => {
-                window.location.href = 'https://newgarage.pl/';
+                window.history.pushState({}, '', '/thank-you');
+                window.dispatchEvent(new PopStateEvent('popstate'));
             }, 4000);
         } else {
             throw new Error(result.message || 'Błąd wysyłania');
