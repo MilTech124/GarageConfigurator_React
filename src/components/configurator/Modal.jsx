@@ -2,12 +2,11 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
-import Checkbox from '@mui/material/Checkbox';
+import Checkbox from "@mui/material/Checkbox";
 import { toast } from "react-toastify";
 import { FormControl, Select, MenuItem, InputLabel } from "@mui/material";
 import SendEmailWP from "../../utils/SendMailWP";
 import { validateForm } from "../../utils/validation";
-import { variable } from "./Variable";
 
 const style = {
   position: "absolute",
@@ -21,19 +20,67 @@ const style = {
   p: 4,
 };
 
-export default function BasicModal({ selectedOptions, setSelectedOptions, modal, price, setModal, setCapture, imageURL }) {
+export default function BasicModal({
+  selectedOptions,
+  setSelectedOptions,
+  modal,
+  price,
+  setModal,
+  setCapture,
+  imageURL,
+  t,
+  lang,
+}) {
+  const tr = t || ((key) => key);
+  const regionOptions =
+    lang === "cs"
+      ? [
+          "Hlavni mesto Praha",
+          "Stredocesky kraj",
+          "Jihocesky kraj",
+          "Plzensky kraj",
+          "Karlovarsky kraj",
+          "Ustecky kraj",
+          "Liberecky kraj",
+          "Kralovehradecky kraj",
+          "Pardubicky kraj",
+          "Vysocina",
+          "Jihomoravsky kraj",
+          "Olomoucky kraj",
+          "Zlinsky kraj",
+          "Moravskoslezsky kraj",
+        ]
+      : [
+          "dolnoslaskie",
+          "kujawsko-pomorskie",
+          "lubelskie",
+          "lubuskie",
+          "lodzkie",
+          "malopolskie",
+          "mazowieckie",
+          "opolskie",
+          "podkarpackie",
+          "podlaskie",
+          "pomorskie",
+          "slaskie",
+          "swietokrzyskie",
+          "warminsko-mazurskie",
+          "wielkopolskie",
+          "zachodniopomorskie",
+        ];
+
   const handleClose = () => {
     setModal(false);
     setContact({
       name: "",
       email: "",
       email2: "",
-      phone: "", 
+      phone: "",
       address: "",
       message: "",
       honeypot: "",
-      zgoda: false, 
-      marketing: true,    
+      zgoda: false,
+      marketing: true,
     });
     setValidationErrors({});
     setFormStartTime(null);
@@ -44,12 +91,12 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
     name: "",
     email: "",
     email2: "",
-    phone: "", 
+    phone: "",
     address: "",
     message: "",
     honeypot: "",
-    zgoda: false, 
-    marketing: true,    
+    zgoda: false,
+    marketing: true,
   });
 
   const [validationErrors, setValidationErrors] = React.useState({});
@@ -64,44 +111,49 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
 
   React.useEffect(() => {
     if (imageURL && pendingEmailData) {
-      const { contact, selectedOptions, price } = pendingEmailData;
+      const { contact: c, selectedOptions: so, price: pr } = pendingEmailData;
 
-      let doorList = selectedOptions.door.map((door, index) => `Door ${index + 1}: ${JSON.stringify(door)}`).join('\n');   
-      let windowList = selectedOptions.window.map((window, index) => `Window ${index + 1}: ${JSON.stringify(window)}`).join('\n');
-      let carportSides = `Lewo: ${selectedOptions.carportSides.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides.tyl ? "Tak" : "Nie"}`;
-      let carportSides2 = `Lewo: ${selectedOptions.carportSides2.lewo ? "Tak" : "Nie"}\nPrawo: ${selectedOptions.carportSides2.prawo ? "Tak" : "Nie"}\nPrzód: ${selectedOptions.carportSides2.przod ? "Tak" : "Nie"}\nTył: ${selectedOptions.carportSides2.tyl ? "Tak" : "Nie"}`;
+      const doorList = so.door
+        .map((door, index) => `Door ${index + 1}: ${JSON.stringify(door)}`)
+        .join("\n");
+      const windowList = so.window
+        .map((window, index) => `Window ${index + 1}: ${JSON.stringify(window)}`)
+        .join("\n");
+
+      const carportSides = `Lewo: ${so.carportSides.lewo ? "Tak" : "Nie"}\nPrawo: ${so.carportSides.prawo ? "Tak" : "Nie"}\nPrzod: ${so.carportSides.przod ? "Tak" : "Nie"}\nTyl: ${so.carportSides.tyl ? "Tak" : "Nie"}`;
+      const carportSides2 = `Lewo: ${so.carportSides2.lewo ? "Tak" : "Nie"}\nPrawo: ${so.carportSides2.prawo ? "Tak" : "Nie"}\nPrzod: ${so.carportSides2.przod ? "Tak" : "Nie"}\nTyl: ${so.carportSides2.tyl ? "Tak" : "Nie"}`;
 
       SendEmailWP(
         {
-          name: contact.name,
-          email: contact.email,
-          phone: contact.phone,
-          wojewodztwo: selectedOptions.wojewodztwo,
-          address: contact.address,
-          message: contact.message,
-          windowList: selectedOptions.window.length,
-          doorList: selectedOptions.door.length,
+          name: c.name,
+          email: c.email,
+          phone: c.phone,
+          wojewodztwo: so.wojewodztwo,
+          address: c.address,
+          message: c.message,
+          windowList: so.window.length,
+          doorList: so.door.length,
           door: doorList,
           window: windowList,
-          data: selectedOptions,
-          imageURL: imageURL,
-          price: price,
-          carportSides: carportSides,
-          carportSides2: carportSides2,
+          data: so,
+          imageURL,
+          price: pr,
+          carportSides,
+          carportSides2,
         },
         "configurator"
       );
 
       setPendingEmailData(null);
     }
-  }, [imageURL]);
+  }, [imageURL, pendingEmailData]);
 
   function handleChange(e) {
     setContact({ ...contact, [e.target.name]: e.target.value });
   }
 
   function setWoj(e) {
-    setSelectedOptions({...selectedOptions, wojewodztwo: e.target.value});        
+    setSelectedOptions({ ...selectedOptions, wojewodztwo: e.target.value });
   }
 
   const sendData = async (e) => {
@@ -109,17 +161,22 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
     setValidationErrors({});
 
     if (!contact.zgoda) {
-      toast.error("Zaznacz zgodę na kontakt");
+      toast.error(tr("formConsentRequired"));
       return;
     }
 
     if (contact.email !== contact.email2) {
-      toast.error("Adresy email nie są takie same");
+      toast.error(tr("formEmailsMismatch"));
       return;
     }
 
-    if (contact.name === "" || contact.email === "" || contact.phone === "" || contact.address === "") {
-      toast.error("Wypełnij wszystkie pola");
+    if (
+      contact.name === "" ||
+      contact.email === "" ||
+      contact.phone === "" ||
+      contact.address === ""
+    ) {
+      toast.error(tr("formFillAllFields"));
       return;
     }
 
@@ -138,18 +195,16 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
       }
     }
 
-    console.log("sendData - validation passed");
-
-    const contactSnapshot = { ...contact }; // snapshot danych
+    const contactSnapshot = { ...contact };
     const selectedOptionsSnapshot = { ...selectedOptions };
 
     setPendingEmailData({
       contact: contactSnapshot,
       selectedOptions: selectedOptionsSnapshot,
-      price: price,
+      price,
     });
 
-    await setCapture(true); // robi screenshot
+    await setCapture(true);
 
     handleClose();
   };
@@ -160,17 +215,17 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
         open={modal}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"   
+        aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <h4 className="text-black">Kontakt</h4>
+          <h4 className="text-black">{tr("formContact")}</h4>
           <form className="flex flex-col gap-2" onSubmit={sendData}>
             <input
               type="text"
               name="honeypot"
               value={contact.honeypot}
               onChange={handleChange}
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
               tabIndex="-1"
               autoComplete="off"
             />
@@ -178,10 +233,12 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
               <input
                 type="text"
                 name="name"
-                placeholder="Imię i nazwisko"
+                placeholder={tr("formName")}
                 value={contact.name}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${validationErrors.name ? 'border-red-500' : 'border-gray-400'}`}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.name ? "border-red-500" : "border-gray-400"
+                }`}
               />
               {validationErrors.name && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
@@ -191,10 +248,12 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
               <input
                 type="email"
                 name="email"
-                placeholder="Email"
+                placeholder={tr("formEmail")}
                 value={contact.email}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${validationErrors.email ? 'border-red-500' : 'border-gray-400'}`}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.email ? "border-red-500" : "border-gray-400"
+                }`}
               />
               {validationErrors.email && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
@@ -204,29 +263,33 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
               <input
                 type="email"
                 name="email2"
-                placeholder="Potwierdź Email"
+                placeholder={tr("formConfirmEmail")}
                 value={contact.email2}
                 onChange={handleChange}
                 className="p-2 border rounded-md w-full"
-                style={{borderColor: contact.email !== contact.email2 ? "red" : "green"}}
+                style={{ borderColor: contact.email !== contact.email2 ? "red" : "green" }}
               />
             </div>
             <FormControl fullWidth>
-              <InputLabel id="woj-label">Województwo</InputLabel>
+              <InputLabel id="woj-label">{tr("formRegion")}</InputLabel>
               <Select labelId="woj-label" value={selectedWojewodztwo} onChange={setWoj}>
-                {variable.wojewodztwa.map((wojewodztwo) => (
-                  <MenuItem key={wojewodztwo} value={wojewodztwo}>{wojewodztwo}</MenuItem>
+                {regionOptions.map((wojewodztwo) => (
+                  <MenuItem key={wojewodztwo} value={wojewodztwo}>
+                    {wojewodztwo}
+                  </MenuItem>
                 ))}
-              </Select>              
+              </Select>
             </FormControl>
             <div>
               <input
                 type="text"
                 name="address"
-                placeholder="Adres dostawy"
+                placeholder={tr("formAddress")}
                 value={contact.address}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${validationErrors.address ? 'border-red-500' : 'border-gray-400'}`}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.address ? "border-red-500" : "border-gray-400"
+                }`}
               />
               {validationErrors.address && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.address}</p>
@@ -236,26 +299,30 @@ export default function BasicModal({ selectedOptions, setSelectedOptions, modal,
               <input
                 type="tel"
                 name="phone"
-                placeholder="Telefon"
+                placeholder={tr("formPhone")}
                 value={contact.phone}
                 onChange={handleChange}
-                className={`p-2 border rounded-md w-full ${validationErrors.phone ? 'border-red-500' : 'border-gray-400'}`}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.phone ? "border-red-500" : "border-gray-400"
+                }`}
               />
               {validationErrors.phone && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
               )}
             </div>
-            <p className="font-light">Cena z transportem: <b className="text-blue-500 font-bold">{price} zł</b></p>
             <div className="text-xs flex">
-              <Checkbox onChange={(e) => setContact({...contact, zgoda: e.target.checked})} />
-              <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym numeru telefonu, przez NewGarage w celu kontaktu telefonicznego dotyczącego mojego zapytania.</p>
+              <Checkbox onChange={(e) => setContact({ ...contact, zgoda: e.target.checked })} />
+              <p>{tr("formConsentText")}</p>
             </div>
             <div className="text-xs flex">
-              <Checkbox onChange={(e) => setContact({...contact, marketing: e.target.checked})} />
-              <p>Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym adresu e-mail, w celu przesyłania mi informacji handlowych, ofert promocyjnych oraz innych treści marketingowych związanych z ofertą garaży blaszanych.</p>
+              <Checkbox
+                defaultChecked
+                onChange={(e) => setContact({ ...contact, marketing: e.target.checked })}
+              />
+              <p>{tr("formMarketingText")}</p>
             </div>
             <Button type="submit" variant="contained" className="bg-slate-900 text-white p-2 rounded-md">
-              Wyślij
+              {tr("formSend")}
             </Button>
           </form>
         </Box>

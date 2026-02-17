@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import GarageConfigurator from "./GarageConfigurator";
 import GarageViewer from "./GarageViewer";
 import Modal from "./Modal";
@@ -10,9 +10,13 @@ import CalcMain from "./calculate/CalcMain";
 import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
 import TagManager from 'react-gtm-module';
+import { LANG, t as translate, translateOption } from "./i18n";
 
 
 function Main() {
+  const [lang, setLang] = useState(LANG.PL);
+  const t = (key) => translate(lang, key);
+  const o = (value) => translateOption(lang, value);
 
   const [selectedOptions, setSelectedOptions] = useState({
     color: "Złoty Dąb",
@@ -20,7 +24,7 @@ function Main() {
     width: 6,
     depth: 6,
     height: 213,
-    emboss: "wąskie",
+    emboss: "wÄ…skie",
     direction: "poziom",
 
     roof: "dwuspad",
@@ -28,7 +32,7 @@ function Main() {
     roofColorRal: "#272C38",
     roofType: "trapezowa",
 
-    gateEmbose: "wąskie",
+    gateEmbose: "wÄ…skie",
     gateDirection: "poziom",
 
     gateCount: 2,   //2 wczesniej
@@ -82,14 +86,14 @@ function Main() {
   useEffect(() => {
     if (selectedOptions.color ==="Ocynk") {
       selectedOptions.direction = "pion";
-      selectedOptions.emboss = "wąskie";
+      selectedOptions.emboss = "wÄ…skie";
     }
   }, [selectedOptions.color]);
 
   useEffect(() => {
     if(selectedOptions.color === "Ocynk") {
     
-      setSelectedOptions({...selectedOptions, gateType1:"dwuskrzydłowa",gateType2:"dwuskrzydłowa", roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
+      setSelectedOptions({...selectedOptions, gateType1:"dwuskrzydĹ‚owa",gateType2:"dwuskrzydĹ‚owa", roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
     }}
   ,[selectedOptions.color])
 
@@ -100,14 +104,14 @@ function Main() {
   const user = import.meta.env.VITE_USER_WP;
   const password = import.meta.env.VITE_PASSWORD_WP;
 
-  // Funkcja do wysyłania zdarzenia do GTM
+  // Funkcja do wysyĹ‚ania zdarzenia do GTM
   const sendGTMEvent = () => {
     TagManager.dataLayer({
       dataLayer: {
         event: 'order_button_click',
         eventCategory: 'Configurator',
         eventAction: 'Click',
-        eventLabel: 'Zamów Button',      
+        eventLabel: 'ZamĂłw Button',      
       }
     });
   };
@@ -216,17 +220,40 @@ function Main() {
         </div>
       </div> }
    
-      <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}  />      
-      <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} />
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 bg-white/90 border border-slate-300 rounded-xl shadow-md overflow-hidden">
+        <button
+          className={`block w-16 px-3 py-2 text-sm ${lang === LANG.PL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+          onClick={() => setLang(LANG.PL)}
+        >
+          PL
+        </button>
+        <button
+          className={`block w-16 px-3 py-2 text-sm ${lang === LANG.CS ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+          onClick={() => setLang(LANG.CS)}
+        >
+          CZ
+        </button>
+      </div>
+
+      <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} t={t} o={o} lang={lang} />
+      <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} t={t} lang={lang} />
       <div id='capture' className="w-full md:h-3/4 relative max-sm:order-1 max-sm:h-1/3 max-sm:pb-[75px] ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
-        <div className="md:pl-[10%] relative flex justify-around p-2 border-2 border-slate-800">
+        <div className="md:pl-[10%] relative flex justify-center items-center p-2 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
     
-          <Button onClick={() => {
-            sendGTMEvent();
-            setModal(true);
-          }} variant="contained" size="large" endIcon={<SendIcon />}>Zamów </Button>
+          <Button
+            onClick={() => {
+              sendGTMEvent();
+              setModal(true);
+            }}
+            variant="contained"
+            size="large"
+            endIcon={<SendIcon />}
+            sx={{ fontSize: "1.1rem", px: 3, py: 1.2, fontWeight: 700 }}
+          >
+            {t("orderQuote")}
+          </Button>
           
         </div>
        
@@ -234,14 +261,13 @@ function Main() {
           onClick={() => (setModal(true))}
           className="fixed z-50 btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-900 text-white rounded-md"
         >
-          Wyślij wycenę
+          WyĹ›lij wycenÄ™
         </button> */}
         <div className="p-2 border-2 border-slate-800 max-sm:hidden ">
-        <p><b>Konstrukcja</b>- Konstrukcja wykonana jest z czarnej stali malowanej farbą podkładową, co chroni przed korozją.
-        <br></br> Wykorzystano <b>profil zamknięty</b>, który zapewnia wysoką wytrzymałość i stabilność garażu. </p>
+        <p><b>{t("constructionTitle")}</b> - {t("constructionText")}
+        <br></br> {t("profileText")} </p>
         <p className="pt-2">
-          <b>Przygotowanie podłoża</b>, <b>fundamentów</b>  leży po stronie klienta.
-          Kotwiczenie garażu we własnym zakresie.
+          <b>{t("groundTitle")}</b>, <b>{t("foundationTitle")}</b> {t("groundText")}
         </p>
         </div>
         
@@ -254,3 +280,5 @@ function Main() {
 }
 
 export default Main;
+
+

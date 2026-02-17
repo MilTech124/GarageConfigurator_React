@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import {
   Select,
@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { variable } from "../Variable";
 
-function GateSetting2({ selectedOptions, setSelectedOptions }) {
+function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
   const [gateCount, setGateCount] = useState(2);
   const {
     
@@ -42,15 +42,15 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
     { name: "Ocynk", url: "./konfigurator/ocynk.png"},
     // { name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png" },
     
-    { name: "Biały 9010", ral: "#FBFFFF" },
+    { name: "BiaĹ‚y 9010", ral: "#FBFFFF" },
     { name: "Szary 9002", ral: "#F2EFE8" },
     { name: "Srebrny 9006", ral: "#A7ABB6" },
     { name: "Piaskowy 1002", ral: "#D7B075" },
     { name: "Antracyt 7016", ral: "#272C38" },
-    { name: "Ciemny Brąz 8017", ral: "#2F1D1D" },
-    { name: "Brąz Jasny 8004", ral: "#85392C" },
-    { name: "Ciemna Zieleń 6029", ral: "#0B3821" },
-    { name: "Jasna Zieleń 6029", ral: "#117825" },    
+    { name: "Ciemny BrÄ…z 8017", ral: "#2F1D1D" },
+    { name: "BrÄ…z Jasny 8004", ral: "#85392C" },
+    { name: "Ciemna ZieleĹ„ 6029", ral: "#0B3821" },
+    { name: "Jasna ZieleĹ„ 6029", ral: "#117825" },    
     { name: "Czerwony 3011", ral: "#781416" },
     { name: "Wisniowy 3005", ral: "#4F121A" },
     { name: "Czarny 9005", ral: "#2C2C2C" },
@@ -63,7 +63,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         width < gateWidth2 + gateWidth1 + gatePositionValue1 / 100
       ){
         return toast.warning(
-          "Zmień rozmiar lub pozycję pierwszej."
+          t("resizeFirstGate")
         );
       }
       if (
@@ -71,11 +71,11 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         width < gateWidth3 + gateWidth2 + gatePositionValue2 / 100
       ) {
         return toast.warning(
-          "Zmień rozmiary."
+          t("resizeGates")
         );
       }
       setGateCount(gateCount + 1);
-      toast.info("Dodano bramę");
+      toast.info(t("gateAdded"));
     } else if (action === "-" && gateCount > 0) {
       setGateCount(gateCount - 1);
     }
@@ -140,9 +140,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
     <div>      
       <div className="relative">
       {/* <p className="text-red-500 text-center text-xl pb-5">
-          Min. szerokość garażu 6m aby dodać bramę.
+          Min. szerokoĹ›Ä‡ garaĹĽu 6m aby dodaÄ‡ bramÄ™.
         </p> */}
-        <p className="text-center">Dodaj lub usuń bramy</p>
+        <p className="text-center">{t("addOrRemoveGates")}</p>
         <div className="flex justify-around p-2">
           {/* <img src="./konfigurator/gate.svg" /> */}
           <div className="  flex flex-col justify-center items-center">
@@ -152,13 +152,13 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 className="bg-slate-900 text-white h-16 w-16 rounded-full"
                 onClick={() => handleGates("-")}
               >
-                Usuń
+                {t("remove")}
               </button>
               <button
                 className="bg-slate-900 text-white h-16 w-16 rounded-full"
                 onClick={() => handleGates("+")}
               >
-                Dodaj
+                {t("add")}
               </button>
             </div>
           </div>
@@ -166,30 +166,30 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         
         <div className="flex pb-3 gap-5 max-md:flex-wrap">
           <FormControl fullWidth>
-            <InputLabel>Przetłoczenia</InputLabel>
+            <InputLabel>{t("emboss")}</InputLabel>
             <Select
               value={selectedOptions.gateEmbose}
               onChange={handleChange("gateEmbose")}
-              label="Przetłoczenia"
+              label={t("emboss")}
             >
               {variable.gateEmbose.map((type) => (
                 <MenuItem key={type} value={type}>
-                  {type}
+                  {o(type)}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
           <FormControl fullWidth className="pb-5">
-            <InputLabel>Kierunek przetłoczeń</InputLabel>
+            <InputLabel>{t("embossDirection")}</InputLabel>
             <Select
               value={selectedOptions.gateDirection}
               onChange={handleChange("gateDirection")}
-              label="Kierunek przetłoczeń"
+              label={t("embossDirection")}
             >
               {variable.gateDirection.map((type) => (
                 <MenuItem key={type} value={type}>
-                  {type}
+                  {o(type)}
                 </MenuItem>
               ))}
             </Select>
@@ -200,40 +200,40 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
         {selectedOptions.gateCount >= 1 ? (
           <div>
           <FormControl className=" mt-3" fullWidth>
-              <InputLabel>Kolorystyka</InputLabel>
+              <InputLabel>{t("color")}</InputLabel>
               <Select
                 value={gateColor1}
-                label="Kolorystyka"
+                label={t("color")}
                 onChange={changeColor("gateColor1", "gateColorRal1")}
               >
                 {gateColor.map((color) => (
                   <MenuItem key={color.name} value={color.name}>
-                    {color.name}
+                    {o(color.name)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <FormControl className="!mt-5" fullWidth>
-              <InputLabel>Pierwsza brama</InputLabel>
+              <InputLabel>{t("firstGate")}</InputLabel>
               <Select
                 value={gateType1}
-                label="Pierwsza brama"
+                label={t("firstGate")}
                 onChange={handleChange("gateType1")}
               >
                 {variable.gateTypes.map((type) => (
                   <MenuItem key={type} value={type}>
-                    {type}
+                    {o(type)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <div className="flex pt-3 gap-1">
               <FormControl fullWidth>
-                <InputLabel>Wysokość</InputLabel>
+                <InputLabel>{t("height")}</InputLabel>
                 <Select
                   disabled={gateCount === 1 ? false : true}
                   value={gateHeight1}
-                  label="Wysokość"
+                  label={t("height")}
                   onChange={handleChange("gateHeight1")}
                 >
                   {variable.gateSizes.height.map((gateHeight) =>
@@ -246,11 +246,11 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>Szerokość</InputLabel>
+                <InputLabel>{t("width")}</InputLabel>
                 <Select
                   disabled={gateCount === 1 ? false : true}
                   value={gateWidth1}
-                  label="Szerokość"
+                  label={t("width")}
                   onChange={handleChange("gateWidth1")}
                 >
                   {variable.gateSizes.width
@@ -268,11 +268,11 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
             </div>
-            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateHeight1-10} wysokość, {selectedOptions.gateWidth1*100-25} szerokość </p>
+            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight1-10} {t("height")}, {selectedOptions.gateWidth1*100-25} {t("width")} </p>
           
             {/* Slider*/}
             <h5 className="text-sm text-center pt-2 text-slate-900">
-              Pozycja bramy
+              {t("gatePosition")}
             </h5>
             <Slider
               disabled={gateCount === 1 ? false : true}
@@ -290,13 +290,13 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 })
               }
             />
-            {gatePositionValue1} cm od lewej krawędzi
+            {gatePositionValue1} {t("fromLeftEdge")}
           </div>
         ) : null}
         {/* //second gate  */}
         {(gateCount >= 2) && (width>=6) ? (
           <div className="py-5 relative">
-            <h4 className="bg-slate-400 text-sm p-2 mb-2">Druga brama</h4>
+            <h4 className="bg-slate-400 text-sm p-2 mb-2">{t("secondGate")}</h4>
             {/* //gateCount -1 button to remove gate */}
             <button
               className="absolute top-0 right-0 bg-slate-900 hover:bg-slate-500 text-white px-3 py-1 rounded-md"
@@ -305,26 +305,26 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
               -
             </button>
             <FormControl fullWidth>
-              <InputLabel>Druga brama</InputLabel>
+              <InputLabel>{t("secondGate")}</InputLabel>
               <Select
                 value={gateType2}
-                label="Druga brama"
+                label={t("secondGate")}
                 onChange={handleChange("gateType2")}
               >
                 {variable.gateTypes.map((type) => (
                   <MenuItem key={type} value={type}>
-                    {type}
+                    {o(type)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <div className="flex pt-3 gap-1">
               <FormControl fullWidth>
-                <InputLabel>Wysokość</InputLabel>
+                <InputLabel>{t("height")}</InputLabel>
                 <Select
                   disabled={gateCount === 2 ? false : true}
                   value={gateHeight2}
-                  label="Wysokość"
+                  label={t("height")}
                   onChange={handleChange("gateHeight2")}
                 >
                   {variable.gateSizes.height.map((heightGate) =>
@@ -337,11 +337,11 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>Szerokość</InputLabel>
+                <InputLabel>{t("width")}</InputLabel>
                 <Select
                   disabled={gateCount === 2 ? false : true}
                   value={gateWidth2}
-                  label="Szerokość"
+                  label={t("width")}
                   onChange={handleChange("gateWidth2")}
                 >
                   {variable.gateSizes.width
@@ -360,23 +360,23 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
               </FormControl>
             </div>
             {/* <FormControl className="py-3 mt-3" fullWidth>
-              <InputLabel>Kolorystyka</InputLabel>
+              <InputLabel>{t("color")}</InputLabel>
               <Select
                 value={gateColor2}
-                label="Kolorystyka"
+                label={t("color")}
                 onChange={changeColor("gateColor2", "gateColorRal2")}
               >
                 {gateColor.map((color) => (
                   <MenuItem key={color.name} value={color.name}>
-                    {color.name}
+                    {o(color.name)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl> */}
             {/* Slider 2*/}
-            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateHeight2-10} wysokość,{selectedOptions.gateWidth2*100-25} szerokość</p>
+            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight2-10} {t("height")},{selectedOptions.gateWidth2*100-25} {t("width")}</p>
             <h5 className="text-sm text-center pt-2 text-slate-900">
-              Pozycja bramy
+              {t("gatePosition")}
             </h5>
             <Slider
               disabled={gateCount === 2 ? false : true}
@@ -394,14 +394,14 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 })
               }
             />
-            {gatePositionValue2} cm od lewej krawędzi
+            {gatePositionValue2} {t("fromLeftEdge")}
           </div>
         ) : null}
 
         {/* //third gate  */}
         {gateCount >= 3 ? (
           <div className="py-5 relative">
-            <h4 className="bg-slate-400 text-sm p-2 mb-2">Trzecia brama</h4>
+            <h4 className="bg-slate-400 text-sm p-2 mb-2">{t("thirdGate")}</h4>
             {/* //gateCount -1 button to remove gate */}
             <button
               className="absolute top-0 right-0 bg-slate-900 hover:bg-slate-500 text-white px-3 py-1 rounded-md"
@@ -410,25 +410,25 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
               -
             </button>
             <FormControl fullWidth>
-              <InputLabel>Trzecia brama</InputLabel>
+              <InputLabel>{t("thirdGate")}</InputLabel>
               <Select
                 value={gateType3}
-                label="Trzecia brama"
+                label={t("thirdGate")}
                 onChange={handleChange("gateType3")}
               >
                 {variable.gateTypes.map((type) => (
                   <MenuItem key={type} value={type}>
-                    {type}
+                    {o(type)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <div className="flex pt-3 gap-1">
               <FormControl fullWidth>
-                <InputLabel>Wysokość</InputLabel>
+                <InputLabel>{t("height")}</InputLabel>
                 <Select
                   value={gateHeight3}
-                  label="Wysokość"
+                  label={t("height")}
                   onChange={handleChange("gateHeight3")}
                 >
                   {variable.gateSizes.height.map((height) => (
@@ -439,10 +439,10 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>Szerokość</InputLabel>
+                <InputLabel>{t("width")}</InputLabel>
                 <Select
                   value={gateWidth3 <= width ? gateWidth3 : width}
-                  label="Szerokość"
+                  label={t("width")}
                   onChange={handleChange("gateWidth3")}
                 >
                     {variable.gateSizes.width
@@ -461,23 +461,23 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
               </FormControl>
             </div>
             {/* <FormControl className="py-3 mt-3" fullWidth>
-              <InputLabel>Kolorystyka</InputLabel>
+              <InputLabel>{t("color")}</InputLabel>
               <Select
                 value={gateColor3}
-                label="Kolorystyka"
+                label={t("color")}
                 onChange={changeColor("gateColor3", "gateColorRal3")}
               >
                 {gateColor.map((color) => (
                   <MenuItem key={color.name} value={color.name}>
-                    {color.name}
+                    {o(color.name)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl> */}
             {/* Slider*/}
-            <p className="text-orange-400"> Swiatło wiazdu: {selectedOptions.gateHeight3-10} wysokość ,{selectedOptions.gateWidth3*100-25} szerokość</p>
+            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight3-10} {t("height")} ,{selectedOptions.gateWidth3*100-25} {t("width")}</p>
             <h5 className="text-sm text-center pt-2 text-slate-900">
-              Pozycja bramy
+              {t("gatePosition")}
             </h5>
             <Slider
               disabled={gateCount === 3 ? false : true}
@@ -495,11 +495,11 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
                 })
               }
             />
-            {gatePositionValue3} cm od lewej krawędzi
+            {gatePositionValue3} {t("fromLeftEdge")}
           </div>
         ) : selectedOptions.gateCount >= 3 ? (
           <p className="text-red-400 text-xs">
-            Nie możesz dodać trzeciej bramy. Brak miejsca
+            {t("cantAddThirdGate")}
           </p>
         ) : null}
       </div>
@@ -508,3 +508,4 @@ function GateSetting2({ selectedOptions, setSelectedOptions }) {
 }
 
 export default GateSetting2;
+
