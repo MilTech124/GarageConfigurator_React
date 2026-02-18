@@ -3,6 +3,7 @@ import { TextureLoader } from "three";
 import { MeshStandardMaterial } from "three";
 import * as THREE from "three";
 import { DoubleSide } from 'three'
+import { assetPath } from '../../utils/assetPath';
  
 
 function Materials(selectedOptions) {
@@ -248,23 +249,23 @@ function Materials(selectedOptions) {
   };
 
   //textures loader
-  const roofTexture = useLoader(TextureLoader, "/model/roof.jpg");
-  const roofTrapezTexture = useLoader(TextureLoader, "/model/trapez3.jpg");
+  const roofTexture = useLoader(TextureLoader, assetPath("model/roof.jpg"));
+  const roofTrapezTexture = useLoader(TextureLoader, assetPath("model/trapez3.jpg"));
 
-  const ocynkTexture = useLoader(TextureLoader, "./model/ocynk.jpg");
-  const wallTexture = useLoader(TextureLoader, "/model/jasny-dab-2.jpg");
-  const wallTextureDabDark = useLoader(TextureLoader, "/model/dab-2.jpg");
-  const wallTextureOrzech = useLoader(TextureLoader, "/model/orzech-2-kopia.jpg");
-  const normalWall = useLoader(TextureLoader, "/model/normal-big-90.jpg");
-  const normalwall90 = useLoader(TextureLoader, "/model/normal-big.jpg");
+  const ocynkTexture = useLoader(TextureLoader, assetPath("model/ocynk.jpg"));
+  const wallTexture = useLoader(TextureLoader, assetPath("model/jasny-dab-2.jpg"));
+  const wallTextureDabDark = useLoader(TextureLoader, assetPath("model/dab-2.jpg"));
+  const wallTextureOrzech = useLoader(TextureLoader, assetPath("model/orzech-2-kopia.jpg"));
+  const normalWall = useLoader(TextureLoader, assetPath("model/normal-big-90.jpg"));
+  const normalwall90 = useLoader(TextureLoader, assetPath("model/normal-big.jpg"));
 
-  const gateTexture = useLoader(TextureLoader, "/model/jasny-dab-2.jpg");
-  const normalGate = useLoader(TextureLoader, "/model/normal-big-90-gate.jpg");
-  const normalGate90 = useLoader(TextureLoader, "/model/normal-big-gate.jpg");
-  const gateSegment = useLoader(TextureLoader, "/model/segmentowa.jpg");
+  const gateTexture = useLoader(TextureLoader, assetPath("model/jasny-dab-2.jpg"));
+  const normalGate = useLoader(TextureLoader, assetPath("model/normal-big-90-gate.jpg"));
+  const normalGate90 = useLoader(TextureLoader, assetPath("model/normal-big-gate.jpg"));
+  const gateSegment = useLoader(TextureLoader, assetPath("model/segmentowa.jpg"));
 
-  const azuryTexture = useLoader(TextureLoader, "/model/azury.png");
-  const alphatexture = useLoader(TextureLoader, "/model/alpha-azury.png");
+  const azuryTexture = useLoader(TextureLoader, assetPath("model/azury.png"));
+  const alphatexture = useLoader(TextureLoader, assetPath("model/alpha-azury.png"));
 
   //textures uv
   ocynkTexture.repeat.set(2*(3*width/6), 1);
@@ -364,7 +365,6 @@ function Materials(selectedOptions) {
         material = new MeshStandardMaterial({
           color: colorRal,
           alphaMap: alphatexture,
-          color: colorRal,
           roughness: 0.9,        
           metalness: .2,
           bumpScale: -1,  
@@ -402,7 +402,6 @@ function Materials(selectedOptions) {
         material = new MeshStandardMaterial({
           color: colorRal,
           alphaMap: alphatexture,
-          color: colorRal,
           roughness: 0.9,        
           metalness: .2,
           bumpScale: -1,  

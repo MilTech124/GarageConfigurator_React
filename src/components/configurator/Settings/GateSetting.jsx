@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Select, InputLabel,FormControl,MenuItem,Slider } from '@mui/material'
 import { variable } from '../Variable'
+import { assetPath } from '../../../utils/assetPath'
 
 
 function GateSetting({ selectedOptions, setSelectedOptions}) {
@@ -121,7 +122,7 @@ const gateTabel3 = () => {
 
         <div className='relative'> 
             <div className='flex justify-around'>
-                <img src="./konfigurator/gate.svg"/>
+                <img src={assetPath("konfigurator/gate.svg")} />
                 <div className='  flex flex-col justify-center items-center'>
                     <p className='text-2xl font-bold'>{selectedOptions.gateCount}</p>
                     <div className='flex gap-2'>

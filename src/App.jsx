@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import Main from "./components/configurator/Main";
 import ThankYou from "./components/ThankYou";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
+  const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
+  const thankYouPaths = [
+    wpConfig.thankYouPathPl || "/dziekujemy",
+    wpConfig.thankYouPathCs || "/dekujeme",
+    wpConfig.thankYouPath || "/thank-you",
+  ];
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
   useEffect(() => {
@@ -34,7 +40,7 @@ function App() {
   }, []);
 
   const renderPage = () => {
-    if (currentPath === '/thank-you') {
+    if (thankYouPaths.includes(currentPath)) {
       return <ThankYou />;
     }
     return <Main />;

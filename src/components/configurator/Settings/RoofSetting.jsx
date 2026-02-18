@@ -1,10 +1,11 @@
 ﻿import { FormControl, InputLabel, Select, MenuItem, Grid, Card, CardActionArea, CardMedia } from '@mui/material';
 import { useEffect } from 'react';
+import { assetPath } from '../../../utils/assetPath';
 
 function RoofSetting({selectedOptions, setSelectedOptions, o}) {
   const roof =[
-    {name: "blachodachówka", url: "./images/blachodachowka.jpg"},
-    {name: "trapezowa", url: "./images/trapezowa.jpg"},
+    {name: "blachodachówka", url: assetPath("images/blachodachowka.jpg") },
+    {name: "trapezowa", url: assetPath("images/trapezowa.jpg") },
   ];
 
   const roofColor = [

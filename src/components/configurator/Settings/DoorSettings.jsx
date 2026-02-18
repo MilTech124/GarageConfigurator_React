@@ -8,14 +8,15 @@ import {
   Slider,
 } from "@mui/material";
 import { variable } from "../Variable";
+import { assetPath } from "../../../utils/assetPath";
 
 function DoorSettings({ selectedOptions, setSelectedOptions, t, o }) {
   const [countDoor, setCountDoor] = useState(0);
   const { width, depth } = selectedOptions;
 
   const doorColor = [
-    { name: "Złoty Dąb", url: "./konfigurator/jasny-dab.webp" },
-    { name: "Orzech", url: "./konfigurator/orzech.png" },
+    { name: "Złoty Dąb", url: assetPath("konfigurator/jasny-dab.webp") },
+    { name: "Orzech", url: assetPath("konfigurator/orzech.png") },
     { name: "Antracyt 7016", ral: "#272C38" },
     { name: "Ciemny BrÄ…z 8017", ral: "#2F1D1D" },
     { name: "BrÄ…z Jasny 8004", ral: "#85392C" },

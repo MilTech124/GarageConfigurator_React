@@ -28,6 +28,7 @@ export default function BasicModal({
   setModal,
   setCapture,
   imageURL,
+  setImageURL,
   t,
   lang,
 }) {
@@ -110,7 +111,7 @@ export default function BasicModal({
   }, [modal]);
 
   React.useEffect(() => {
-    if (imageURL && pendingEmailData) {
+    if (pendingEmailData && imageURL !== null) {
       const { contact: c, selectedOptions: so, price: pr } = pendingEmailData;
 
       const doorList = so.door
@@ -136,12 +137,13 @@ export default function BasicModal({
           door: doorList,
           window: windowList,
           data: so,
-          imageURL,
+          imageURL: imageURL || "",
           price: pr,
           carportSides,
           carportSides2,
         },
-        "configurator"
+        "configurator",
+        lang
       );
 
       setPendingEmailData(null);
@@ -204,6 +206,7 @@ export default function BasicModal({
       price,
     });
 
+    setImageURL(null);
     await setCapture(true);
 
     handleClose();

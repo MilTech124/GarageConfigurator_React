@@ -11,7 +11,11 @@ const tagManagerArgs = {
 
 TagManager.initialize(tagManagerArgs)
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const mountNode =
+  document.getElementById("configurator-plugin-root") ||
+  document.getElementById("root");
+
+ReactDOM.createRoot(mountNode).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,

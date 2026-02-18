@@ -13,8 +13,13 @@ import TagManager from 'react-gtm-module';
 import { LANG, t as translate, translateOption } from "./i18n";
 
 
+function resolveInitialLang() {
+  const runtimeLang = globalThis?.__CONFIGURATOR_PLUGIN__?.lang;
+  return runtimeLang === LANG.CS ? LANG.CS : LANG.PL;
+}
+
 function Main() {
-  const [lang, setLang] = useState(LANG.PL);
+  const [lang, setLang] = useState(resolveInitialLang);
   const t = (key) => translate(lang, key);
   const o = (value) => translateOption(lang, value);
 
@@ -24,7 +29,7 @@ function Main() {
     width: 6,
     depth: 6,
     height: 213,
-    emboss: "wÄ…skie",
+    emboss: "wąskie",
     direction: "poziom",
 
     roof: "dwuspad",
@@ -32,7 +37,7 @@ function Main() {
     roofColorRal: "#272C38",
     roofType: "trapezowa",
 
-    gateEmbose: "wÄ…skie",
+    gateEmbose: "wąskie",
     gateDirection: "poziom",
 
     gateCount: 2,   //2 wczesniej
@@ -86,14 +91,14 @@ function Main() {
   useEffect(() => {
     if (selectedOptions.color ==="Ocynk") {
       selectedOptions.direction = "pion";
-      selectedOptions.emboss = "wÄ…skie";
+      selectedOptions.emboss = "wąskie";
     }
   }, [selectedOptions.color]);
 
   useEffect(() => {
     if(selectedOptions.color === "Ocynk") {
     
-      setSelectedOptions({...selectedOptions, gateType1:"dwuskrzydĹ‚owa",gateType2:"dwuskrzydĹ‚owa", roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
+      setSelectedOptions({...selectedOptions, gateType1:"dwuskrzydłowa",gateType2:"dwuskrzydłowa", roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
     }}
   ,[selectedOptions.color])
 
@@ -101,8 +106,10 @@ function Main() {
 
 
 
-  const user = import.meta.env.VITE_USER_WP;
-  const password = import.meta.env.VITE_PASSWORD_WP;
+  const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
+  const uploadEndpoint =
+    wpConfig.uploadEndpoint ||
+    `${window.location.origin}/wp-json/configurator/v1/upload-image`;
 
   // Funkcja do wysyĹ‚ania zdarzenia do GTM
   const sendGTMEvent = () => {
@@ -167,11 +174,12 @@ function Main() {
     try {
       // Use the custom upload endpoint instead of WordPress media endpoint
       const response = await axios.post(
-        'https://newgarage.pl/wp-json/newgarage/v1/upload-image',
+        uploadEndpoint,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
+            ...(wpConfig.nonce ? { 'X-WP-Nonce': wpConfig.nonce } : {}),
           },
         }
       );
@@ -181,36 +189,18 @@ function Main() {
         await setImageURL(response.data.url);
       } else {
         console.error("Upload failed:", response.data.message);
+        await setImageURL("");
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      
-      // Fallback - try the original WordPress media endpoint with Basic Auth
-      if (user && password) {
-        console.log("Trying WordPress media endpoint as fallback...");
-        try {
-          const fallbackResponse = await axios.post(
-            'https://newgarage.pl/wp-json/wp/v2/media',
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': 'Basic ' + btoa(user + ":" + password),
-              },
-            }
-          );
-          console.log("Fallback Response", fallbackResponse.data);
-          await setImageURL(fallbackResponse.data.guid.rendered);
-        } catch (fallbackError) {
-          console.error("Fallback also failed:", fallbackError);
-        }
-      }
+      await setImageURL("");
     }
+    await setCapture(false);
    
   };
  
   return (
-    <div className="bg-slate-200 relative w-screen h-screen flex max-sm:flex-col">
+    <div className="bg-slate-200 relative w-screen h-screen min-h-0 flex overflow-hidden max-sm:flex-col">
    
    {capture && <div class="absolute top-0 left-0 w-full h-full flex-col gap-4  flex items-center justify-center !z-50 bg-black/50 ">
         <div class="w-28 h-28 border-8 text-blue-400 text-4xl animate-spin border-gray-300 flex items-center justify-center border-t-blue-400 rounded-full">
@@ -236,8 +226,8 @@ function Main() {
       </div>
 
       <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} t={t} o={o} lang={lang} />
-      <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} t={t} lang={lang} />
-      <div id='capture' className="w-full md:h-3/4 relative max-sm:order-1 max-sm:h-1/3 max-sm:pb-[75px] ">
+      <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} setImageURL={setImageURL} t={t} lang={lang} />
+      <div id='capture' className="w-full md:h-[62vh] relative max-sm:order-1 max-sm:h-[40vh] max-sm:pb-[75px] ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
         <div className="md:pl-[10%] relative flex justify-center items-center p-2 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
@@ -263,13 +253,7 @@ function Main() {
         >
           WyĹ›lij wycenÄ™
         </button> */}
-        <div className="p-2 border-2 border-slate-800 max-sm:hidden ">
-        <p><b>{t("constructionTitle")}</b> - {t("constructionText")}
-        <br></br> {t("profileText")} </p>
-        <p className="pt-2">
-          <b>{t("groundTitle")}</b>, <b>{t("foundationTitle")}</b> {t("groundText")}
-        </p>
-        </div>
+        
         
       </div>
    

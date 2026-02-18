@@ -8,6 +8,7 @@ import {
   Slider,
 } from "@mui/material";
 import { variable } from "../Variable";
+import { assetPath } from "../../../utils/assetPath";
 
 function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
   const [gateCount, setGateCount] = useState(2);
@@ -37,9 +38,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
   } = selectedOptions;
 
   const gateColor = [
-    { name: "Złoty Dąb", url: "./konfigurator/jasny-dab.webp" },
-    { name: "Orzech", url: "./konfigurator/orzech.png" },
-    { name: "Ocynk", url: "./konfigurator/ocynk.png"},
+    { name: "Złoty Dąb", url: assetPath("konfigurator/jasny-dab.webp") },
+    { name: "Orzech", url: assetPath("konfigurator/orzech.png") },
+    { name: "Ocynk", url: assetPath("konfigurator/ocynk.png") },
     // { name: "Złoty Dąb Ciemny", url: "./konfigurator/ciemny-dab.png" },
     
     { name: "BiaĹ‚y 9010", ral: "#FBFFFF" },

@@ -1,0 +1,521 @@
+<?php
+/**
+ * Plugin Name: Configurator Plugin
+ * Description: React 3D configurator as shortcode with REST API endpoints for inquiry emails and image upload.
+ * Version: 0.1.0
+ * Author: Configurator Team
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+final class ConfiguratorPlugin {
+    const OPTION_EMAIL = 'configurator_inquiry_email';
+    const SHORTCODE = 'configurator_plugin';
+    const REST_NS = 'configurator/v1';
+
+    public static function init() {
+        add_shortcode(self::SHORTCODE, [__CLASS__, 'render_shortcode']);
+        add_action('rest_api_init', [__CLASS__, 'register_rest_routes']);
+        add_action('admin_init', [__CLASS__, 'register_settings']);
+    }
+
+    public static function register_settings() {
+        register_setting('general', self::OPTION_EMAIL, [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_email',
+            'default' => get_option('admin_email'),
+        ]);
+
+        add_settings_field(
+            self::OPTION_EMAIL,
+            'Configurator inquiry email',
+            [__CLASS__, 'render_email_setting_field'],
+            'general'
+        );
+    }
+
+    public static function render_email_setting_field() {
+        $value = get_option(self::OPTION_EMAIL, get_option('admin_email'));
+        echo '<input type="email" name="' . esc_attr(self::OPTION_EMAIL) . '" value="' . esc_attr($value) . '" class="regular-text" />';
+        echo '<p class="description">Address used to receive configurator inquiries.</p>';
+    }
+
+    public static function register_rest_routes() {
+        register_rest_route(self::REST_NS, '/inquiry', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => [__CLASS__, 'handle_inquiry'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route(self::REST_NS, '/upload-image', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => [__CLASS__, 'handle_upload_image'],
+            'permission_callback' => '__return_true',
+        ]);
+    }
+
+    public static function render_shortcode() {
+        self::enqueue_frontend_assets();
+        return '<div class="configurator-plugin-shell"><div id="configurator-plugin-root"></div></div>';
+    }
+
+    private static function enqueue_frontend_assets() {
+        $manifest_path = plugin_dir_path(__FILE__) . 'assets/dist/.vite/manifest.json';
+        if (!file_exists($manifest_path)) {
+            return;
+        }
+
+        $manifest = json_decode(file_get_contents($manifest_path), true);
+        if (!is_array($manifest) || empty($manifest['index.html']['file'])) {
+            return;
+        }
+
+        $entry = $manifest['index.html'];
+        $base_url = plugin_dir_url(__FILE__) . 'assets/dist/';
+
+        if (!empty($entry['css']) && is_array($entry['css'])) {
+            foreach ($entry['css'] as $index => $css_file) {
+                wp_enqueue_style(
+                    'configurator-plugin-style-' . $index,
+                    $base_url . ltrim($css_file, '/'),
+                    [],
+                    null
+                );
+            }
+        }
+
+        wp_register_style('configurator-plugin-layout', false, [], null);
+        wp_enqueue_style('configurator-plugin-layout');
+        wp_add_inline_style('configurator-plugin-layout', self::layout_css());
+
+        $script_handle = 'configurator-plugin-app';
+        wp_enqueue_script(
+            $script_handle,
+            $base_url . ltrim($entry['file'], '/'),
+            [],
+            null,
+            true
+        );
+        wp_script_add_data($script_handle, 'type', 'module');
+
+        $config = [
+            'restBaseUrl' => untrailingslashit(rest_url(self::REST_NS)),
+            'inquiryEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/inquiry',
+            'uploadEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/upload-image',
+            'assetsBaseUrl' => trailingslashit($base_url),
+            'lang' => self::resolve_frontend_lang(),
+            'locale' => get_locale(),
+            'nonce' => wp_create_nonce('wp_rest'),
+            'siteUrl' => home_url('/'),
+            'logoUrl' => self::resolve_logo_url(),
+            'thankYouPathPl' => '/dziekujemy',
+            'thankYouPathCs' => '/dekujeme',
+            'thankYouPath' => '/thank-you',
+        ];
+
+        wp_add_inline_script(
+            $script_handle,
+            'window.__CONFIGURATOR_PLUGIN__ = ' . wp_json_encode($config) . ';',
+            'before'
+        );
+        wp_add_inline_script($script_handle, self::layout_js(), 'before');
+    }
+
+    public static function handle_upload_image(WP_REST_Request $request) {
+        $files = $request->get_file_params();
+        if (empty($files['file'])) {
+            return new WP_Error('no_file', 'No file uploaded', ['status' => 400]);
+        }
+
+        $file = $files['file'];
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowed_types, true)) {
+            return new WP_Error('invalid_file_type', 'Invalid file type', ['status' => 400]);
+        }
+
+        $max_size = 5 * 1024 * 1024;
+        if ((int) $file['size'] > $max_size) {
+            return new WP_Error('file_too_large', 'File too large', ['status' => 400]);
+        }
+
+        $upload_overrides = ['test_form' => false];
+        $movefile = wp_handle_upload($file, $upload_overrides);
+        if (!$movefile || isset($movefile['error'])) {
+            return new WP_Error('upload_failed', 'Upload failed', ['status' => 500]);
+        }
+
+        $attachment = [
+            'guid' => $movefile['url'],
+            'post_mime_type' => $file['type'],
+            'post_title' => preg_replace('/\.[^.]+$/', '', sanitize_file_name($file['name'])),
+            'post_content' => '',
+            'post_status' => 'inherit',
+        ];
+        $attach_id = wp_insert_attachment($attachment, $movefile['file']);
+        if ($attach_id) {
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+            $attach_data = wp_generate_attachment_metadata($attach_id, $movefile['file']);
+            wp_update_attachment_metadata($attach_id, $attach_data);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'File uploaded',
+            'id' => $attach_id,
+            'url' => $movefile['url'],
+            'guid' => ['rendered' => $movefile['url']],
+        ];
+    }
+
+    public static function handle_inquiry(WP_REST_Request $request) {
+        $data = $request->get_json_params();
+        $contact = isset($data['contact']) && is_array($data['contact']) ? $data['contact'] : [];
+        $garage = isset($data['garage_config']) && is_array($data['garage_config']) ? $data['garage_config'] : [];
+        $name = isset($contact['name']) ? sanitize_text_field($contact['name']) : '';
+        $email = isset($contact['email']) ? sanitize_email($contact['email']) : '';
+        $phone = isset($contact['phone']) ? sanitize_text_field($contact['phone']) : '';
+        $region = isset($contact['wojewodztwo']) ? sanitize_text_field($contact['wojewodztwo']) : '';
+        $address = isset($contact['address']) ? sanitize_text_field($contact['address']) : '';
+        $message = isset($contact['message']) ? sanitize_textarea_field($contact['message']) : '';
+        $price = isset($data['price']) ? sanitize_text_field((string) $data['price']) : '';
+        $image_url = isset($data['imageURL']) ? esc_url_raw($data['imageURL']) : '';
+
+        if ($name === '' || $email === '' || $phone === '') {
+            return new WP_Error('missing_data', 'Missing required contact fields', ['status' => 400]);
+        }
+        if (!is_email($email)) {
+            return new WP_Error('invalid_email', 'Invalid email', ['status' => 400]);
+        }
+
+        $to_email = get_option(self::OPTION_EMAIL, get_option('admin_email'));
+        $subject = 'Nowe zapytanie z konfiguratora garazu - ' . $name;
+        $from_domain = wp_parse_url(home_url(), PHP_URL_HOST);
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: Configurator <noreply@' . $from_domain . '>',
+            'Reply-To: ' . $email,
+        ];
+
+        $attachments = self::resolve_image_attachments($image_url);
+
+        $sent = wp_mail(
+            $to_email,
+            $subject,
+            self::build_inquiry_email($name, $email, $phone, $region, $address, $message, $price, $image_url, $garage),
+            $headers,
+            $attachments
+        );
+
+        if (!$sent) {
+            return new WP_Error('email_failed', 'Email send failed', ['status' => 500]);
+        }
+
+        return [
+            'success' => true,
+            'code' => 'sent',
+            'message' => 'Inquiry sent',
+            'data' => ['to' => $to_email],
+        ];
+    }
+
+    private static function build_inquiry_email($name, $email, $phone, $region, $address, $message, $price, $image_url, $garage) {
+        $garage_json = wp_json_encode($garage, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $gate_count = (int) self::garage_value($garage, 'gateCount', 0);
+        $door_count = (int) self::garage_value($garage, 'doorCount', 0);
+        $window_count = (int) self::garage_value($garage, 'windowCount', 0);
+        $has_carport = (bool) self::garage_value($garage, 'carport', false);
+        $request_time = wp_date('d.m.Y H:i:s');
+        $client_ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field((string) $_SERVER['REMOTE_ADDR']) : '';
+
+        ob_start();
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin:0; padding:0;">
+          <div style="max-width:900px; margin:0 auto; padding:20px;">
+            <div style="background:#1f2937; color:#fff; padding:18px; text-align:center; border-radius:8px;">
+              <h1 style="margin:0; font-size:24px;">Nowe zapytanie z konfiguratora garażu</h1>
+              <p style="margin:8px 0 0;">Otrzymano nowe zapytanie od klienta</p>
+            </div>
+
+            <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
+              <h3 style="margin:0 0 10px;">Dane kontaktowe</h3>
+              <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                <tr><th align="left" style="background:#f5f5f5; width:220px;">Imię i nazwisko</th><td><?php echo esc_html($name); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Email</th><td><a href="mailto:<?php echo esc_attr($email); ?>"><?php echo esc_html($email); ?></a></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Telefon</th><td><a href="tel:<?php echo esc_attr($phone); ?>"><?php echo esc_html($phone); ?></a></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Województwo / kraj</th><td><?php echo esc_html($region); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Adres dostawy</th><td><?php echo esc_html($address); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Wiadomość</th><td><?php echo nl2br(esc_html($message)); ?></td></tr>
+              </table>
+            </div>
+
+            <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
+              <h3 style="margin:0 0 10px;">Konfiguracja garażu</h3>
+              <h4 style="margin:14px 0 8px;">Parametry podstawowe</h4>
+              <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                <tr><th align="left" style="background:#f5f5f5; width:220px;">Szerokość</th><td><?php echo esc_html(self::garage_value($garage, 'width')); ?> m</td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Głębokość</th><td><?php echo esc_html(self::garage_value($garage, 'depth')); ?> m</td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Wysokość</th><td><?php echo esc_html(self::garage_value($garage, 'height')); ?> cm</td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Kolor</th><td><?php echo esc_html(self::garage_value($garage, 'color')); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Tłoczenie</th><td><?php echo esc_html(self::garage_value($garage, 'emboss')); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Kierunek tłoczenia</th><td><?php echo esc_html(self::garage_value($garage, 'direction')); ?></td></tr>
+              </table>
+
+              <h4 style="margin:14px 0 8px;">Dach</h4>
+              <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                <tr><th align="left" style="background:#f5f5f5; width:220px;">Typ spadu</th><td><?php echo esc_html(self::garage_value($garage, 'roof')); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Kolor dachu</th><td><?php echo esc_html(self::garage_value($garage, 'roofColor')); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Rodzaj pokrycia</th><td><?php echo esc_html(self::garage_value($garage, 'roofType')); ?></td></tr>
+              </table>
+
+              <h4 style="margin:14px 0 8px;">Bramy</h4>
+              <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                <tr><th align="left" style="background:#f5f5f5; width:220px;">Liczba bram</th><td><?php echo esc_html((string) $gate_count); ?></td></tr>
+                <?php for ($i = 1; $i <= min(3, $gate_count); $i++): ?>
+                  <?php $gate_type = self::garage_value($garage, 'gateType' . $i); ?>
+                  <?php if ($gate_type !== ''): ?>
+                    <tr>
+                      <th align="left" style="background:#f5f5f5;">Brama <?php echo (int) $i; ?></th>
+                      <td>
+                        Typ: <?php echo esc_html($gate_type); ?>,
+                        kolor: <?php echo esc_html(self::garage_value($garage, 'gateColor' . $i)); ?>,
+                        rozmiar: <?php echo esc_html(self::garage_value($garage, 'gateWidth' . $i)); ?> m x <?php echo esc_html(self::garage_value($garage, 'gateHeight' . $i)); ?> cm,
+                        pozycja: <?php echo esc_html(self::garage_value($garage, 'gatePositionValue' . $i)); ?> cm
+                      </td>
+                    </tr>
+                  <?php endif; ?>
+                <?php endfor; ?>
+              </table>
+
+              <?php if ($door_count > 0): ?>
+                <h4 style="margin:14px 0 8px;">Drzwi</h4>
+                <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                  <tr><th align="left" style="background:#f5f5f5; width:220px;">Liczba drzwi</th><td><?php echo esc_html((string) $door_count); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;">Szczegoly</th><td><?php echo self::format_item_details_html(self::garage_value($garage, 'doors'), 'door'); ?></td></tr>
+                </table>
+              <?php endif; ?>
+
+              <?php if ($window_count > 0): ?>
+                <h4 style="margin:14px 0 8px;">Okna</h4>
+                <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                  <tr><th align="left" style="background:#f5f5f5; width:220px;">Liczba okien</th><td><?php echo esc_html((string) $window_count); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;">Szczegoly</th><td><?php echo self::format_item_details_html(self::garage_value($garage, 'windows'), 'window'); ?></td></tr>
+                </table>
+              <?php endif; ?>
+
+              <?php if ($has_carport): ?>
+                <h4 style="margin:14px 0 8px;">Wiata</h4>
+                <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                  <tr><th align="left" style="background:#f5f5f5; width:220px;">Szerokość</th><td><?php echo esc_html(self::garage_value($garage, 'carportWidth')); ?> m</td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;">Strona</th><td><?php echo esc_html(self::garage_value($garage, 'carportSide')); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;">Typ</th><td><?php echo esc_html(self::garage_value($garage, 'carportType')); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;">Ściany</th><td><?php echo nl2br(esc_html(self::garage_value($garage, 'carportSides'))); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;">Ściany 2</th><td><?php echo nl2br(esc_html(self::garage_value($garage, 'carportSides2'))); ?></td></tr>
+                </table>
+              <?php endif; ?>
+
+              <h4 style="margin:14px 0 8px;">Dodatki</h4>
+              <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                <tr><th align="left" style="background:#f5f5f5; width:220px;">Rynny</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'gutter'))); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Automatyka</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'automatic'))); ?><?php echo !empty(self::garage_value($garage, 'automatic')) ? ' (' . esc_html((string) self::garage_value($garage, 'countAutomatic', 0)) . ' szt.)' : ''; ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Filc</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'filc'))); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">Transport</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'transport'))); ?></td></tr>
+              </table>
+            </div>
+
+            <?php if (!empty($image_url)): ?>
+              <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px; text-align:center;">
+                <h3 style="margin:0 0 12px;">Wizualizacja garażu</h3>
+                <img src="<?php echo esc_url($image_url); ?>" alt="Wizualizacja garażu" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:6px;" />
+              </div>
+            <?php endif; ?>
+
+            <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
+              <h3 style="margin:0 0 10px;">Informacje systemowe</h3>
+              <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                <tr><th align="left" style="background:#f5f5f5; width:220px;">Data zapytania</th><td><?php echo esc_html($request_time); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;">IP klienta</th><td><?php echo esc_html($client_ip); ?></td></tr>
+              </table>
+            </div>
+
+            <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
+              <h3 style="margin:0 0 10px;">Surowe dane konfiguracji (JSON)</h3>
+              <pre style="background:#f6f6f6; padding:12px; border:1px solid #ddd; overflow:auto;"><?php echo esc_html($garage_json); ?></pre>
+            </div>
+          </div>
+        </body>
+        </html>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    private static function resolve_logo_url() {
+        $custom_logo_id = (int) get_theme_mod('custom_logo');
+        if ($custom_logo_id > 0) {
+            $logo = wp_get_attachment_image_url($custom_logo_id, 'full');
+            if (!empty($logo)) {
+                return $logo;
+            }
+        }
+        $site_icon_id = (int) get_option('site_icon');
+        if ($site_icon_id > 0) {
+            $icon = wp_get_attachment_image_url($site_icon_id, 'full');
+            if (!empty($icon)) {
+                return $icon;
+            }
+        }
+        return '';
+    }
+
+    private static function resolve_frontend_lang() {
+        $locale = strtolower((string) get_locale());
+        if (strpos($locale, 'cs') === 0) {
+            return 'cs';
+        }
+        return 'pl';
+    }
+
+    private static function garage_value($garage, $key, $default = '') {
+        if (!is_array($garage)) {
+            return $default;
+        }
+        return array_key_exists($key, $garage) ? $garage[$key] : $default;
+    }
+
+    private static function yes_no($value) {
+        return !empty($value) ? 'Tak' : 'Nie';
+    }
+
+    private static function resolve_image_attachments($image_url) {
+        if (empty($image_url)) {
+            return [];
+        }
+        $upload = wp_upload_dir();
+        $base_url = isset($upload['baseurl']) ? (string) $upload['baseurl'] : '';
+        $base_dir = isset($upload['basedir']) ? (string) $upload['basedir'] : '';
+        if ($base_url === '' || $base_dir === '' || strpos($image_url, $base_url) !== 0) {
+            return [];
+        }
+        $relative = ltrim(substr($image_url, strlen($base_url)), '/');
+        $file_path = wp_normalize_path($base_dir . '/' . $relative);
+        if (file_exists($file_path) && is_file($file_path)) {
+            return [$file_path];
+        }
+        return [];
+    }
+
+    private static function format_item_details_html($raw, $type) {
+        if (!is_string($raw) || trim($raw) === '') {
+            return '-';
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', trim($raw));
+        $result = [];
+        $idx = 0;
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $idx++;
+
+            if (preg_match('/^[^:]+:\s*(\{.*\})$/', $line, $m)) {
+                $decoded = json_decode($m[1], true);
+                if (is_array($decoded)) {
+                    $result[] = $type === 'door'
+                        ? self::format_door_line($decoded, $idx)
+                        : self::format_window_line($decoded, $idx);
+                    continue;
+                }
+            }
+
+            $result[] = esc_html($line);
+        }
+
+        return implode('<br>', $result);
+    }
+
+    private static function format_door_line($door, $idx) {
+        $size = isset($door['size']) ? (string) $door['size'] : '-';
+        $door_type = isset($door['type']) ? (string) $door['type'] : '-';
+        $color = isset($door['color']) ? (string) $door['color'] : '-';
+        $position = isset($door['position']) ? (string) $door['position'] : '-';
+        $position_value = isset($door['positionValue']) ? (string) $door['positionValue'] : '-';
+
+        return esc_html(
+            'Drzwi ' . $idx .
+            ': rozmiar ' . $size .
+            ', typ ' . $door_type .
+            ', kolor ' . $color .
+            ', pozycja ' . $position .
+            ', odleglosc ' . $position_value . ' cm'
+        );
+    }
+
+    private static function format_window_line($window, $idx) {
+        $size = isset($window['size']) ? (string) $window['size'] : '-';
+        $position = isset($window['position']) ? (string) $window['position'] : '-';
+        $position_value = isset($window['positionValue']) ? (string) $window['positionValue'] : '-';
+
+        return esc_html(
+            'Okno ' . $idx .
+            ': rozmiar ' . $size .
+            ', pozycja ' . $position .
+            ', odleglosc ' . $position_value . ' cm'
+        );
+    }
+
+    private static function layout_css() {
+        return '
+.configurator-plugin-shell {
+  position: relative;
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+.configurator-plugin-shell #configurator-plugin-root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body.configurator-plugin-active {
+  overflow-x: hidden;
+}
+
+/* Raise configurator only on selected page */
+';
+    }
+
+    private static function layout_js() {
+        return '
+(function () {
+  var shell = document.querySelector(".configurator-plugin-shell");
+  if (!shell) return;
+  document.body.classList.add("configurator-plugin-active");
+  var titleSelectors = [
+    ".entry-title",
+    ".post-title",
+    ".page-title",
+    ".wp-block-post-title",
+    ".elementor-heading-title"
+  ];
+  titleSelectors.forEach(function (selector) {
+    document.querySelectorAll(selector).forEach(function (el) {
+      el.style.display = "none";
+    });
+  });
+})();
+';
+    }
+}
+
+ConfiguratorPlugin::init();

@@ -1,6 +1,7 @@
 ﻿import React,{useState}from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Grid, Card, CardActionArea, CardMedia } from '@mui/material';
 import { variable } from '../Variable';
+import { assetPath } from '../../../utils/assetPath';
 
 const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
   const colorLabel = (name) => {
@@ -11,9 +12,9 @@ const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
   };
 
   const garageColors = [
-    {name: "Ocynk", url: "./konfigurator/ocynk.png"},
-    {name: "Złoty Dąb", url: "./konfigurator/jasny-dab.webp"},
-    {name: "Orzech", url: "./konfigurator/orzech.png"},
+    {name: "Ocynk", url: assetPath("konfigurator/ocynk.png")},
+    {name: "Złoty Dąb", url: assetPath("konfigurator/jasny-dab.webp")},
+    {name: "Orzech", url: assetPath("konfigurator/orzech.png")},
     {name: "BiaĹ‚y 9010", ral: "#FBFFFF"},
     {name: "Szary 9002", ral: "#F2EFE8"},
     {name: "Srebrny 9006", ral: "#A7ABB6"},

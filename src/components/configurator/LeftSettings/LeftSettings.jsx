@@ -15,7 +15,7 @@ import Accessories from '../Settings/Accessories';
 
 export default function LeftSettings({ selectedOptions, setSelectedOptions, t, o, lang }) {
   return (
-    <div className='overflow-scroll max-sm:order-2'>
+    <div className='md:w-[430px] md:max-w-[44vw] shrink-0 h-full min-h-0 overflow-y-auto max-sm:order-2'>
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1-content" id="panel1-header">
           <h3>{t("sectionDimensions")}</h3>

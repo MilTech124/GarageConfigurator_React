@@ -1,5 +1,6 @@
 ﻿import React from "react";
 import { Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
+import { assetPath } from "../../../utils/assetPath";
 
 function Accessories({ selectedOptions, setSelectedOptions, t }) {
   const { filc, gutter, automatic } = selectedOptions;
@@ -15,14 +16,14 @@ function Accessories({ selectedOptions, setSelectedOptions, t }) {
     <div>
       <div className="flex flex-col justify-center items-center">
         <div className="flex">
-          <img src="/images/rynnabp.jpg" className="w-[200px] flex items-center justify-center" alt="" />
+          <img src={assetPath("images/rynnabp.jpg")} className="w-[200px] flex items-center justify-center" alt="" />
           <FormControlLabel
             control={<Checkbox name="gutter" checked={gutter} onChange={handleChange} inputProps={{ "aria-label": "controlled" }} />}
             label={t("gutters")}
           />
         </div>
         <div className="flex items-center justify-center">
-          <img src="/images/automat.jpg" className="w-[200px] flex items-center justify-center" alt="" />
+          <img src={assetPath("images/automat.jpg")} className="w-[200px] flex items-center justify-center" alt="" />
           <Select
             value={selectedOptions.countAutomatic}
             onChange={(e) => setSelectedOptions({ ...selectedOptions, countAutomatic: e.target.value })}
@@ -38,7 +39,7 @@ function Accessories({ selectedOptions, setSelectedOptions, t }) {
         </div>
       </div>
       <div className="flex items-center justify-center">
-        <img src="/images/filc.jpeg" className="w-[150px] flex items-center justify-center" alt="" />
+        <img src={assetPath("images/filc.jpeg")} className="w-[150px] flex items-center justify-center" alt="" />
         <FormControlLabel
           control={<Checkbox className="text-black" name="filc" checked={filc} onChange={handleChange} inputProps={{ "aria-label": "controlled" }} />}
           label={t("antiCondensationFelt")}

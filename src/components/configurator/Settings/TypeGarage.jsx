@@ -1,11 +1,13 @@
-﻿function TypeGarage({ selectedOptions, setSelectedOptions, o }) {
+﻿import { assetPath } from '../../../utils/assetPath';
+
+function TypeGarage({ selectedOptions, setSelectedOptions, o }) {
   const garageTypes = [
-    {name: "spad tył", url: "./konfigurator/tyl.png"},
-    {name: "dwuspad", url: "./konfigurator/prawo-lewo.png"},
-    {name: "spad przód", url: "./konfigurator/przod.png"},
-    {name: "spad w lewo", url: "./konfigurator/lewo.png"},
-    {name: "dwuspad przod-tył", url: "./konfigurator/przod-tyl.png"},
-    {name: "spad w prawo", url: "./konfigurator/prawo.png"},
+    {name: "spad tył", url: assetPath("konfigurator/tyl.png") },
+    {name: "dwuspad", url: assetPath("konfigurator/prawo-lewo.png") },
+    {name: "spad przód", url: assetPath("konfigurator/przod.png") },
+    {name: "spad w lewo", url: assetPath("konfigurator/lewo.png") },
+    {name: "dwuspad przod-tył", url: assetPath("konfigurator/przod-tyl.png") },
+    {name: "spad w prawo", url: assetPath("konfigurator/prawo.png") },
   ];
 
   return (
