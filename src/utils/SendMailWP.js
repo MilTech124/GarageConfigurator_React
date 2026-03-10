@@ -1,10 +1,39 @@
 import { toast } from "react-toastify";
 
 function resolveThankYouPath(wpConfig, lang) {
-  if (lang === "cs") {
-    return wpConfig.thankYouPathCs || "/dekujeme";
-  }
+  if (lang === "cs") return wpConfig.thankYouPathCs || "/dekujeme";
+  if (lang === "sl") return wpConfig.thankYouPathSl || "/dakujeme";
+  if (lang === "hu") return wpConfig.thankYouPathHu || "/koszonjuk";
   return wpConfig.thankYouPathPl || wpConfig.thankYouPath || "/dziekujemy";
+}
+
+function getToastCopy(lang) {
+  if (lang === "cs") {
+    return {
+      sending: "Odesilani zpravy",
+      sent: "Zprava byla odeslana",
+      error: "Chyba pri odeslani zpravy: ",
+    };
+  }
+  if (lang === "sl") {
+    return {
+      sending: "Odosiela sa sprava",
+      sent: "Sprava bola odoslana",
+      error: "Chyba pri odoslani spravy: ",
+    };
+  }
+  if (lang === "hu") {
+    return {
+      sending: "Uzenet kuldese folyamatban",
+      sent: "Az uzenet elkuldve",
+      error: "Hiba az uzenet kuldese kozben: ",
+    };
+  }
+  return {
+    sending: "Wysylanie wiadomosci",
+    sent: "Wyslano wiadomosc",
+    error: "Blad wysylania wiadomosci: ",
+  };
 }
 
 // Send inquiry to WordPress REST API
@@ -13,8 +42,9 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
   const wpApiUrl =
     wpConfig.inquiryEndpoint ||
     `${window.location.origin}/wp-json/configurator/v1/inquiry`;
+  const toastCopy = getToastCopy(lang);
 
-  toast.info("Wysylanie wiadomosci", {
+  toast.info(toastCopy.sending, {
     autoClose: 3000,
     hideProgressBar: false,
     closeOnClick: true,
@@ -23,11 +53,13 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
 
   const emailData = {
     template_type: templateType,
+    lang,
     contact: {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      wojewodztwo: data.wojewodztwo,
+      postalCode: data.postalCode,
+      city: data.city,
       address: data.address,
       message: data.message || "",
     },
@@ -90,7 +122,7 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
     })
     .then((result) => {
       if (result.success) {
-        toast.success("Wyslano wiadomosc", {
+        toast.success(toastCopy.sent, {
           autoClose: 3000,
           hideProgressBar: false,
           closeOnClick: true,
@@ -108,7 +140,7 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
     })
     .catch((error) => {
       console.error("FAILED...", error);
-      toast.error("Blad wysylania wiadomosci: " + error.message, {
+      toast.error(toastCopy.error + error.message, {
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,

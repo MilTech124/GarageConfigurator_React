@@ -15,7 +15,7 @@ import { LANG, t as translate, translateOption } from "./i18n";
 
 function resolveInitialLang() {
   const runtimeLang = globalThis?.__CONFIGURATOR_PLUGIN__?.lang;
-  return runtimeLang === LANG.CS ? LANG.CS : LANG.PL;
+  return Object.values(LANG).includes(runtimeLang) ? runtimeLang : LANG.PL;
 }
 
 function Main() {
@@ -200,7 +200,7 @@ function Main() {
   };
  
   return (
-    <div className="bg-slate-200 relative w-screen h-screen min-h-0 flex overflow-hidden max-sm:flex-col">
+    <div className="bg-slate-200 relative w-screen h-screen min-h-0 flex overflow-hidden max-sm:flex-col max-sm:h-auto max-sm:min-h-screen max-sm:overflow-y-auto">
    
    {capture && <div class="absolute top-0 left-0 w-full h-full flex-col gap-4  flex items-center justify-center !z-50 bg-black/50 ">
         <div class="w-28 h-28 border-8 text-blue-400 text-4xl animate-spin border-gray-300 flex items-center justify-center border-t-blue-400 rounded-full">
@@ -210,25 +210,10 @@ function Main() {
         </div>
       </div> }
    
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 bg-white/90 border border-slate-300 rounded-xl shadow-md overflow-hidden">
-        <button
-          className={`block w-16 px-3 py-2 text-sm ${lang === LANG.PL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
-          onClick={() => setLang(LANG.PL)}
-        >
-          PL
-        </button>
-        <button
-          className={`block w-16 px-3 py-2 text-sm ${lang === LANG.CS ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
-          onClick={() => setLang(LANG.CS)}
-        >
-          CZ
-        </button>
-      </div>
-
       <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} t={t} o={o} lang={lang} />
       <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} setImageURL={setImageURL} t={t} lang={lang} />
       <div id='capture' className="w-full md:h-[62vh] relative max-sm:order-1 max-sm:h-[40vh] max-sm:pb-[75px] ">
-        <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture}  />
+        <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture} lang={lang} setLang={setLang} />
         <div className="md:pl-[10%] relative flex justify-center items-center p-2 border-2 border-slate-800">
           <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
     

@@ -4,7 +4,6 @@ import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 import Checkbox from "@mui/material/Checkbox";
 import { toast } from "react-toastify";
-import { FormControl, Select, MenuItem, InputLabel } from "@mui/material";
 import SendEmailWP from "../../utils/SendMailWP";
 import { validateForm } from "../../utils/validation";
 
@@ -33,42 +32,6 @@ export default function BasicModal({
   lang,
 }) {
   const tr = t || ((key) => key);
-  const regionOptions =
-    lang === "cs"
-      ? [
-          "Hlavni mesto Praha",
-          "Stredocesky kraj",
-          "Jihocesky kraj",
-          "Plzensky kraj",
-          "Karlovarsky kraj",
-          "Ustecky kraj",
-          "Liberecky kraj",
-          "Kralovehradecky kraj",
-          "Pardubicky kraj",
-          "Vysocina",
-          "Jihomoravsky kraj",
-          "Olomoucky kraj",
-          "Zlinsky kraj",
-          "Moravskoslezsky kraj",
-        ]
-      : [
-          "dolnoslaskie",
-          "kujawsko-pomorskie",
-          "lubelskie",
-          "lubuskie",
-          "lodzkie",
-          "malopolskie",
-          "mazowieckie",
-          "opolskie",
-          "podkarpackie",
-          "podlaskie",
-          "pomorskie",
-          "slaskie",
-          "swietokrzyskie",
-          "warminsko-mazurskie",
-          "wielkopolskie",
-          "zachodniopomorskie",
-        ];
 
   const handleClose = () => {
     setModal(false);
@@ -77,6 +40,8 @@ export default function BasicModal({
       email: "",
       email2: "",
       phone: "",
+      postalCode: "",
+      city: "",
       address: "",
       message: "",
       honeypot: "",
@@ -87,12 +52,13 @@ export default function BasicModal({
     setFormStartTime(null);
   };
 
-  const selectedWojewodztwo = selectedOptions.wojewodztwo;
   const [contact, setContact] = React.useState({
     name: "",
     email: "",
     email2: "",
     phone: "",
+    postalCode: "",
+    city: "",
     address: "",
     message: "",
     honeypot: "",
@@ -129,7 +95,8 @@ export default function BasicModal({
           name: c.name,
           email: c.email,
           phone: c.phone,
-          wojewodztwo: so.wojewodztwo,
+          postalCode: c.postalCode,
+          city: c.city,
           address: c.address,
           message: c.message,
           windowList: so.window.length,
@@ -154,10 +121,6 @@ export default function BasicModal({
     setContact({ ...contact, [e.target.name]: e.target.value });
   }
 
-  function setWoj(e) {
-    setSelectedOptions({ ...selectedOptions, wojewodztwo: e.target.value });
-  }
-
   const sendData = async (e) => {
     e.preventDefault();
     setValidationErrors({});
@@ -176,6 +139,8 @@ export default function BasicModal({
       contact.name === "" ||
       contact.email === "" ||
       contact.phone === "" ||
+      contact.postalCode === "" ||
+      contact.city === "" ||
       contact.address === ""
     ) {
       toast.error(tr("formFillAllFields"));
@@ -273,16 +238,36 @@ export default function BasicModal({
                 style={{ borderColor: contact.email !== contact.email2 ? "red" : "green" }}
               />
             </div>
-            <FormControl fullWidth>
-              <InputLabel id="woj-label">{tr("formRegion")}</InputLabel>
-              <Select labelId="woj-label" value={selectedWojewodztwo} onChange={setWoj}>
-                {regionOptions.map((wojewodztwo) => (
-                  <MenuItem key={wojewodztwo} value={wojewodztwo}>
-                    {wojewodztwo}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <div>
+              <input
+                type="text"
+                name="postalCode"
+                placeholder={tr("formRegion")}
+                value={contact.postalCode}
+                onChange={handleChange}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.postalCode ? "border-red-500" : "border-gray-400"
+                }`}
+              />
+              {validationErrors.postalCode && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.postalCode}</p>
+              )}
+            </div>
+            <div>
+              <input
+                type="text"
+                name="city"
+                placeholder={tr("formCity")}
+                value={contact.city}
+                onChange={handleChange}
+                className={`p-2 border rounded-md w-full ${
+                  validationErrors.city ? "border-red-500" : "border-gray-400"
+                }`}
+              />
+              {validationErrors.city && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.city}</p>
+              )}
+            </div>
             <div>
               <input
                 type="text"

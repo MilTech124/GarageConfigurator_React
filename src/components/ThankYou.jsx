@@ -1,34 +1,64 @@
 import React from "react";
 
+function resolveThankYouLang(wpConfig, currentPath) {
+  if (currentPath === (wpConfig.thankYouPathCs || "/dekujeme") || wpConfig.lang === "cs") {
+    return "cs";
+  }
+  if (currentPath === (wpConfig.thankYouPathSl || "/dakujeme") || wpConfig.lang === "sl") {
+    return "sl";
+  }
+  if (currentPath === (wpConfig.thankYouPathHu || "/koszonjuk") || wpConfig.lang === "hu") {
+    return "hu";
+  }
+  return "pl";
+}
+
 function ThankYou() {
   const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
   const siteUrl = wpConfig.siteUrl || window.location.origin;
   const currentPath = window.location.pathname;
-  const lang =
-    currentPath === (wpConfig.thankYouPathCs || "/dekujeme") || wpConfig.lang === "cs"
-      ? "cs"
-      : "pl";
+  const lang = resolveThankYouLang(wpConfig, currentPath);
 
-  const text =
-    lang === "cs"
-      ? {
-          title: "Konfigurator",
-          thanks: "Dìkujeme!",
-          line1: "Vaše konfigurace garáže byla odeslána k nacenìní.",
-          line2: "Ozveme se vám co nejdøíve.",
-          home: "Hlavní stránka",
-          newConfig: "Nová konfigurace",
-          footer: "Pokud máte dotazy, kontaktujte nás pøes hlavní stránku.",
-        }
-      : {
-          title: "Konfigurator",
-          thanks: "Dziêkujemy!",
-          line1: "Twój gara¿ zosta³ wys³any do wyceny.",
-          line2: "Postaramy siê odezwaæ jak najszybciej.",
-          home: "Strona g³ówna",
-          newConfig: "Nowa konfiguracja",
-          footer: "Jeœli masz pytania, skontaktuj siê z nami przez stronê g³ówn¹.",
-        };
+  const textByLang = {
+    pl: {
+      title: "Konfigurator",
+      thanks: "Dziekujemy!",
+      line1: "Twoj garaz zostal wyslany do wyceny.",
+      line2: "Postaramy sie odezwac jak najszybciej.",
+      home: "Strona glowna",
+      newConfig: "Nowa konfiguracja",
+      footer: "Jesli masz pytania, skontaktuj sie z nami przez strone glowna.",
+    },
+    cs: {
+      title: "Konfigurator",
+      thanks: "Dekujeme!",
+      line1: "Vase konfigurace garaze byla odeslana k naceneni.",
+      line2: "Ozveme se vam co nejdrive.",
+      home: "Hlavni stranka",
+      newConfig: "Nova konfigurace",
+      footer: "Pokud mate dotazy, kontaktujte nas pres hlavni stranku.",
+    },
+    sl: {
+      title: "Konfigurator",
+      thanks: "Dakujeme!",
+      line1: "Vasa konfiguracia garaze bola odoslana na nacenenie.",
+      line2: "Ozveme sa vam co najskor.",
+      home: "Hlavna stranka",
+      newConfig: "Nova konfiguracia",
+      footer: "Ak mate otazky, kontaktujte nas cez hlavnu stranku.",
+    },
+    hu: {
+      title: "Konfigurator",
+      thanks: "Koszonjuk!",
+      line1: "A garaz konfiguraciojat elkuldtuk arajanlat keszitesre.",
+      line2: "Hamarosan felvesszuk Onnel a kapcsolatot.",
+      home: "Fooldal",
+      newConfig: "Uj konfiguracio",
+      footer: "Ha kerdese van, lepjen kapcsolatba velunk a fooldalon keresztul.",
+    },
+  };
+
+  const text = textByLang[lang] ?? textByLang.pl;
 
   return (
     <div className="bg-slate-200 min-h-screen flex items-center justify-center">

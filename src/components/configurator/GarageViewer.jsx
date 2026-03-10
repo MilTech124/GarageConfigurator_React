@@ -1,6 +1,7 @@
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Environment, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Model } from "./Model";
+import { LANG } from "./i18n";
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@mui/material";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
@@ -37,25 +38,16 @@ function CameraOrbit({ center = [0, 0, 0], radius = 10 }) {
   return <PerspectiveCamera makeDefault ref={cameraRef} fov={30} position={[10, 0, 5]} />;
 }
 
-function GarageViewer({ selectedOptions, captureScreenshot, capture }) {
+function GarageViewer({ selectedOptions, captureScreenshot, capture, lang, setLang }) {
   const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
   const logoUrl = wpConfig.logoUrl || null;
 
   const rendererRef = useRef(null);
   const [cameraPosition, setCameraPosition] = useState([15, 8, 4]);
   const [onPlay, setOnPlay] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 768 : true
-  );
 
   const maxZoom = 20;
   const minZoom = 12;
-
-  useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= 768);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   const downloadCurrentView = () => {
     const renderer = rendererRef.current;
@@ -72,13 +64,41 @@ function GarageViewer({ selectedOptions, captureScreenshot, capture }) {
 
   return (
     <>
-      <div className="absolute right-0 top-0 z-10 flex flex-col gap-1 py-2">
-        <Button variant="contained" color="error" onClick={() => setOnPlay(!onPlay)}>
-          <PlayCircleIcon />
-        </Button>
-        <Button variant="contained" color="primary" onClick={downloadCurrentView}>
-          <DownloadIcon />
-        </Button>
+      <div className="absolute right-2 top-2 z-10 flex gap-1 py-2">
+        <div className="flex flex-col gap-1">
+          <Button variant="contained" color="error" sx={{ minWidth: 64 }} onClick={() => setOnPlay(!onPlay)}>
+            <PlayCircleIcon />
+          </Button>
+          <Button variant="contained" color="primary" sx={{ minWidth: 64 }} onClick={downloadCurrentView}>
+            <DownloadIcon />
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.PL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            onClick={() => setLang(LANG.PL)}
+          >
+            PL
+          </button>
+          <button
+            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.CS ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            onClick={() => setLang(LANG.CS)}
+          >
+            CZ
+          </button>
+          <button
+            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.SL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            onClick={() => setLang(LANG.SL)}
+          >
+            SK
+          </button>
+          <button
+            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.HU ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            onClick={() => setLang(LANG.HU)}
+          >
+            HU
+          </button>
+        </div>
       </div>
 
       {logoUrl ? (
@@ -104,7 +124,7 @@ function GarageViewer({ selectedOptions, captureScreenshot, capture }) {
 
         <CaptureScreenshot setCaptureFunction={captureScreenshot} capture={capture} />
         <OrbitControls
-          enableZoom={!isDesktop}
+          enableZoom
           minPolarAngle={Math.PI / 2.8}
           maxPolarAngle={Math.PI / 2.2}
           minDistance={minZoom}

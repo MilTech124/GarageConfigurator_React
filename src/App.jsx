@@ -9,6 +9,8 @@ function App() {
   const thankYouPaths = [
     wpConfig.thankYouPathPl || "/dziekujemy",
     wpConfig.thankYouPathCs || "/dekujeme",
+    wpConfig.thankYouPathSl || "/dakujeme",
+    wpConfig.thankYouPathHu || "/koszonjuk",
     wpConfig.thankYouPath || "/thank-you",
   ];
   const [currentPath, setCurrentPath] = useState(window.location.pathname);

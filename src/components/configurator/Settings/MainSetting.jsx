@@ -5,9 +5,6 @@ import { assetPath } from '../../../utils/assetPath';
 
 const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
   const colorLabel = (name) => {
-    if (lang === "cs" && (name === "Złoty Dąb" || name === "ZĹ‚oty DÄ…b")) {
-      return "Zlaty dub";
-    }
     return o(name);
   };
 

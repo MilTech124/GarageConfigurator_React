@@ -112,6 +112,8 @@ final class ConfiguratorPlugin {
             'logoUrl' => self::resolve_logo_url(),
             'thankYouPathPl' => '/dziekujemy',
             'thankYouPathCs' => '/dekujeme',
+            'thankYouPathSl' => '/dakujeme',
+            'thankYouPathHu' => '/koszonjuk',
             'thankYouPath' => '/thank-you',
         ];
 
@@ -176,11 +178,16 @@ final class ConfiguratorPlugin {
         $name = isset($contact['name']) ? sanitize_text_field($contact['name']) : '';
         $email = isset($contact['email']) ? sanitize_email($contact['email']) : '';
         $phone = isset($contact['phone']) ? sanitize_text_field($contact['phone']) : '';
-        $region = isset($contact['wojewodztwo']) ? sanitize_text_field($contact['wojewodztwo']) : '';
+        $postal_code = isset($contact['postalCode'])
+            ? sanitize_text_field($contact['postalCode'])
+            : (isset($contact['wojewodztwo']) ? sanitize_text_field($contact['wojewodztwo']) : '');
+        $city = isset($contact['city']) ? sanitize_text_field($contact['city']) : '';
         $address = isset($contact['address']) ? sanitize_text_field($contact['address']) : '';
         $message = isset($contact['message']) ? sanitize_textarea_field($contact['message']) : '';
         $price = isset($data['price']) ? sanitize_text_field((string) $data['price']) : '';
         $image_url = isset($data['imageURL']) ? esc_url_raw($data['imageURL']) : '';
+        $allowed_langs = ['pl', 'cs', 'sl', 'hu'];
+        $lang = isset($data['lang']) && in_array($data['lang'], $allowed_langs, true) ? $data['lang'] : 'pl';
 
         if ($name === '' || $email === '' || $phone === '') {
             return new WP_Error('missing_data', 'Missing required contact fields', ['status' => 400]);
@@ -190,7 +197,15 @@ final class ConfiguratorPlugin {
         }
 
         $to_email = get_option(self::OPTION_EMAIL, get_option('admin_email'));
-        $subject = 'Nowe zapytanie z konfiguratora garazu - ' . $name;
+        if ($lang === 'cs') {
+            $subject = 'Nova poptavka z konfiguratoru garaze - ' . $name;
+        } elseif ($lang === 'sl') {
+            $subject = 'Novy dopyt z konfiguratora garaze - ' . $name;
+        } elseif ($lang === 'hu') {
+            $subject = 'Uj erdeklodes a garaz konfiguratorbol - ' . $name;
+        } else {
+            $subject = 'Nowe zapytanie z konfiguratora garazu - ' . $name;
+        }
         $from_domain = wp_parse_url(home_url(), PHP_URL_HOST);
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
@@ -203,7 +218,7 @@ final class ConfiguratorPlugin {
         $sent = wp_mail(
             $to_email,
             $subject,
-            self::build_inquiry_email($name, $email, $phone, $region, $address, $message, $price, $image_url, $garage),
+            self::build_inquiry_email($name, $email, $phone, $postal_code, $city, $address, $message, $price, $image_url, $garage, $lang),
             $headers,
             $attachments
         );
@@ -212,22 +227,304 @@ final class ConfiguratorPlugin {
             return new WP_Error('email_failed', 'Email send failed', ['status' => 500]);
         }
 
+        // Send short confirmation email to the client.
+        if ($lang === 'cs') {
+            $client_subject = 'Potvrzeni prijeti poptavky - Konfigurator garaze';
+        } elseif ($lang === 'sl') {
+            $client_subject = 'Potvrdenie prijatia dopytu - Konfigurator garaze';
+        } elseif ($lang === 'hu') {
+            $client_subject = 'Erdeklodes visszaigazolasa - Garaz konfigurator';
+        } else {
+            $client_subject = 'Potwierdzenie przyjecia zapytania - Konfigurator garazu';
+        }
+        $client_headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: Configurator <noreply@' . $from_domain . '>',
+        ];
+        $client_confirmation_sent = wp_mail(
+            $email,
+            $client_subject,
+            self::build_client_confirmation_email($name, $lang),
+            $client_headers
+        );
+
         return [
             'success' => true,
             'code' => 'sent',
             'message' => 'Inquiry sent',
-            'data' => ['to' => $to_email],
+            'data' => [
+                'to' => $to_email,
+                'client_confirmation_sent' => (bool) $client_confirmation_sent,
+            ],
         ];
     }
 
-    private static function build_inquiry_email($name, $email, $phone, $region, $address, $message, $price, $image_url, $garage) {
-        $garage_json = wp_json_encode($garage, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    private static function build_client_confirmation_email($name, $lang = 'pl') {
+        if ($lang === 'cs') {
+            $safe_name = esc_html($name);
+            return '<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; color:#1f2937; line-height:1.5;">
+  <div style="max-width:640px; margin:0 auto; padding:20px;">
+    <h2 style="margin:0 0 12px;">Dekujeme za poptavku</h2>
+    <p style="margin:0 0 10px;">Dobrý den ' . $safe_name . ',</p>
+    <p style="margin:0 0 10px;">vase poptavka z konfiguratoru byla uspesne prijata.</p>
+    <p style="margin:0 0 10px;">Nase obchodni oddeleni vas bude brzy kontaktovat s nezavaznou nabidkou.</p>
+  </div>
+</body>
+</html>';
+        }
+
+        if ($lang === 'sl') {
+            $safe_name = esc_html($name);
+            return '<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; color:#1f2937; line-height:1.5;">
+  <div style="max-width:640px; margin:0 auto; padding:20px;">
+    <h2 style="margin:0 0 12px;">Dakujeme za dopyt</h2>
+    <p style="margin:0 0 10px;">Dobry den ' . $safe_name . ',</p>
+    <p style="margin:0 0 10px;">vas dopyt z konfiguratora bol uspesne prijaty.</p>
+    <p style="margin:0 0 10px;">Nase obchodne oddelenie vas bude coskoro kontaktovat s nezavaznou cenovou ponukou.</p>
+  </div>
+</body>
+</html>';
+        }
+
+        if ($lang === 'hu') {
+            $safe_name = esc_html($name);
+            return '<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; color:#1f2937; line-height:1.5;">
+  <div style="max-width:640px; margin:0 auto; padding:20px;">
+    <h2 style="margin:0 0 12px;">Koszonjuk az erdeklodest</h2>
+    <p style="margin:0 0 10px;">Tisztelt ' . $safe_name . ',</p>
+    <p style="margin:0 0 10px;">a konfiguratorbol kuldott erdeklodeset sikeresen megkaptuk.</p>
+    <p style="margin:0 0 10px;">Munkatarsunk hamarosan felveszi Onnel a kapcsolatot egy kotelezettsegmentes ajanlattal.</p>
+  </div>
+</body>
+</html>';
+        }
+
+        $safe_name = esc_html($name);
+        return '<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; color:#1f2937; line-height:1.5;">
+  <div style="max-width:640px; margin:0 auto; padding:20px;">
+    <h2 style="margin:0 0 12px;">Dziekujemy za zapytanie</h2>
+    <p style="margin:0 0 10px;">Dzien dobry ' . $safe_name . ',</p>
+    <p style="margin:0 0 10px;">Twoje zapytanie z konfiguratora zostalo poprawnie przyjete.</p>
+    <p style="margin:0 0 10px;">Skontaktujemy sie z Toba wkrotce z niezobowiazujaca wycena.</p>
+  </div>
+</body>
+</html>';
+    }
+
+    private static function build_inquiry_email($name, $email, $phone, $postal_code, $city, $address, $message, $price, $image_url, $garage, $lang = 'pl') {
         $gate_count = (int) self::garage_value($garage, 'gateCount', 0);
         $door_count = (int) self::garage_value($garage, 'doorCount', 0);
         $window_count = (int) self::garage_value($garage, 'windowCount', 0);
         $has_carport = (bool) self::garage_value($garage, 'carport', false);
-        $request_time = wp_date('d.m.Y H:i:s');
-        $client_ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field((string) $_SERVER['REMOTE_ADDR']) : '';
+        if ($lang === 'cs') {
+            $t = [
+            'mail_title' => 'Nova poptavka z konfiguratoru garaze',
+            'mail_subtitle' => 'Prisla nova poptavka od zakaznika',
+            'contact' => 'Kontaktni udaje',
+            'full_name' => 'Jmeno a prijmeni',
+            'email' => 'E-mail',
+            'phone' => 'Telefon',
+            'postal_code' => 'PSC',
+            'city' => 'Mesto',
+            'delivery_address' => 'Adresa montaze',
+            'message' => 'Poznamka',
+            'garage_config' => 'Konfigurace garaze',
+            'basic_params' => 'Zakladni parametry',
+            'width' => 'Sirka',
+            'depth' => 'Delka',
+            'height' => 'Vyska',
+            'color' => 'Barva',
+            'emboss' => 'Prolis',
+            'direction' => 'Smer prolisu',
+            'roof' => 'Strecha',
+            'roof_slope' => 'Typ spadu',
+            'roof_color' => 'Barva strechy',
+            'roof_type' => 'Typ krytiny',
+            'gates' => 'Brany',
+            'gate_count' => 'Pocet bran',
+            'gate' => 'Brana',
+            'type' => 'Typ',
+            'size' => 'Rozmer',
+            'position' => 'Pozice',
+            'door' => 'Dvere',
+            'door_count' => 'Pocet dveri',
+            'details' => 'Detaily',
+            'window' => 'Okna',
+            'window_count' => 'Pocet oken',
+            'carport' => 'Pristresek',
+            'side' => 'Strana',
+            'walls' => 'Steny',
+            'walls2' => 'Steny 2',
+            'addons' => 'Doplnky',
+            'gutter' => 'Okapy',
+            'automation' => 'Automatika',
+            'filc' => 'Antikondenzacni filc',
+            'transport' => 'Doprava',
+            'garage_visualization' => 'Vizualizace garaze',
+            'm' => 'm',
+            'cm' => 'cm',
+            'pieces' => ' ks',
+            ];
+        } elseif ($lang === 'sl') {
+            $t = [
+            'mail_title' => 'Novy dopyt z konfiguratora garaze',
+            'mail_subtitle' => 'Prisiel novy dopyt od zakaznika',
+            'contact' => 'Kontaktne udaje',
+            'full_name' => 'Meno a priezvisko',
+            'email' => 'E-mail',
+            'phone' => 'Telefon',
+            'postal_code' => 'PSC',
+            'city' => 'Mesto',
+            'delivery_address' => 'Adresa montaze',
+            'message' => 'Poznamka',
+            'garage_config' => 'Konfiguracia garaze',
+            'basic_params' => 'Zakladne parametre',
+            'width' => 'Sirka',
+            'depth' => 'Dlzka',
+            'height' => 'Vyska',
+            'color' => 'Farba',
+            'emboss' => 'Prelis',
+            'direction' => 'Smer prelisu',
+            'roof' => 'Strecha',
+            'roof_slope' => 'Typ spadu',
+            'roof_color' => 'Farba strechy',
+            'roof_type' => 'Typ krytiny',
+            'gates' => 'Brany',
+            'gate_count' => 'Pocet bran',
+            'gate' => 'Brana',
+            'type' => 'Typ',
+            'size' => 'Rozmer',
+            'position' => 'Pozicia',
+            'door' => 'Dvere',
+            'door_count' => 'Pocet dveri',
+            'details' => 'Detaily',
+            'window' => 'Okna',
+            'window_count' => 'Pocet okien',
+            'carport' => 'Pristresok',
+            'side' => 'Strana',
+            'walls' => 'Steny',
+            'walls2' => 'Steny 2',
+            'addons' => 'Doplnky',
+            'gutter' => 'Odkvapy',
+            'automation' => 'Automatika',
+            'filc' => 'Antikondenzacna plst',
+            'transport' => 'Doprava',
+            'garage_visualization' => 'Vizualizacia garaze',
+            'm' => 'm',
+            'cm' => 'cm',
+            'pieces' => ' ks',
+            ];
+        } elseif ($lang === 'hu') {
+            $t = [
+            'mail_title' => 'Uj erdeklodes a garaz konfiguratorbol',
+            'mail_subtitle' => 'Uj ugyfel erdeklodes erkezett',
+            'contact' => 'Kapcsolati adatok',
+            'full_name' => 'Nev',
+            'email' => 'E-mail',
+            'phone' => 'Telefon',
+            'postal_code' => 'Iranyitoszam',
+            'city' => 'Varos',
+            'delivery_address' => 'Szerelesi cim',
+            'message' => 'Megjegyzes',
+            'garage_config' => 'Garazs konfiguracio',
+            'basic_params' => 'Alapadatok',
+            'width' => 'Szelesseg',
+            'depth' => 'Hosszusag',
+            'height' => 'Magassag',
+            'color' => 'Szin',
+            'emboss' => 'Profilozas',
+            'direction' => 'Profil iranya',
+            'roof' => 'Teto',
+            'roof_slope' => 'Tetolejtes tipusa',
+            'roof_color' => 'Tetoszin',
+            'roof_type' => 'Fedestipus',
+            'gates' => 'Kapuk',
+            'gate_count' => 'Kapuk szama',
+            'gate' => 'Kapu',
+            'type' => 'Tipus',
+            'size' => 'Meret',
+            'position' => 'Pozicio',
+            'door' => 'Ajtok',
+            'door_count' => 'Ajtok szama',
+            'details' => 'Reszletek',
+            'window' => 'Ablakok',
+            'window_count' => 'Ablakok szama',
+            'carport' => 'Beallo',
+            'side' => 'Oldal',
+            'walls' => 'Oldalfalak',
+            'walls2' => 'Oldalfalak 2',
+            'addons' => 'Kiegeszitok',
+            'gutter' => 'Ereszcsatorna',
+            'automation' => 'Automatika',
+            'filc' => 'Paracseppgatlo filc',
+            'transport' => 'Szallitas',
+            'garage_visualization' => 'Garazs latvanyterv',
+            'm' => 'm',
+            'cm' => 'cm',
+            'pieces' => ' db',
+            ];
+        } else {
+            $t = [
+            'mail_title' => 'Nowe zapytanie z konfiguratora garazu',
+            'mail_subtitle' => 'Otrzymano nowe zapytanie od klienta',
+            'contact' => 'Dane kontaktowe',
+            'full_name' => 'Imie i nazwisko',
+            'email' => 'Email',
+            'phone' => 'Telefon',
+            'postal_code' => 'Kod pocztowy',
+            'city' => 'Miasto',
+            'delivery_address' => 'Adres dostawy',
+            'message' => 'Wiadomosc',
+            'garage_config' => 'Konfiguracja garazu',
+            'basic_params' => 'Parametry podstawowe',
+            'width' => 'Szerokosc',
+            'depth' => 'Glebokosc',
+            'height' => 'Wysokosc',
+            'color' => 'Kolor',
+            'emboss' => 'Tloczenie',
+            'direction' => 'Kierunek tloczenia',
+            'roof' => 'Dach',
+            'roof_slope' => 'Typ spadu',
+            'roof_color' => 'Kolor dachu',
+            'roof_type' => 'Rodzaj pokrycia',
+            'gates' => 'Bramy',
+            'gate_count' => 'Liczba bram',
+            'gate' => 'Brama',
+            'type' => 'Typ',
+            'size' => 'Rozmiar',
+            'position' => 'Pozycja',
+            'door' => 'Drzwi',
+            'door_count' => 'Liczba drzwi',
+            'details' => 'Szczegoly',
+            'window' => 'Okna',
+            'window_count' => 'Liczba okien',
+            'carport' => 'Wiata',
+            'side' => 'Strona',
+            'walls' => 'Sciany',
+            'walls2' => 'Sciany 2',
+            'addons' => 'Dodatki',
+            'gutter' => 'Rynny',
+            'automation' => 'Automatyka',
+            'filc' => 'Filc',
+            'transport' => 'Transport',
+            'garage_visualization' => 'Wizualizacja garazu',
+            'm' => 'm',
+            'cm' => 'cm',
+            'pieces' => ' szt.',
+            ];
+        }
 
         ob_start();
         ?>
@@ -239,54 +536,55 @@ final class ConfiguratorPlugin {
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin:0; padding:0;">
           <div style="max-width:900px; margin:0 auto; padding:20px;">
             <div style="background:#1f2937; color:#fff; padding:18px; text-align:center; border-radius:8px;">
-              <h1 style="margin:0; font-size:24px;">Nowe zapytanie z konfiguratora garażu</h1>
-              <p style="margin:8px 0 0;">Otrzymano nowe zapytanie od klienta</p>
+              <h1 style="margin:0; font-size:24px;"><?php echo esc_html($t['mail_title']); ?></h1>
+              <p style="margin:8px 0 0;"><?php echo esc_html($t['mail_subtitle']); ?></p>
             </div>
 
             <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
-              <h3 style="margin:0 0 10px;">Dane kontaktowe</h3>
+              <h3 style="margin:0 0 10px;"><?php echo esc_html($t['contact']); ?></h3>
               <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                <tr><th align="left" style="background:#f5f5f5; width:220px;">Imię i nazwisko</th><td><?php echo esc_html($name); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Email</th><td><a href="mailto:<?php echo esc_attr($email); ?>"><?php echo esc_html($email); ?></a></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Telefon</th><td><a href="tel:<?php echo esc_attr($phone); ?>"><?php echo esc_html($phone); ?></a></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Województwo / kraj</th><td><?php echo esc_html($region); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Adres dostawy</th><td><?php echo esc_html($address); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Wiadomość</th><td><?php echo nl2br(esc_html($message)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['full_name']); ?></th><td><?php echo esc_html($name); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['email']); ?></th><td><a href="mailto:<?php echo esc_attr($email); ?>"><?php echo esc_html($email); ?></a></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['phone']); ?></th><td><a href="tel:<?php echo esc_attr($phone); ?>"><?php echo esc_html($phone); ?></a></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['postal_code']); ?></th><td><?php echo esc_html($postal_code); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['city']); ?></th><td><?php echo esc_html($city); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['delivery_address']); ?></th><td><?php echo esc_html($address); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['message']); ?></th><td><?php echo nl2br(esc_html($message)); ?></td></tr>
               </table>
             </div>
 
             <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
-              <h3 style="margin:0 0 10px;">Konfiguracja garażu</h3>
-              <h4 style="margin:14px 0 8px;">Parametry podstawowe</h4>
+              <h3 style="margin:0 0 10px;"><?php echo esc_html($t['garage_config']); ?></h3>
+              <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['basic_params']); ?></h4>
               <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                <tr><th align="left" style="background:#f5f5f5; width:220px;">Szerokość</th><td><?php echo esc_html(self::garage_value($garage, 'width')); ?> m</td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Głębokość</th><td><?php echo esc_html(self::garage_value($garage, 'depth')); ?> m</td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Wysokość</th><td><?php echo esc_html(self::garage_value($garage, 'height')); ?> cm</td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Kolor</th><td><?php echo esc_html(self::garage_value($garage, 'color')); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Tłoczenie</th><td><?php echo esc_html(self::garage_value($garage, 'emboss')); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Kierunek tłoczenia</th><td><?php echo esc_html(self::garage_value($garage, 'direction')); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['width']); ?></th><td><?php echo esc_html(self::garage_value($garage, 'width')); ?> <?php echo esc_html($t['m']); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['depth']); ?></th><td><?php echo esc_html(self::garage_value($garage, 'depth')); ?> <?php echo esc_html($t['m']); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['height']); ?></th><td><?php echo esc_html(self::garage_value($garage, 'height')); ?> <?php echo esc_html($t['cm']); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['color']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'color'), $lang)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['emboss']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'emboss'), $lang)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['direction']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'direction'), $lang)); ?></td></tr>
               </table>
 
-              <h4 style="margin:14px 0 8px;">Dach</h4>
+              <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['roof']); ?></h4>
               <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                <tr><th align="left" style="background:#f5f5f5; width:220px;">Typ spadu</th><td><?php echo esc_html(self::garage_value($garage, 'roof')); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Kolor dachu</th><td><?php echo esc_html(self::garage_value($garage, 'roofColor')); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Rodzaj pokrycia</th><td><?php echo esc_html(self::garage_value($garage, 'roofType')); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['roof_slope']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'roof'), $lang)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['roof_color']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'roofColor'), $lang)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['roof_type']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'roofType'), $lang)); ?></td></tr>
               </table>
 
-              <h4 style="margin:14px 0 8px;">Bramy</h4>
+              <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['gates']); ?></h4>
               <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                <tr><th align="left" style="background:#f5f5f5; width:220px;">Liczba bram</th><td><?php echo esc_html((string) $gate_count); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['gate_count']); ?></th><td><?php echo esc_html((string) $gate_count); ?></td></tr>
                 <?php for ($i = 1; $i <= min(3, $gate_count); $i++): ?>
                   <?php $gate_type = self::garage_value($garage, 'gateType' . $i); ?>
                   <?php if ($gate_type !== ''): ?>
                     <tr>
-                      <th align="left" style="background:#f5f5f5;">Brama <?php echo (int) $i; ?></th>
+                      <th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['gate'] . ' ' . (int) $i); ?></th>
                       <td>
-                        Typ: <?php echo esc_html($gate_type); ?>,
-                        kolor: <?php echo esc_html(self::garage_value($garage, 'gateColor' . $i)); ?>,
-                        rozmiar: <?php echo esc_html(self::garage_value($garage, 'gateWidth' . $i)); ?> m x <?php echo esc_html(self::garage_value($garage, 'gateHeight' . $i)); ?> cm,
-                        pozycja: <?php echo esc_html(self::garage_value($garage, 'gatePositionValue' . $i)); ?> cm
+                        <?php echo esc_html($t['type']); ?>: <?php echo esc_html(self::translate_config_value($gate_type, $lang)); ?>,
+                        <?php echo esc_html($t['color']); ?>: <?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'gateColor' . $i), $lang)); ?>,
+                        <?php echo esc_html($t['size']); ?>: <?php echo esc_html(self::garage_value($garage, 'gateWidth' . $i)); ?> <?php echo esc_html($t['m']); ?> x <?php echo esc_html(self::garage_value($garage, 'gateHeight' . $i)); ?> <?php echo esc_html($t['cm']); ?>,
+                        <?php echo esc_html($t['position']); ?>: <?php echo esc_html(self::garage_value($garage, 'gatePositionValue' . $i)); ?> <?php echo esc_html($t['cm']); ?>
                       </td>
                     </tr>
                   <?php endif; ?>
@@ -294,67 +592,54 @@ final class ConfiguratorPlugin {
               </table>
 
               <?php if ($door_count > 0): ?>
-                <h4 style="margin:14px 0 8px;">Drzwi</h4>
+                <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['door']); ?></h4>
                 <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                  <tr><th align="left" style="background:#f5f5f5; width:220px;">Liczba drzwi</th><td><?php echo esc_html((string) $door_count); ?></td></tr>
-                  <tr><th align="left" style="background:#f5f5f5;">Szczegoly</th><td><?php echo self::format_item_details_html(self::garage_value($garage, 'doors'), 'door'); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['door_count']); ?></th><td><?php echo esc_html((string) $door_count); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['details']); ?></th><td><?php echo self::format_item_details_html(self::garage_value($garage, 'doors'), 'door', $lang); ?></td></tr>
                 </table>
               <?php endif; ?>
 
               <?php if ($window_count > 0): ?>
-                <h4 style="margin:14px 0 8px;">Okna</h4>
+                <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['window']); ?></h4>
                 <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                  <tr><th align="left" style="background:#f5f5f5; width:220px;">Liczba okien</th><td><?php echo esc_html((string) $window_count); ?></td></tr>
-                  <tr><th align="left" style="background:#f5f5f5;">Szczegoly</th><td><?php echo self::format_item_details_html(self::garage_value($garage, 'windows'), 'window'); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['window_count']); ?></th><td><?php echo esc_html((string) $window_count); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['details']); ?></th><td><?php echo self::format_item_details_html(self::garage_value($garage, 'windows'), 'window', $lang); ?></td></tr>
                 </table>
               <?php endif; ?>
 
               <?php if ($has_carport): ?>
-                <h4 style="margin:14px 0 8px;">Wiata</h4>
+                <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['carport']); ?></h4>
                 <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                  <tr><th align="left" style="background:#f5f5f5; width:220px;">Szerokość</th><td><?php echo esc_html(self::garage_value($garage, 'carportWidth')); ?> m</td></tr>
-                  <tr><th align="left" style="background:#f5f5f5;">Strona</th><td><?php echo esc_html(self::garage_value($garage, 'carportSide')); ?></td></tr>
-                  <tr><th align="left" style="background:#f5f5f5;">Typ</th><td><?php echo esc_html(self::garage_value($garage, 'carportType')); ?></td></tr>
-                  <tr><th align="left" style="background:#f5f5f5;">Ściany</th><td><?php echo nl2br(esc_html(self::garage_value($garage, 'carportSides'))); ?></td></tr>
-                  <tr><th align="left" style="background:#f5f5f5;">Ściany 2</th><td><?php echo nl2br(esc_html(self::garage_value($garage, 'carportSides2'))); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['width']); ?></th><td><?php echo esc_html(self::garage_value($garage, 'carportWidth')); ?> <?php echo esc_html($t['m']); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['side']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'carportSide'), $lang)); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['type']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'carportType'), $lang)); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['walls']); ?></th><td><?php echo nl2br(esc_html(self::translate_config_value(self::garage_value($garage, 'carportSides'), $lang))); ?></td></tr>
+                  <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['walls2']); ?></th><td><?php echo nl2br(esc_html(self::translate_config_value(self::garage_value($garage, 'carportSides2'), $lang))); ?></td></tr>
                 </table>
               <?php endif; ?>
 
-              <h4 style="margin:14px 0 8px;">Dodatki</h4>
+              <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['addons']); ?></h4>
               <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                <tr><th align="left" style="background:#f5f5f5; width:220px;">Rynny</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'gutter'))); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Automatyka</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'automatic'))); ?><?php echo !empty(self::garage_value($garage, 'automatic')) ? ' (' . esc_html((string) self::garage_value($garage, 'countAutomatic', 0)) . ' szt.)' : ''; ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Filc</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'filc'))); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">Transport</th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'transport'))); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['gutter']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'gutter'), $lang)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['automation']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'automatic'), $lang)); ?><?php echo !empty(self::garage_value($garage, 'automatic')) ? ' (' . esc_html((string) self::garage_value($garage, 'countAutomatic', 0)) . $t['pieces'] . ')' : ''; ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['filc']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'filc'), $lang)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['transport']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'transport'), $lang)); ?></td></tr>
               </table>
             </div>
 
             <?php if (!empty($image_url)): ?>
               <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px; text-align:center;">
-                <h3 style="margin:0 0 12px;">Wizualizacja garażu</h3>
-                <img src="<?php echo esc_url($image_url); ?>" alt="Wizualizacja garażu" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:6px;" />
+                <h3 style="margin:0 0 12px;"><?php echo esc_html($t['garage_visualization']); ?></h3>
+                <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($t['garage_visualization']); ?>" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:6px;" />
               </div>
             <?php endif; ?>
 
-            <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
-              <h3 style="margin:0 0 10px;">Informacje systemowe</h3>
-              <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
-                <tr><th align="left" style="background:#f5f5f5; width:220px;">Data zapytania</th><td><?php echo esc_html($request_time); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;">IP klienta</th><td><?php echo esc_html($client_ip); ?></td></tr>
-              </table>
-            </div>
-
-            <div style="margin-top:18px; border:1px solid #ddd; border-radius:8px; padding:14px;">
-              <h3 style="margin:0 0 10px;">Surowe dane konfiguracji (JSON)</h3>
-              <pre style="background:#f6f6f6; padding:12px; border:1px solid #ddd; overflow:auto;"><?php echo esc_html($garage_json); ?></pre>
-            </div>
           </div>
         </body>
         </html>
         <?php
         return (string) ob_get_clean();
     }
-
     private static function resolve_logo_url() {
         $custom_logo_id = (int) get_theme_mod('custom_logo');
         if ($custom_logo_id > 0) {
@@ -378,6 +663,12 @@ final class ConfiguratorPlugin {
         if (strpos($locale, 'cs') === 0) {
             return 'cs';
         }
+        if (strpos($locale, 'sk') === 0) {
+            return 'sl';
+        }
+        if (strpos($locale, 'hu') === 0) {
+            return 'hu';
+        }
         return 'pl';
     }
 
@@ -388,10 +679,18 @@ final class ConfiguratorPlugin {
         return array_key_exists($key, $garage) ? $garage[$key] : $default;
     }
 
-    private static function yes_no($value) {
+    private static function yes_no($value, $lang = 'pl') {
+        if ($lang === 'cs') {
+            return !empty($value) ? 'Ano' : 'Ne';
+        }
+        if ($lang === 'sl') {
+            return !empty($value) ? 'Ano' : 'Nie';
+        }
+        if ($lang === 'hu') {
+            return !empty($value) ? 'Igen' : 'Nem';
+        }
         return !empty($value) ? 'Tak' : 'Nie';
     }
-
     private static function resolve_image_attachments($image_url) {
         if (empty($image_url)) {
             return [];
@@ -410,7 +709,7 @@ final class ConfiguratorPlugin {
         return [];
     }
 
-    private static function format_item_details_html($raw, $type) {
+    private static function format_item_details_html($raw, $type, $lang = 'pl') {
         if (!is_string($raw) || trim($raw) === '') {
             return '-';
         }
@@ -430,8 +729,8 @@ final class ConfiguratorPlugin {
                 $decoded = json_decode($m[1], true);
                 if (is_array($decoded)) {
                     $result[] = $type === 'door'
-                        ? self::format_door_line($decoded, $idx)
-                        : self::format_window_line($decoded, $idx);
+                        ? self::format_door_line($decoded, $idx, $lang)
+                        : self::format_window_line($decoded, $idx, $lang);
                     continue;
                 }
             }
@@ -442,13 +741,42 @@ final class ConfiguratorPlugin {
         return implode('<br>', $result);
     }
 
-    private static function format_door_line($door, $idx) {
+        private static function format_door_line($door, $idx, $lang = 'pl') {
         $size = isset($door['size']) ? (string) $door['size'] : '-';
-        $door_type = isset($door['type']) ? (string) $door['type'] : '-';
-        $color = isset($door['color']) ? (string) $door['color'] : '-';
-        $position = isset($door['position']) ? (string) $door['position'] : '-';
+        $door_type = self::translate_config_value(isset($door['type']) ? (string) $door['type'] : '-', $lang);
+        $color = self::translate_config_value(isset($door['color']) ? (string) $door['color'] : '-', $lang);
+        $position = self::translate_config_value(isset($door['position']) ? (string) $door['position'] : '-', $lang);
         $position_value = isset($door['positionValue']) ? (string) $door['positionValue'] : '-';
-
+        if ($lang === 'cs') {
+            return esc_html(
+                'Dvere ' . $idx .
+                ': rozmer ' . $size .
+                ', typ ' . $door_type .
+                ', barva ' . $color .
+                ', pozice ' . $position .
+                ', vzdalenost ' . $position_value . ' cm'
+            );
+        }
+        if ($lang === 'sl') {
+            return esc_html(
+                'Dvere ' . $idx .
+                ': rozmer ' . $size .
+                ', typ ' . $door_type .
+                ', farba ' . $color .
+                ', pozicia ' . $position .
+                ', vzdialenost ' . $position_value . ' cm'
+            );
+        }
+        if ($lang === 'hu') {
+            return esc_html(
+                'Ajto ' . $idx .
+                ': meret ' . $size .
+                ', tipus ' . $door_type .
+                ', szin ' . $color .
+                ', pozicio ' . $position .
+                ', tavolsag ' . $position_value . ' cm'
+            );
+        }
         return esc_html(
             'Drzwi ' . $idx .
             ': rozmiar ' . $size .
@@ -458,12 +786,34 @@ final class ConfiguratorPlugin {
             ', odleglosc ' . $position_value . ' cm'
         );
     }
-
-    private static function format_window_line($window, $idx) {
+        private static function format_window_line($window, $idx, $lang = 'pl') {
         $size = isset($window['size']) ? (string) $window['size'] : '-';
-        $position = isset($window['position']) ? (string) $window['position'] : '-';
+        $position = self::translate_config_value(isset($window['position']) ? (string) $window['position'] : '-', $lang);
         $position_value = isset($window['positionValue']) ? (string) $window['positionValue'] : '-';
-
+        if ($lang === 'cs') {
+            return esc_html(
+                'Okno ' . $idx .
+                ': rozmer ' . $size .
+                ', pozice ' . $position .
+                ', vzdalenost ' . $position_value . ' cm'
+            );
+        }
+        if ($lang === 'sl') {
+            return esc_html(
+                'Okno ' . $idx .
+                ': rozmer ' . $size .
+                ', pozicia ' . $position .
+                ', vzdialenost ' . $position_value . ' cm'
+            );
+        }
+        if ($lang === 'hu') {
+            return esc_html(
+                'Ablak ' . $idx .
+                ': meret ' . $size .
+                ', pozicio ' . $position .
+                ', tavolsag ' . $position_value . ' cm'
+            );
+        }
         return esc_html(
             'Okno ' . $idx .
             ': rozmiar ' . $size .
@@ -472,6 +822,142 @@ final class ConfiguratorPlugin {
         );
     }
 
+    private static function translate_config_value($value, $lang = 'pl') {
+        $source = is_scalar($value) ? (string) $value : '';
+        if ($source === '' || $lang === 'pl') {
+            return $source;
+        }
+
+        $replacements = [
+            'cs' => [
+                ['Lewo:', 'Prawo:', 'Przod:', 'Przód:', 'Tyl:', 'Tak', 'Nie'],
+                ['Leva:', 'Prava:', 'Predni:', 'Predni:', 'Zadni:', 'Ano', 'Ne'],
+            ],
+            'sl' => [
+                ['Lewo:', 'Prawo:', 'Przod:', 'Przód:', 'Tyl:', 'Tak', 'Nie'],
+                ['Lava:', 'Prava:', 'Predna:', 'Predna:', 'Zadna:', 'Ano', 'Nie'],
+            ],
+            'hu' => [
+                ['Lewo:', 'Prawo:', 'Przod:', 'Przód:', 'Tyl:', 'Tak', 'Nie'],
+                ['Bal:', 'Jobb:', 'Elol:', 'Elol:', 'Hatul:', 'Igen', 'Nem'],
+            ],
+        ];
+
+        $maps = [
+            'cs' => [
+                'ocynk' => 'Pozink',
+                'orzech' => 'Orech',
+                'zloty dab' => 'Zlaty dub',
+                'złoty dąb' => 'Zlaty dub',
+                'zloty dab ciemny' => 'Tmavy zlaty dub',
+                'złoty dąb ciemny' => 'Tmavy zlaty dub',
+                'lewo' => 'Leva',
+                'prawo' => 'Prava',
+                'przod' => 'Predni',
+                'przód' => 'Predni',
+                'tyl' => 'Zadni',
+                'tył' => 'Zadni',
+                'pion' => 'Svisle',
+                'poziom' => 'Vodorovne',
+                'spad tyl' => 'Spad dozadu',
+                'spad tył' => 'Spad dozadu',
+                'spad przod' => 'Spad dopredu',
+                'spad przód' => 'Spad dopredu',
+                'spad w lewo' => 'Spad doleva',
+                'spad w prawo' => 'Spad doprava',
+                'dwuspad' => 'Dvojity spad',
+                'dwuspad przod-tyl' => 'Dvojity spad predek-zadek',
+                'dwuspad przod-tył' => 'Dvojity spad predek-zadek',
+                'trapezowa' => 'Trapezova',
+                'blachodachowka' => 'Plechova stresni taska',
+                'blachodachówka' => 'Plechova stresni taska',
+                'uchylna' => 'Vyklopna',
+                'dwuskrzydlowa' => 'Dvoukridlova',
+                'dwuskrzydłowa' => 'Dvoukridlova',
+                'brak' => 'Bez pristresku',
+                'oblachowane' => 'Oplechovane',
+                'azury' => 'Azurove',
+                'mix' => 'Mix',
+            ],
+            'sl' => [
+                'ocynk' => 'Pozink',
+                'orzech' => 'Orech',
+                'zloty dab' => 'Zlaty dub',
+                'złoty dąb' => 'Zlaty dub',
+                'zloty dab ciemny' => 'Tmavy zlaty dub',
+                'złoty dąb ciemny' => 'Tmavy zlaty dub',
+                'lewo' => 'Lava',
+                'prawo' => 'Prava',
+                'przod' => 'Predna',
+                'przód' => 'Predna',
+                'tyl' => 'Zadna',
+                'tył' => 'Zadna',
+                'pion' => 'Zvisle',
+                'poziom' => 'Vodorovne',
+                'spad tyl' => 'Spad dozadu',
+                'spad tył' => 'Spad dozadu',
+                'spad przod' => 'Spad dopredu',
+                'spad przód' => 'Spad dopredu',
+                'spad w lewo' => 'Spad dolava',
+                'spad w prawo' => 'Spad doprava',
+                'dwuspad' => 'Dvojity spad',
+                'dwuspad przod-tyl' => 'Dvojity spad predu-zadu',
+                'dwuspad przod-tył' => 'Dvojity spad predu-zadu',
+                'trapezowa' => 'Trapezova',
+                'blachodachowka' => 'Plechova stresna krytina',
+                'blachodachówka' => 'Plechova stresna krytina',
+                'uchylna' => 'Vyklopna',
+                'dwuskrzydlowa' => 'Dvojkridlova',
+                'dwuskrzydłowa' => 'Dvojkridlova',
+                'brak' => 'Bez pristresku',
+                'oblachowane' => 'Oplastene',
+                'azury' => 'Azurowe',
+                'mix' => 'Kombinacia',
+            ],
+            'hu' => [
+                'ocynk' => 'Horganyzott',
+                'orzech' => 'Dio',
+                'zloty dab' => 'Aranytolgy',
+                'złoty dąb' => 'Aranytolgy',
+                'zloty dab ciemny' => 'Sotet aranytolgy',
+                'złoty dąb ciemny' => 'Sotet aranytolgy',
+                'lewo' => 'Bal',
+                'prawo' => 'Jobb',
+                'przod' => 'Elol',
+                'przód' => 'Elol',
+                'tyl' => 'Hatul',
+                'tył' => 'Hatul',
+                'pion' => 'Fuggoleges',
+                'poziom' => 'Vizszintes',
+                'spad tyl' => 'Hatso lejtes',
+                'spad tył' => 'Hatso lejtes',
+                'spad przod' => 'Elso lejtes',
+                'spad przód' => 'Elso lejtes',
+                'spad w lewo' => 'Balra lejto',
+                'spad w prawo' => 'Jobbra lejto',
+                'dwuspad' => 'Ketoldalu teto',
+                'dwuspad przod-tyl' => 'Ketoldalu teto elol-hatul',
+                'dwuspad przod-tył' => 'Ketoldalu teto elol-hatul',
+                'trapezowa' => 'Trapezlemez',
+                'blachodachowka' => 'Cserepmintas lemez',
+                'blachodachówka' => 'Cserepmintas lemez',
+                'uchylna' => 'Billeno',
+                'dwuskrzydlowa' => 'Ketszarnyu',
+                'dwuskrzydłowa' => 'Ketszarnyu',
+                'brak' => 'Burkolat nelkul',
+                'oblachowane' => 'Burkolt',
+                'azury' => 'Lamelas',
+                'mix' => 'Kombinalt',
+            ],
+        ];
+
+        $translated = isset($replacements[$lang])
+            ? str_ireplace($replacements[$lang][0], $replacements[$lang][1], $source)
+            : $source;
+
+        $key = strtolower(trim($translated));
+        return isset($maps[$lang][$key]) ? $maps[$lang][$key] : $translated;
+    }
     private static function layout_css() {
         return '
 .configurator-plugin-shell {
@@ -519,3 +1005,4 @@ body.configurator-plugin-active {
 }
 
 ConfiguratorPlugin::init();
+
