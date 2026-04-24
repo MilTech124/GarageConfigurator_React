@@ -1,24 +1,75 @@
-import data from "./data.json";
-import dataOcynk from "./dataOcynk.json";
+import dataDefault from "./data.json";
+import dataOcynkDefault from "./dataOcynk.json";
+
+let cachedPrices = null;
+let cachedAddons = null;
+let fetchPromise = null;
+
+async function fetchPrices() {
+  if (cachedPrices) return cachedPrices;
+  if (fetchPromise) return fetchPromise;
+
+  const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
+  const endpoint = wpConfig.pricesEndpoint;
+
+  if (!endpoint) {
+    cachedPrices = { standard: dataDefault, galvanized: dataOcynkDefault };
+    return cachedPrices;
+  }
+
+  fetchPromise = fetch(endpoint)
+    .then((res) => res.json())
+    .then((result) => {
+      if (result.success && result.data) {
+        cachedPrices = {
+          standard: result.data.standard || dataDefault,
+          galvanized: result.data.galvanized || dataOcynkDefault,
+        };
+        if (result.data.addons) cachedAddons = result.data.addons;
+      } else {
+        cachedPrices = { standard: dataDefault, galvanized: dataOcynkDefault };
+      }
+      fetchPromise = null;
+      return cachedPrices;
+    })
+    .catch(() => {
+      cachedPrices = { standard: dataDefault, galvanized: dataOcynkDefault };
+      fetchPromise = null;
+      return cachedPrices;
+    });
+
+  return fetchPromise;
+}
+
+export async function getPrices() {
+  return fetchPrices();
+}
+
+export function getPriceDataSync() {
+  return cachedPrices || { standard: dataDefault, galvanized: dataOcynkDefault };
+}
 
 const garagePrice = ({ selectedOptions }) => {
   const { width, depth } = selectedOptions;
+  const prices = cachedPrices || { standard: dataDefault, galvanized: dataOcynkDefault };
 
-  if(selectedOptions.color === "Ocynk") {
-    const garagePrice = dataOcynk.find((garage) => garage.width === width && garage.depth === depth);
+  if (selectedOptions.color === "Ocynk") {
+    const garagePrice = prices.galvanized.find(
+      (garage) => garage.width === width && garage.depth === depth
+    );
     if (!garagePrice) {
-      // Handle the case where no matching garage is found
       console.error("No matching garage found");
-      return null; // or return a default value or throw an error
+      return null;
     }
-    return garagePrice.price+500+400+500;    // -spad tyl - brama
+    const ocynkExtra = cachedAddons ? (cachedAddons.ocynkExtra || 1400) : 1400;
+    return garagePrice.price + ocynkExtra;
   }
-  const garagePrice = data.find((garage) => garage.width === width && garage.depth === depth);
-
+  const garagePrice = prices.standard.find(
+    (garage) => garage.width === width && garage.depth === depth
+  );
   if (!garagePrice) {
-    // Handle the case where no matching garage is found
     console.error("No matching garage found");
-    return null; // or return a default value or throw an error
+    return null;
   }
 
   return garagePrice.price;

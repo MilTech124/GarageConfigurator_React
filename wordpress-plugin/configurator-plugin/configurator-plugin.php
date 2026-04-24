@@ -12,6 +12,10 @@ if (!defined('ABSPATH')) {
 
 final class ConfiguratorPlugin {
     const OPTION_EMAIL = 'configurator_inquiry_email';
+    const OPTION_PRICES_STANDARD = 'configurator_prices_standard';
+    const OPTION_PRICES_GALVANIZED = 'configurator_prices_galvanized';
+    const OPTION_SHOW_PRICE = 'configurator_show_price';
+    const OPTION_ADDON_PRICES = 'configurator_addon_prices';
     const SHORTCODE = 'configurator_plugin';
     const REST_NS = 'configurator/v1';
 
@@ -19,6 +23,7 @@ final class ConfiguratorPlugin {
         add_shortcode(self::SHORTCODE, [__CLASS__, 'render_shortcode']);
         add_action('rest_api_init', [__CLASS__, 'register_rest_routes']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
+        add_action('admin_menu', [__CLASS__, 'add_admin_menu']);
     }
 
     public static function register_settings() {
@@ -54,6 +59,12 @@ final class ConfiguratorPlugin {
             'callback' => [__CLASS__, 'handle_upload_image'],
             'permission_callback' => '__return_true',
         ]);
+
+        register_rest_route(self::REST_NS, '/prices', [
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => [__CLASS__, 'handle_get_prices'],
+            'permission_callback' => '__return_true',
+        ]);
     }
 
     public static function render_shortcode() {
@@ -81,7 +92,7 @@ final class ConfiguratorPlugin {
                     'configurator-plugin-style-' . $index,
                     $base_url . ltrim($css_file, '/'),
                     [],
-                    null
+                    filemtime(plugin_dir_path(__FILE__) . 'assets/dist/' . ltrim($css_file, '/'))
                 );
             }
         }
@@ -95,7 +106,7 @@ final class ConfiguratorPlugin {
             $script_handle,
             $base_url . ltrim($entry['file'], '/'),
             [],
-            null,
+            filemtime(plugin_dir_path(__FILE__) . 'assets/dist/' . ltrim($entry['file'], '/')),
             true
         );
         wp_script_add_data($script_handle, 'type', 'module');
@@ -104,6 +115,8 @@ final class ConfiguratorPlugin {
             'restBaseUrl' => untrailingslashit(rest_url(self::REST_NS)),
             'inquiryEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/inquiry',
             'uploadEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/upload-image',
+            'pricesEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/prices',
+            'showPrice' => (bool) get_option(self::OPTION_SHOW_PRICE, true),
             'assetsBaseUrl' => trailingslashit($base_url),
             'lang' => self::resolve_frontend_lang(),
             'locale' => get_locale(),
@@ -958,6 +971,304 @@ final class ConfiguratorPlugin {
         $key = strtolower(trim($translated));
         return isset($maps[$lang][$key]) ? $maps[$lang][$key] : $translated;
     }
+
+    // --- Price Editor Admin ---
+
+    public static function add_admin_menu() {
+        add_menu_page(
+            'Ceny konfiguratora',
+            'Ceny konfiguratora',
+            'manage_options',
+            'configurator-prices',
+            [__CLASS__, 'render_price_admin_page'],
+            'dashicons-money-alt',
+            56
+        );
+    }
+
+    private static function get_default_prices($type) {
+        $file = plugin_dir_path(__FILE__) . 'defaults/' . ($type === 'galvanized' ? 'dataOcynk.json' : 'data.json');
+        if (!file_exists($file)) {
+            return [];
+        }
+        $decoded = json_decode(file_get_contents($file), true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private static function get_effective_prices($type) {
+        $option = $type === 'galvanized' ? self::OPTION_PRICES_GALVANIZED : self::OPTION_PRICES_STANDARD;
+        $custom = get_option($option, false);
+        if ($custom !== false && is_array($custom) && !empty($custom)) {
+            return $custom;
+        }
+        return self::get_default_prices($type);
+    }
+
+    private static function build_price_lookup($prices) {
+        $map = [];
+        foreach ($prices as $item) {
+            $w = (int) $item['width'];
+            $d = (int) $item['depth'];
+            $map[$w][$d] = (int) $item['price'];
+        }
+        return $map;
+    }
+
+    private static function get_addon_defaults() {
+        return [
+            'heightPerCm' => 700,
+            'ocynkExtra' => 1400,
+            'gateDwuskrzydlowa' => -400,
+            'automatic' => 1300,
+            'blachodachowkaPerM2' => 65,
+            'filcPerM2' => 25,
+            'door' => 450,
+            'window' => 450,
+            'spadTyl' => -500,
+            'carportBrak' => 1000,
+            'carportOblachowane' => 2000,
+            'carportAzury' => 2500,
+            'carportPerHalfMeter' => 500,
+            'carportVariable' => 1000,
+            'gutterPerMeter' => 100,
+            'transportNear' => 250,
+            'transportFar' => 500,
+        ];
+    }
+
+    private static function get_effective_addons() {
+        $custom = get_option(self::OPTION_ADDON_PRICES, []);
+        if (!is_array($custom) || empty($custom)) {
+            return self::get_addon_defaults();
+        }
+        return array_merge(self::get_addon_defaults(), $custom);
+    }
+
+    public static function handle_get_prices(WP_REST_Request $request) {
+        $standard = self::get_effective_prices('standard');
+        $galvanized = self::get_effective_prices('galvanized');
+        return [
+            'success' => true,
+            'data' => [
+                'standard' => $standard,
+                'galvanized' => $galvanized,
+                'showPrice' => (bool) get_option(self::OPTION_SHOW_PRICE, true),
+                'addons' => self::get_effective_addons(),
+            ],
+        ];
+    }
+
+    public static function render_price_admin_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $notice = '';
+
+        if (isset($_POST['configurator_reset_prices']) && check_admin_referer('configurator_prices_save', 'configurator_prices_nonce')) {
+            delete_option(self::OPTION_PRICES_STANDARD);
+            delete_option(self::OPTION_PRICES_GALVANIZED);
+            delete_option(self::OPTION_ADDON_PRICES);
+            $notice = '<div class="notice notice-success is-dismissible"><p>Ceny zostaly przywrocone do domyslnych.</p></div>';
+        }
+
+        if (isset($_POST['configurator_save_prices']) && check_admin_referer('configurator_prices_save', 'configurator_prices_nonce')) {
+            $prices_standard = [];
+            $prices_galvanized = [];
+
+            if (isset($_POST['prices']['standard']) && is_array($_POST['prices']['standard'])) {
+                foreach ($_POST['prices']['standard'] as $w => $depths) {
+                    foreach ($depths as $d => $price) {
+                        $prices_standard[] = ['width' => intval($w), 'depth' => intval($d), 'price' => intval($price)];
+                    }
+                }
+            }
+            if (isset($_POST['prices']['galvanized']) && is_array($_POST['prices']['galvanized'])) {
+                foreach ($_POST['prices']['galvanized'] as $w => $depths) {
+                    foreach ($depths as $d => $price) {
+                        $prices_galvanized[] = ['width' => intval($w), 'depth' => intval($d), 'price' => intval($price)];
+                    }
+                }
+            }
+
+            update_option(self::OPTION_PRICES_STANDARD, $prices_standard);
+            update_option(self::OPTION_PRICES_GALVANIZED, $prices_galvanized);
+            update_option(self::OPTION_SHOW_PRICE, !empty($_POST['configurator_show_price']) ? 1 : 0);
+
+            if (isset($_POST['addons']) && is_array($_POST['addons'])) {
+                $addons = [];
+                foreach (self::get_addon_defaults() as $key => $default) {
+                    $addons[$key] = isset($_POST['addons'][$key]) ? intval($_POST['addons'][$key]) : $default;
+                }
+                update_option(self::OPTION_ADDON_PRICES, $addons);
+            }
+
+            $notice = '<div class="notice notice-success is-dismissible"><p>Ceny zostaly zapisane.</p></div>';
+        }
+
+        $standard = self::get_effective_prices('standard');
+        $galvanized = self::get_effective_prices('galvanized');
+        $standard_map = self::build_price_lookup($standard);
+        $galvanized_map = self::build_price_lookup($galvanized);
+        $addons = self::get_effective_addons();
+        $valid_tabs = ['standard', 'galvanized', 'addons'];
+        $active_tab = isset($_GET['tab']) && in_array($_GET['tab'], $valid_tabs) ? $_GET['tab'] : 'standard';
+        $addon_labels = [
+            'heightPerCm' => 'Wysokosc (zl / 10cm powyzej 213cm)',
+            'ocynkExtra' => 'Dodatek ocynk (zl)',
+            'gateDwuskrzydlowa' => 'Brama dwuskrzydlowa (zl, ujemna = znizka)',
+            'automatic' => 'Automatyka (zl / szt)',
+            'blachodachowkaPerM2' => 'Blachodachowka (zl / m2)',
+            'filcPerM2' => 'Filc antikondenzacyjny (zl / m2)',
+            'door' => 'Drzwi (zl / szt)',
+            'window' => 'Okno (zl / szt)',
+            'spadTyl' => 'Spad tyl (zl, ujemna = znizka)',
+            'carportBrak' => 'Wiata - brak (zl)',
+            'carportOblachowane' => 'Wiata - oblachowane (zl)',
+            'carportAzury' => 'Wiata - azury/mix (zl)',
+            'carportPerHalfMeter' => 'Wiata - zl / 0.5m szerokosci',
+            'carportVariable' => 'Wiata - stala (zl)',
+            'gutterPerMeter' => 'Rynny (zl / m)',
+            'transportNear' => 'Transport - blisko (zl)',
+            'transportFar' => 'Transport - daleko (zl)',
+        ];
+        ?>
+        <div class="wrap">
+            <h1>Ceny konfiguratora garazy</h1>
+            <?php echo $notice; ?>
+
+            <h2 class="nav-tab-wrapper">
+                <a href="?page=configurator-prices&tab=standard" class="nav-tab <?php echo $active_tab === 'standard' ? 'nav-tab-active' : ''; ?>">Standard</a>
+                <a href="?page=configurator-prices&tab=galvanized" class="nav-tab <?php echo $active_tab === 'galvanized' ? 'nav-tab-active' : ''; ?>">Ocynk</a>
+                <a href="?page=configurator-prices&tab=addons" class="nav-tab <?php echo $active_tab === 'addons' ? 'nav-tab-active' : ''; ?>">Dodatki</a>
+            </h2>
+
+            <form method="post" action="">
+                <?php wp_nonce_field('configurator_prices_save', 'configurator_prices_nonce'); ?>
+
+                <?php if ($active_tab === 'standard'): ?>
+                    <h3>Ceny standardowe (zl)</h3>
+                    <p class="description">Szerokosc (kolumny) x Glebokosc (wiersze) w metrach. Ceny w PLN.</p>
+                    <table class="widefat fixed striped" style="margin-top:10px;">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">Gleb.\Szer.</th>
+                                <?php for ($w = 3; $w <= 12; $w++): ?>
+                                    <th style="text-align:center;"><?php echo $w; ?>m</th>
+                                <?php endfor; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php for ($d = 3; $d <= 12; $d++): ?>
+                                <tr>
+                                    <th><?php echo $d; ?>m</th>
+                                    <?php for ($w = 3; $w <= 12; $w++): ?>
+                                        <td>
+                                            <input type="number"
+                                                   name="prices[standard][<?php echo $w; ?>][<?php echo $d; ?>]"
+                                                   value="<?php echo esc_attr(isset($standard_map[$w][$d]) ? $standard_map[$w][$d] : 0); ?>"
+                                                   min="0" step="100"
+                                                   style="width:80px; text-align:right;">
+                                        </td>
+                                    <?php endfor; ?>
+                                </tr>
+                            <?php endfor; ?>
+                        </tbody>
+                    </table>
+                <?php elseif ($active_tab === 'galvanized'): ?>
+                    <h3>Ceny ocynk (zl)</h3>
+                    <p class="description">Szerokosc (kolumny) x Glebokosc (wiersze) w metrach. Ceny w PLN.</p>
+                    <table class="widefat fixed striped" style="margin-top:10px;">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">Gleb.\Szer.</th>
+                                <?php for ($w = 3; $w <= 12; $w++): ?>
+                                    <th style="text-align:center;"><?php echo $w; ?>m</th>
+                                <?php endfor; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php for ($d = 3; $d <= 12; $d++): ?>
+                                <tr>
+                                    <th><?php echo $d; ?>m</th>
+                                    <?php for ($w = 3; $w <= 12; $w++): ?>
+                                        <td>
+                                            <input type="number"
+                                                   name="prices[galvanized][<?php echo $w; ?>][<?php echo $d; ?>]"
+                                                   value="<?php echo esc_attr(isset($galvanized_map[$w][$d]) ? $galvanized_map[$w][$d] : 0); ?>"
+                                                   min="0" step="100"
+                                                   style="width:80px; text-align:right;">
+                                        </td>
+                                    <?php endfor; ?>
+                                </tr>
+                            <?php endfor; ?>
+                        </tbody>
+                    </table>
+                <?php elseif ($active_tab === 'addons'): ?>
+                    <h3>Ceny dodatkow</h3>
+                    <p class="description">Zmiana cen dodatkow. Wartosci ujemne = znizka. Ceny w PLN.</p>
+                    <table class="widefat striped" style="margin-top:10px; max-width:700px;">
+                        <thead>
+                            <tr>
+                                <th style="width:60%;">Dodatek</th>
+                                <th style="width:40%;">Cena (zl)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($addon_labels as $key => $label): ?>
+                                <tr>
+                                    <td><?php echo esc_html($label); ?></td>
+                                    <td>
+                                        <input type="number"
+                                               name="addons[<?php echo esc_attr($key); ?>]"
+                                               value="<?php echo esc_attr($addons[$key]); ?>"
+                                               step="1"
+                                               style="width:100px; text-align:right;">
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+
+                <div style="margin-top:12px; padding:10px; background:#f9f9f9; border:1px solid #ddd; border-radius:4px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:8px;">
+                        <input type="checkbox" name="configurator_show_price" value="1" <?php checked(get_option(self::OPTION_SHOW_PRICE, false), 1); ?>>
+                        <strong>Pokazuj cene na frontendzie</strong>
+                    </label>
+
+                    <div style="display:inline-flex; align-items:center; gap:8px;">
+                        <input type="number" id="cfg-price-percent" value="10" min="1" max="100" step="1" style="width:60px; text-align:right;">
+                        <span>%</span>
+                        <button type="button" class="button" onclick="cfgAdjustPrices(1)">Podnies ceny</button>
+                        <button type="button" class="button" onclick="cfgAdjustPrices(-1)">Obniz ceny</button>
+                    </div>
+                </div>
+
+                <p style="margin-top:15px;">
+                    <?php submit_button('Zapisz ceny', 'primary', 'configurator_save_prices', false); ?>
+                    <button type="submit" name="configurator_reset_prices" value="1" class="button button-link-delete" onclick="return confirm('Przywrocic domyslne ceny?');">Przywroc domyslne</button>
+                </p>
+            </form>
+
+            <script>
+            function cfgAdjustPrices(direction) {
+                var pct = parseFloat(document.getElementById('cfg-price-percent').value) || 0;
+                if (pct <= 0) return;
+                var factor = direction === 1 ? (1 + pct / 100) : (1 - pct / 100);
+                var inputs = document.querySelectorAll('table input[type="number"]');
+                for (var i = 0; i < inputs.length; i++) {
+                    var val = parseInt(inputs[i].value, 10) || 0;
+                    inputs[i].value = Math.round(val * factor / 100) * 100;
+                }
+            }
+            </script>
+        </div>
+        <?php
+    }
+
+    // --- End Price Editor ---
+
     private static function layout_css() {
         return '
 .configurator-plugin-shell {

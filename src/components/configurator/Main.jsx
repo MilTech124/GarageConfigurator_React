@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
 import TagManager from 'react-gtm-module';
 import { LANG, t as translate, translateOption } from "./i18n";
+import { getPrices } from "./calculate/garagePrice";
 
 
 function resolveInitialLang() {
@@ -84,6 +85,10 @@ function Main() {
   const [capture, setCapture] = useState(false);
   const [imageURL, setImageURL] = useState(null);
   const [price, setPrice] = useState(0);
+
+  useEffect(() => {
+    getPrices();
+  }, []);
 
 
   //use effects helpers
@@ -229,7 +234,7 @@ function Main() {
           >
             {t("orderQuote")}
           </Button>
-          
+
         </div>
        
         {/* <button
