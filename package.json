@@ -20,6 +20,7 @@
     "@react-three/fiber": "^8.15.10",
     "axios": "^1.7.2",
     "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "leva": "^0.9.35",
     "react": "^18.3.1",
     "react-awesome-reveal": "^4.2.6",

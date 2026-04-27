@@ -65,6 +65,12 @@ final class ConfiguratorPlugin {
             'callback' => [__CLASS__, 'handle_get_prices'],
             'permission_callback' => '__return_true',
         ]);
+
+        register_rest_route(self::REST_NS, '/generate-pdf', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => [__CLASS__, 'handle_generate_pdf'],
+            'permission_callback' => '__return_true',
+        ]);
     }
 
     public static function render_shortcode() {
@@ -228,6 +234,19 @@ final class ConfiguratorPlugin {
 
         $attachments = self::resolve_image_attachments($image_url);
 
+        // Generate PDF order document.
+        $pdf_path = null;
+        try {
+            $contact_arr = compact('name', 'email', 'phone', 'postal_code', 'city', 'address', 'message');
+            $pdf_gen = new Configurator_PDF_Generator($garage, $contact_arr, $price, $image_url, $lang);
+            $pdf_path = $pdf_gen->generate();
+            if ($pdf_path && file_exists($pdf_path)) {
+                $attachments[] = $pdf_path;
+            }
+        } catch (\Exception $e) {
+            // PDF generation failed — continue without it.
+        }
+
         $sent = wp_mail(
             $to_email,
             $subject,
@@ -235,6 +254,11 @@ final class ConfiguratorPlugin {
             $headers,
             $attachments
         );
+
+        // Clean up temp PDF.
+        if ($pdf_path && file_exists($pdf_path)) {
+            @unlink($pdf_path);
+        }
 
         if (!$sent) {
             return new WP_Error('email_failed', 'Email send failed', ['status' => 500]);
@@ -970,6 +994,72 @@ final class ConfiguratorPlugin {
 
         $key = strtolower(trim($translated));
         return isset($maps[$lang][$key]) ? $maps[$lang][$key] : $translated;
+    }
+
+    public static function handle_generate_pdf(WP_REST_Request $request) {
+        // Increase limits for PDF generation.
+        @set_time_limit(60);
+        @ini_set('memory_limit', '256M');
+
+        // Load PDF generator class only when needed.
+        $generator_file = plugin_dir_path(__FILE__) . 'class-pdf-generator.php';
+        if (!file_exists($generator_file)) {
+            return new WP_Error('pdf_missing', 'PDF generator file not found', ['status' => 500]);
+        }
+        require_once $generator_file;
+
+        $data = $request->get_json_params();
+        $garage = isset($data['garage_config']) && is_array($data['garage_config']) ? $data['garage_config'] : [];
+        $contact = isset($data['contact']) && is_array($data['contact']) ? $data['contact'] : [];
+        $price = isset($data['price']) ? sanitize_text_field((string) $data['price']) : '';
+        $image_url = isset($data['imageURL']) ? esc_url_raw($data['imageURL']) : '';
+        $allowed_langs = ['pl', 'cs', 'sl', 'hu'];
+        $lang = isset($data['lang']) && in_array($data['lang'], $allowed_langs, true) ? $data['lang'] : 'pl';
+
+        // Catch everything — errors, exceptions, and output buffering issues.
+        ob_start();
+        try {
+            $pdf_gen = new Configurator_PDF_Generator($garage, $contact, $price, $image_url, $lang);
+            $pdf_path = $pdf_gen->generate();
+
+            if (!$pdf_path || !file_exists($pdf_path)) {
+                $dbg = ob_get_clean();
+                return new WP_Error('pdf_failed', 'PDF file not created. Debug: ' . $dbg, ['status' => 500]);
+            }
+
+            // Move to uploads directory with a publicly accessible name.
+            $upload = wp_upload_dir();
+            $filename = 'cfg-pdf-' . wp_generate_password(12, false) . '.pdf';
+            $dest = trailingslashit($upload['path']) . $filename;
+            rename($pdf_path, $dest);
+
+            $download_url = trailingslashit($upload['url']) . $filename;
+
+            // Schedule cleanup of old PDFs (delete files older than 1 hour).
+            self::cleanup_temp_pdfs($upload['path']);
+
+            ob_end_clean();
+
+            return [
+                'success' => true,
+                'downloadUrl' => $download_url,
+                'filename' => 'zamowienie-garaz-' . date('Y-m-d-His') . '.pdf',
+            ];
+        } catch (\Throwable $e) {
+            $dbg = ob_get_clean();
+            return new WP_Error('pdf_error', get_class($e) . ': ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine() . ($dbg ? ' | Output: ' . substr($dbg, 0, 500) : ''), ['status' => 500]);
+        }
+    }
+
+    private static function cleanup_temp_pdfs($dir) {
+        $files = glob(trailingslashit($dir) . 'cfg-pdf-*.pdf');
+        if (!$files) return;
+        $cutoff = time() - 3600; // 1 hour.
+        foreach ($files as $f) {
+            if (filemtime($f) < $cutoff) {
+                @unlink($f);
+            }
+        }
     }
 
     // --- Price Editor Admin ---
