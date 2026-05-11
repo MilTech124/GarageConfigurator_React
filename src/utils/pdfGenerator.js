@@ -408,7 +408,9 @@ function drawTopView(doc,ctx) {
   }
   doc.setLineWidth(0.5);
   doors.forEach(d=>{
-    const wk=pm[d.position]||d.position,dp=parseFloat(d.positionValue)||0,[dw]=(d.size||"80x190").split("x").map(Number);
+    const wk=pm[d.position]||d.position;
+    const dp=parseFloat(d.positionValue)||0;
+    const[dw]=(d.size||"80x190").split("x").map(Number);
     const oMm=(dp/10)*scale,wMm=(dw/10)*scale;
     doc.setDrawColor(C_DOOR[0],C_DOOR[1],C_DOOR[2]);doc.setLineWidth(1);
     if(wk==="front")doc.line(garageLx+oMm,ty,garageLx+oMm+wMm,ty);
@@ -417,7 +419,9 @@ function drawTopView(doc,ctx) {
     if(wk==="right")doc.line(garageLx+pw,ty+oMm,garageLx+pw,ty+oMm+wMm);
   });
   windows.forEach(w=>{
-    const wk=pm[w.position]||w.position,wp=parseFloat(w.positionValue)||0,[ww]=(w.size||"80x60").split("x").map(Number);
+    const wk=pm[w.position]||w.position;
+    const wp=parseFloat(w.positionValue)||0;
+    const[ww]=(w.size||"80x60").split("x").map(Number);
     const oMm=(wp/10)*scale,wMm=(ww/10)*scale;
     doc.setDrawColor(C_WINDOW[0],C_WINDOW[1],C_WINDOW[2]);doc.setLineWidth(1);
     if(wk==="front")doc.line(garageLx+oMm,ty,garageLx+oMm+wMm,ty);
@@ -460,30 +464,26 @@ function drawOpenings(doc,wall,wLx,wBy,wPwMm,wWCm,wHCm,scale,doors,windows,garag
   const baseY = wBy + 8 + gateCount * 6;
 
   wallDoors.forEach((d,idx)=>{
-    const[dw,dh]=(d.size||"80x190").split("x").map(Number),dp=parseFloat(d.positionValue)||0;
+    const[dw,dh]=(d.size||"80x190").split("x").map(Number);
+    const dp=parseFloat(d.positionValue)||0;
     const ox=wLx+(dp/10)*scale,ow=(dw/10)*scale,oh=(dh/10)*scale,oy=wBy-oh;
     doc.setDrawColor(C_DOOR[0],C_DOOR[1],C_DOOR[2]);doc.setLineWidth(0.6);
     doc.setFillColor(C_DOOR_FILL[0],C_DOOR_FILL[1],C_DOOR_FILL[2]);doc.rect(ox,oy,ow,oh,"FD");
     doc.setFontSize(4);doc.setFont("helvetica","bold");doc.setTextColor(C_DOOR[0],C_DOOR[1],C_DOOR[2]);
     doc.text(`D${idx+1}`,ox+ow/2,oy+oh/2+1,{align:"center"});doc.setTextColor(0,0,0);
-    // Width
-    drawDimH(doc,ox,ox+ow,baseY+idx*5,`${dw}cm`);
-    // Position from left wall
-    drawDimH(doc,wLx,ox,baseY+(wallDoors.length)+idx*5,`${dp}cm`);
+    drawDimH(doc,wLx,ox,baseY+idx*5,`${dp}cm`);
   });
 
-  const doorBase = baseY + wallDoors.length * 2 * 5;
+  const doorBase = baseY + wallDoors.length * 5;
   wallWindows.forEach((w,idx)=>{
-    const[ww,wh]=(w.size||"80x60").split("x").map(Number),wp=parseFloat(w.positionValue)||0;
+    const[ww,wh]=(w.size||"80x60").split("x").map(Number);
+    const wp=parseFloat(w.positionValue)||0;
     const ox=wLx+(wp/10)*scale,ow=(ww/10)*scale,oh=(wh/10)*scale,winBotMm=(150/10)*scale,oy=wBy-winBotMm;
     doc.setDrawColor(C_WINDOW[0],C_WINDOW[1],C_WINDOW[2]);doc.setLineWidth(0.6);
     doc.setFillColor(C_WIN_FILL[0],C_WIN_FILL[1],C_WIN_FILL[2]);doc.rect(ox,oy,ow,oh,"FD");
     doc.setFontSize(4);doc.setFont("helvetica","bold");doc.setTextColor(C_WINDOW[0],C_WINDOW[1],C_WINDOW[2]);
     doc.text(`O${idx+1}`,ox+ow/2,oy+oh/2+1,{align:"center"});doc.setTextColor(0,0,0);
-    // Width
-    drawDimH(doc,ox,ox+ow,doorBase+idx*5,`${ww}cm`);
-    // Position from left wall
-    drawDimH(doc,wLx,ox,doorBase+wallWindows.length+idx*5,`${wp}cm`);
+    drawDimH(doc,wLx,ox,doorBase+idx*5,`${wp}cm`);
   });
 }
 

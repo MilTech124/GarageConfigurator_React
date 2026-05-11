@@ -153,7 +153,9 @@ export function Model(props) {
             ? [
                 (-2.965 * depth) / 6,
                 1.054,
-                ((-2.2 - 0.71) * width) / 6 + door[number].positionValue / 100,
+                width < 5
+                  ? (2.82 * width) / 6 - door[number].positionValue / 100
+                  : (2.92 * width) / 6 - door[number].positionValue / 100,
               ]
             : door[number].position === "prawo"
             ? [
@@ -163,9 +165,9 @@ export function Model(props) {
               ]
             : door[number].position === "lewo"
             ? [
-                (2.86 * depth) / 6 -
-                  door[number].positionValue / 100 -
-                  (0.6 * width) / 6,
+                (2.86 * depth - 0.6 * width) / 6 -
+                  (depth - 1) +
+                  door[number].positionValue / 100,
                 1.054,
                 (2.965 * width) / 6,
               ]
@@ -1083,8 +1085,8 @@ export function Model(props) {
             : window[number].position === "prawo"
             ? [
                 depth <= 6
-                  ? (-2.4 * depth) / 6 + window[number].positionValue / 100
-                  : (-2.7 * depth) / 6 + window[number].positionValue / 100,
+                  ? (-2.4 * depth) / 6 + (depth - 1) - window[number].positionValue / 100
+                  : (-2.7 * depth) / 6 + (depth - 1) - window[number].positionValue / 100,
                 1.631,
                 (-3 * width) / 6,
               ]
