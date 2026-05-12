@@ -154,8 +154,8 @@ export function Model(props) {
                 (-2.965 * depth) / 6,
                 1.054,
                 width < 5
-                  ? (2.82 * width) / 6 - door[number].positionValue / 100
-                  : (2.92 * width) / 6 - door[number].positionValue / 100,
+                  ? (-2.82 * width) / 6 + door[number].positionValue / 100
+                  : (-2.92 * width) / 6 + door[number].positionValue / 100,
               ]
             : door[number].position === "prawo"
             ? [
@@ -203,9 +203,9 @@ export function Model(props) {
           geometry={nodes["drzwi-klamka"].geometry}
           material={materials.czarna}
           position={
-            door[number].type === "lewe" ? [0.1, 0.014, 0] : [0.1, 0.014, -0.7]
+            door[number].type === "lewe" ? [0.1, 0.014, -0.7] : [0.1, 0.014, 0] 
           }
-          rotation={[door[number].type === "lewe" ? 0 : Math.PI / 1, 0, 0]}
+          rotation={[door[number].type === "lewe" ? Math.PI / 1 : 0, 0, 0]}
           scale={[0.025, 0.02, 0.025]}
         />
 
@@ -1071,8 +1071,8 @@ export function Model(props) {
                 (-3.006 * depth) / 6,
                 1.631,
                 width >= 6
-                  ? (2.7 * width) / 6 - window[number].positionValue / 100
-                  : (2 * width) / 6 - window[number].positionValue / 100,
+                  ? (-2.7 * width) / 6 + window[number].positionValue / 100
+                  : (-2 * width) / 6 + window[number].positionValue / 100,
               ]
             : window[number].position === "lewo"
             ? [
