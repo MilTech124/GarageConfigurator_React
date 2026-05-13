@@ -64,36 +64,36 @@ function GarageViewer({ selectedOptions, captureScreenshot, capture, lang, setLa
 
   return (
     <>
-      <div className="absolute right-2 top-2 z-10 flex gap-1 py-2">
-        <div className="flex flex-col gap-1">
-          <Button variant="contained" color="error" sx={{ minWidth: 64 }} onClick={() => setOnPlay(!onPlay)}>
-            <PlayCircleIcon />
+      <div className="absolute right-2 top-2 z-10 flex gap-1 py-2 max-sm:py-0.5 max-sm:gap-[2px]">
+        <div className="flex flex-col gap-1 max-sm:gap-[2px]">
+          <Button variant="contained" color="error" sx={{ minWidth: { xs: 22, md: 64 }, padding: { xs: '2px', md: '8px' } }} onClick={() => setOnPlay(!onPlay)}>
+            <PlayCircleIcon sx={{ fontSize: { xs: '0.8rem', md: '1.5rem' } }} />
           </Button>
-          <Button variant="contained" color="primary" sx={{ minWidth: 64 }} onClick={downloadCurrentView}>
-            <DownloadIcon />
+          <Button variant="contained" color="primary" sx={{ minWidth: { xs: 22, md: 64 }, padding: { xs: '2px', md: '8px' } }} onClick={downloadCurrentView}>
+            <DownloadIcon sx={{ fontSize: { xs: '0.8rem', md: '1.5rem' } }} />
           </Button>
         </div>
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-2 gap-0.5 max-sm:gap-[2px]">
           <button
-            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.PL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            className={`max-sm:w-7 max-sm:px-0 max-sm:py-[1px] max-sm:text-[8px] md:w-20 md:px-3 md:py-2 md:text-sm text-xs rounded leading-none ${lang === LANG.PL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
             onClick={() => setLang(LANG.PL)}
           >
             PL
           </button>
           <button
-            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.CS ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            className={`max-sm:w-7 max-sm:px-0 max-sm:py-[1px] max-sm:text-[8px] md:w-20 md:px-3 md:py-2 md:text-sm text-xs rounded leading-none ${lang === LANG.CS ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
             onClick={() => setLang(LANG.CS)}
           >
             CZ
           </button>
           <button
-            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.SL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            className={`max-sm:w-7 max-sm:px-0 max-sm:py-[1px] max-sm:text-[8px] md:w-20 md:px-3 md:py-2 md:text-sm text-xs rounded leading-none ${lang === LANG.SL ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
             onClick={() => setLang(LANG.SL)}
           >
             SK
           </button>
           <button
-            className={`w-20 px-3 py-2 text-sm rounded ${lang === LANG.HU ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            className={`max-sm:w-7 max-sm:px-0 max-sm:py-[1px] max-sm:text-[8px] md:w-20 md:px-3 md:py-2 md:text-sm text-xs rounded leading-none ${lang === LANG.HU ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
             onClick={() => setLang(LANG.HU)}
           >
             HU

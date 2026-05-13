@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 
-h3 {
+#configurator-plugin-root h3,
+#root h3 {
   @apply text-xl font-bold;
 }
 

@@ -168,7 +168,7 @@ function drawViewFrame(doc,x,y,w,h,label) {
   doc.setDrawColor(200,200,200);doc.setLineWidth(0.2);doc.rect(x,y+5,w,h-5);doc.setDrawColor(0,0,0);
 }
 function calcScale(aw,ah,rwCm,rhCm) {
-  const m=14,rv=rwCm/10,rh=rhCm/10;
+  const m=22,rv=rwCm/10,rh=rhCm/10;
   if(rv<=0||rh<=0) return 1;
   return Math.min((aw-m)/rv,(ah-m)/rh);
 }
@@ -237,7 +237,7 @@ function drawElevationView(doc, wall, ctx) {
   const {vx,vy,colW,rowH,widthCm,depthCm,heightCm,garage,doors,windows,roofGeo,hasCarport,carportWidthCm,carportSide}=ctx;
   const roof=garage.roof;
   const rk=roofKey(roof);
-  const dTop=vy+8, dH=rowH-15, dW=colW-14;
+  const dTop=vy+8, dH=rowH-35, dW=colW-10;
   const cx=vx+colW/2, by=dTop+dH;
 
   const isFB=wall==="front"||wall==="back";
@@ -299,7 +299,6 @@ function drawElevationView(doc, wall, ctx) {
     doc.setTextColor(C_CARPORT[0],C_CARPORT[1],C_CARPORT[2]);
     doc.text("WIATA",(cpL+cpR)/2,(topL+by)/2+1,{align:"center"});
     doc.setTextColor(0,0,0);
-    drawDimH(doc,cpL,cpR,by+8,fmtM(carportWidthCm));
   };
 
   if(isSingleSlope) {
@@ -324,12 +323,11 @@ function drawElevationView(doc, wall, ctx) {
       doc.setTextColor(C_CARPORT[0],C_CARPORT[1],C_CARPORT[2]);
       doc.text("WIATA",(cpL+cpR)/2,by-(cpLH+cpRH)/4+1,{align:"center"});
       doc.setTextColor(0,0,0);
-      drawDimH(doc,cpL,cpR,by+8,fmtM(carportWidthCm));
     }
     drawOpenings(doc,wall,garageLx,by,garagePW,visW,wallH,scale,doors,windows,garage);
     setDraw(doc,C_ROOF);doc.setLineWidth(0.7);setFill(doc,C_ROOF_FILL);
     drawTrap(doc,lx-ohMm,by-plH,rx+ohMm,by-prH,rx+ohMm,by-prH-ohMm*0.15,lx-ohMm,by-plH-ohMm*0.15);
-    drawDimH(doc,lx,rx,by+3,fmtM(totalVisW));
+    drawElevationWidthDims(doc,{lx,rx,garageLx,garageRx,by,totalVisW,visW,showCarport,carportBefore});
     drawDimV(doc,lx-4,by,by-plH,fmtCm(leftH));
     if(Math.abs(leftH-rightH)>1) drawDimV(doc,rx+4,by,by-prH,fmtCm(rightH));
     if(roofGeo.angle>0) drawAngleLabel(doc,lx,by-plH,rx,by-prH,roofGeo.angle,Math.max(plH,prH));
@@ -343,7 +341,7 @@ function drawElevationView(doc, wall, ctx) {
     const ridgeX=cx;
     setDraw(doc,C_ROOF);doc.setLineWidth(0.7);setFill(doc,C_ROOF_FILL);
     drawTri(doc,lx-ohMm,wallTopY,rx+ohMm,wallTopY,ridgeX,wallTopY-pr);
-    drawDimH(doc,lx,rx,by+3,fmtM(totalVisW));
+    drawElevationWidthDims(doc,{lx,rx,garageLx,garageRx,by,totalVisW,visW,showCarport,carportBefore});
     drawDimV(doc,lx-4,by,wallTopY,fmtCm(wallH));
     drawDimV(doc,rx+4,by,wallTopY-pr,fmtCm(wallH+roofGeo.riseCm));
     if(roofGeo.angle>0) drawAngleLabel(doc,lx-ohMm,wallTopY,ridgeX,wallTopY-pr,roofGeo.angle,pr);
@@ -358,7 +356,7 @@ function drawElevationView(doc, wall, ctx) {
     setDraw(doc,C_ROOF);doc.setLineWidth(0.7);setFill(doc,C_ROOF_FILL);
     doc.triangle(lx-ohMm,wallTopY,rx+ohMm,wallTopY,rx+ohMm,ridgeY,"FD");
     doc.triangle(lx-ohMm,wallTopY,rx+ohMm,ridgeY,lx-ohMm,ridgeY,"FD");
-    drawDimH(doc,lx,rx,by+3,fmtM(totalVisW));
+    drawElevationWidthDims(doc,{lx,rx,garageLx,garageRx,by,totalVisW,visW,showCarport,carportBefore});
     drawDimV(doc,lx-4,by,wallTopY,fmtCm(wallH));
     drawDimV(doc,rx+4,by,ridgeY,fmtCm(wallH+roofGeo.riseCm));
 
@@ -370,9 +368,21 @@ function drawElevationView(doc, wall, ctx) {
     drawOpenings(doc,wall,garageLx,by,garagePW,visW,wallH,scale,doors,windows,garage);
     setDraw(doc,C_ROOF);doc.setLineWidth(0.7);
     doc.line(lx-ohMm,wallTopY,rx+ohMm,wallTopY);
-    drawDimH(doc,lx,rx,by+3,fmtM(totalVisW));
+    drawElevationWidthDims(doc,{lx,rx,garageLx,garageRx,by,totalVisW,visW,showCarport,carportBefore});
     drawDimV(doc,lx-4,by,wallTopY,fmtCm(wallH));
   }
+}
+
+function drawElevationWidthDims(doc,{lx,rx,garageLx,garageRx,by,totalVisW,visW,showCarport,carportBefore}) {
+  if(showCarport) {
+    const cpL=carportBefore?lx:garageRx;
+    const cpR=carportBefore?garageLx:rx;
+    drawDimH(doc,cpL,cpR,by+18.4,fmtM(totalVisW-visW));
+    drawDimH(doc,garageLx,garageRx,by+21.2,fmtM(visW));
+    drawDimH(doc,lx,rx,by+24,fmtM(totalVisW));
+    return;
+  }
+  drawDimH(doc,lx,rx,by+23,fmtM(totalVisW));
 }
 // =====================================================================
 function drawAngleLabel(doc,x1,y1,x2,y2,angleDeg,heightMm) {
@@ -394,7 +404,7 @@ function drawAngleLabel(doc,x1,y1,x2,y2,angleDeg,heightMm) {
 // =====================================================================
 function drawTopView(doc,ctx) {
   const {vx,vy,colW,rowH,widthCm,depthCm,garage,roofGeo,hasCarport,carportWidthCm,carportSide,doors,windows}=ctx;
-  const dTop=vy+8,dH=rowH-13,dW=colW-12;
+  const dTop=vy+8,dH=rowH-35,dW=colW-12;
   const cx=vx+colW/2,cy=dTop+dH/2;
   const sideCarport=hasCarport&&isSideCarport(carportSide);
   const fbCarport=hasCarport&&isFrontBackCarport(carportSide);
@@ -521,6 +531,16 @@ function drawTopView(doc,ctx) {
 // Openings
 // =====================================================================
 function drawOpenings(doc,wall,wLx,wBy,wPwMm,wWCm,wHCm,scale,doors,windows,garage) {
+  const hDims=[];
+  const vDims=[];
+  const queueDim=(x1,x2,label,priority=0)=>{
+    if(Math.abs(x2-x1)<0.5)return;
+    hDims.push({x1,x2,label,span:Math.abs(x2-x1),priority});
+  };
+  const queueVDim=(x,y1,y2,label,side=1)=>{
+    if(Math.abs(y2-y1)<3)return;
+    vDims.push({x,y1,y2,label,side,top:Math.min(y1,y2),bottom:Math.max(y1,y2)});
+  };
   const pm={przod:"front","przód":"front",tyl:"back","tył":"back",lewo:"left",prawo:"right"};
 
   if(wall==="front"){
@@ -533,19 +553,14 @@ function drawOpenings(doc,wall,wLx,wBy,wPwMm,wWCm,wHCm,scale,doors,windows,garag
       doc.setFillColor(C_GATE_FILL[0],C_GATE_FILL[1],C_GATE_FILL[2]);doc.rect(ox,oy,ow,oh,"FD");
       doc.setFontSize(5);doc.setFont("helvetica","bold");doc.setTextColor(C_GATE[0],C_GATE[1],C_GATE[2]);
       doc.text(`B${i}`,ox+ow/2,oy+oh/2+1.5,{align:"center"});doc.setTextColor(0,0,0);
-      // Width and height
-      drawDimH(doc,ox,ox+ow,wBy+8+(i-1)*6,`${garage[`gateWidth${i}`]}m`);
-      drawDimV(doc,ox-3-(i-1)*5,wBy,oy,`${ghCm}cm`);
-      // Position from left wall
-      drawDimHVisible(doc,wLx,ox,wBy+3+(i-1)*3,`${gpCm}cm`,wLx,wLx+wPwMm);
+      queueDim(ox,ox+ow,`${garage[`gateWidth${i}`]}m`,1);
+      queueDim(wLx,ox,`${gpCm}cm`,0);
+      queueVDim(ox-3,wBy,oy,`${ghCm}cm`,-1);
     }
   }
 
   const wallDoors = doors.filter(d=>(pm[d.position]||d.position)===wall);
   const wallWindows = windows.filter(w=>(pm[w.position]||w.position)===wall);
-  const gateCount = wall==="front" ? Math.min(3, parseInt(garage.gateCount)||0) : 0;
-  const baseY = wBy + 3 + gateCount * 3;
-
   wallDoors.forEach((d,idx)=>{
     const[dw,dh]=(d.size||"80x190").split("x").map(Number);
     const dp=parseFloat(d.positionValue)||0;
@@ -579,13 +594,10 @@ function drawOpenings(doc,wall,wLx,wBy,wPwMm,wWCm,wHCm,scale,doors,windows,garag
     }
     doc.setTextColor(0,0,0);
 
-    // Position from left
-    drawDimHVisible(doc,wLx,ox,baseY+idx*4,`${dp}cm`,wLx,wLx+wPwMm);
-    // Door width
-    drawDimH(doc,ox,ox+ow,baseY+idx*4+2.6,`${dw}cm`);
+    queueDim(ox,ox+ow,`${dw}cm`,1);
+    queueDim(wLx,ox,`${dp}cm`,0);
   });
 
-  const doorBase = baseY + wallDoors.length * 4;
   wallWindows.forEach((w,idx)=>{
     const[ww,wh]=(w.size||"80x60").split("x").map(Number);
     const wp=parseFloat(w.positionValue)||0;
@@ -602,10 +614,59 @@ function drawOpenings(doc,wall,wLx,wBy,wPwMm,wWCm,wHCm,scale,doors,windows,garag
     doc.text(`${ww}x${wh}`,ox+ow/2,oy+oh*0.65,{align:"center"});
     doc.setTextColor(0,0,0);
 
-    // Position from left
-    drawDimHVisible(doc,wLx,ox,doorBase+idx*4,`${wp}cm`,wLx,wLx+wPwMm);
-    // Window width
-    drawDimH(doc,ox,ox+ow,doorBase+idx*4+2.6,`${ww}cm`);
+    queueDim(ox,ox+ow,`${ww}cm`,1);
+    queueDim(wLx,ox,`${wp}cm`,0);
+  });
+  drawQueuedOpeningDims(doc,hDims,wBy,wLx,wLx+wPwMm);
+  drawQueuedVerticalOpeningDims(doc,vDims);
+}
+
+function drawQueuedOpeningDims(doc,dims,baseY,minX,maxX) {
+  if(!dims.length)return;
+  const lanes=[[],[],[],[],[],[],[],[]];
+  const gap=2.1;
+  const pad=1.4;
+  const sorted=[...dims].sort((a,b)=>(a.span-b.span)||(a.priority-b.priority));
+  sorted.forEach((dim)=>{
+    const range=dimHCollisionRange(doc,dim,minX,maxX,pad);
+    let lane=lanes.findIndex(items=>items.every(item=>range.to<item.from||range.from>item.to));
+    if(lane<0) lane=lanes.length-1;
+    lanes[lane].push(range);
+    const y=baseY+3+lane*gap;
+    if(dim.priority===0) drawDimHVisible(doc,dim.x1,dim.x2,y,dim.label,minX,maxX);
+    else drawDimH(doc,dim.x1,dim.x2,y,dim.label);
+  });
+}
+
+function dimHCollisionRange(doc,dim,minX,maxX,pad=1) {
+  doc.setFontSize(5);doc.setFont("helvetica","normal");
+  const tw=doc.getTextWidth(dim.label)+2;
+  const lineFrom=Math.min(dim.x1,dim.x2);
+  const lineTo=Math.max(dim.x1,dim.x2);
+  let labelFrom=(dim.x1+dim.x2)/2-tw/2;
+  if(dim.priority===0 && Math.abs(dim.x2-dim.x1)<10) labelFrom=dim.x2+2;
+  if(dim.priority===0) labelFrom=Math.max(minX+1,Math.min(maxX-tw-1,labelFrom));
+  const labelTo=labelFrom+tw;
+  return {
+    from:Math.min(lineFrom,labelFrom)-pad,
+    to:Math.max(lineTo,labelTo)+pad
+  };
+}
+
+function drawQueuedVerticalOpeningDims(doc,dims) {
+  if(!dims.length)return;
+  const left=[];
+  const right=[];
+  dims.sort((a,b)=>a.x-b.x).forEach(dim=>{
+    const lanes=dim.side<0?left:right;
+    const gap=2.4;
+    const pad=1.2;
+    const range={top:dim.top-pad,bottom:dim.bottom+pad};
+    let lane=lanes.findIndex(items=>items.every(item=>range.bottom<item.top||range.top>item.bottom));
+    if(lane<0){lane=lanes.length;lanes.push([]);}
+    lanes[lane].push(range);
+    const x=dim.x+dim.side*lane*gap;
+    drawDimV(doc,x,dim.y1,dim.y2,dim.label);
   });
 }
 

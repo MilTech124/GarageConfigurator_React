@@ -4,19 +4,37 @@ import App from './App.jsx'
 import './index.css'
 import TagManager from 'react-gtm-module'
 
-// Inicjalizacja Google Tag Manager
 const tagManagerArgs = {
   gtmId: 'GTM-KB8G8PVR'
 }
 
-TagManager.initialize(tagManagerArgs)
+let appMounted = false;
 
-const mountNode =
-  document.getElementById("configurator-plugin-root") ||
-  document.getElementById("root");
+function mountApp() {
+  if (appMounted) {
+    return;
+  }
 
-ReactDOM.createRoot(mountNode).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+  const mountNode =
+    document.getElementById("configurator-plugin-root") ||
+    document.getElementById("root");
+
+  if (!mountNode) {
+    return;
+  }
+
+  appMounted = true;
+  TagManager.initialize(tagManagerArgs);
+
+  ReactDOM.createRoot(mountNode).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  )
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", mountApp, { once: true });
+} else {
+  mountApp();
+}

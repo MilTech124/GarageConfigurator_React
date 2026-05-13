@@ -18,12 +18,26 @@ final class ConfiguratorPlugin {
     const OPTION_ADDON_PRICES = 'configurator_addon_prices';
     const SHORTCODE = 'configurator_plugin';
     const REST_NS = 'configurator/v1';
+    private static $shortcode_assets_rendered = false;
 
     public static function init() {
         add_shortcode(self::SHORTCODE, [__CLASS__, 'render_shortcode']);
         add_action('rest_api_init', [__CLASS__, 'register_rest_routes']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
         add_action('admin_menu', [__CLASS__, 'add_admin_menu']);
+        add_filter('script_loader_tag', [__CLASS__, 'force_module_script_tag'], 10, 3);
+    }
+
+    public static function force_module_script_tag($tag, $handle, $src) {
+        if ($handle !== 'configurator-plugin-app') {
+            return $tag;
+        }
+
+        if (strpos($tag, ' type=') !== false) {
+            return $tag;
+        }
+
+        return '<script type="module" src="' . esc_url($src) . '" id="' . esc_attr($handle) . '-js"></script>' . "\n";
     }
 
     public static function register_settings() {
@@ -74,8 +88,59 @@ final class ConfiguratorPlugin {
     }
 
     public static function render_shortcode() {
-        self::enqueue_frontend_assets();
-        return '<div class="configurator-plugin-shell"><div id="configurator-plugin-root"></div></div>';
+        return '<div class="configurator-plugin-shell"><div id="configurator-plugin-root"></div></div>' . self::render_shortcode_assets();
+    }
+
+    private static function render_shortcode_assets() {
+        if (self::$shortcode_assets_rendered) {
+            return '';
+        }
+        self::$shortcode_assets_rendered = true;
+
+        $manifest_path = plugin_dir_path(__FILE__) . 'assets/dist/.vite/manifest.json';
+        if (!file_exists($manifest_path)) {
+            return '<!-- Configurator Plugin: missing build manifest at assets/dist/.vite/manifest.json -->';
+        }
+
+        $manifest = json_decode(file_get_contents($manifest_path), true);
+        if (!is_array($manifest) || empty($manifest['index.html']['file'])) {
+            return '<!-- Configurator Plugin: invalid Vite manifest -->';
+        }
+
+        $entry = $manifest['index.html'];
+        $base_url = plugin_dir_url(__FILE__) . 'assets/dist/';
+        $html = '';
+
+        if (!empty($entry['css']) && is_array($entry['css'])) {
+            foreach ($entry['css'] as $css_file) {
+                $html .= '<link rel="stylesheet" href="' . esc_url($base_url . ltrim($css_file, '/')) . '">' . "\n";
+            }
+        }
+
+        $config = [
+            'restBaseUrl' => untrailingslashit(rest_url(self::REST_NS)),
+            'inquiryEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/inquiry',
+            'uploadEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/upload-image',
+            'pricesEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/prices',
+            'showPrice' => (bool) get_option(self::OPTION_SHOW_PRICE, true),
+            'assetsBaseUrl' => trailingslashit($base_url),
+            'lang' => self::resolve_frontend_lang(),
+            'locale' => get_locale(),
+            'nonce' => wp_create_nonce('wp_rest'),
+            'siteUrl' => home_url('/'),
+            'logoUrl' => self::resolve_logo_url(),
+            'thankYouPathPl' => '/dziekujemy',
+            'thankYouPathCs' => '/dekujeme',
+            'thankYouPathSl' => '/dakujeme',
+            'thankYouPathHu' => '/koszonjuk',
+            'thankYouPath' => '/thank-you',
+        ];
+
+        $html .= '<style>' . self::layout_css() . '</style>' . "\n";
+        $html .= '<script>window.__CONFIGURATOR_PLUGIN__ = ' . wp_json_encode($config) . ';' . self::layout_js() . '</script>' . "\n";
+        $html .= '<script type="module" src="' . esc_url($base_url . ltrim($entry['file'], '/')) . '"></script>' . "\n";
+
+        return $html;
     }
 
     private static function enqueue_frontend_assets() {
@@ -113,7 +178,7 @@ final class ConfiguratorPlugin {
             $base_url . ltrim($entry['file'], '/'),
             [],
             filemtime(plugin_dir_path(__FILE__) . 'assets/dist/' . ltrim($entry['file'], '/')),
-            true
+            false
         );
         wp_script_add_data($script_handle, 'type', 'module');
 
