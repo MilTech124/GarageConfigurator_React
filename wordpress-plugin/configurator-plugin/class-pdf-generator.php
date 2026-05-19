@@ -46,6 +46,12 @@ class Configurator_PDF_Generator {
     // Roof angles in degrees — configurable.
     const SINGLE_PITCH_ANGLE = 5;
     const DUAL_PITCH_ANGLE   = 20;
+    const REAR_SLOPE_BASE_RISE_CM = 23;
+    const REAR_SLOPE_BASE_LENGTH_M = 5;
+    const REAR_SLOPE_EXTRA_RISE_CM_PER_METER = 5;
+    const FRONT_SLOPE_BASE_RISE_CM = 23;
+    const FRONT_SLOPE_BASE_LENGTH_M = 5;
+    const FRONT_SLOPE_EXTRA_RISE_CM_PER_METER = 5;
 
     // Colors [R, G, B].
     const COLOR_WALL     = [50, 50, 50];
@@ -144,6 +150,7 @@ class Configurator_PDF_Generator {
                 'm'              => ' m',
                 'cm'             => ' cm',
                 'from_left'      => 'od lewej',
+                'from_front'     => 'od przodu',
             ],
         ];
         return isset($t[$lang]) ? $t[$lang] : $t['pl'];
@@ -302,9 +309,9 @@ class Configurator_PDF_Generator {
             foreach ($this->doors as $idx => $door) {
                 $size = isset($door['size']) ? $door['size'] : '-';
                 $pos  = isset($door['position']) ? $door['position'] : '-';
-                $pv   = isset($door['positionValue']) ? $door['positionValue'] : '-';
+                $pv   = $this->position_value_text(isset($door['positionValue']) ? $door['positionValue'] : null);
                 $y = $row($t['doors_section'] . ' ' . ($idx + 1),
-                    $size . ', ' . $pos . ', ' . $this->from_left_label() . ': ' . $pv . $t['cm'], $y);
+                    $size . ', ' . $pos . ', ' . $this->opening_position_label($pos) . ': ' . $pv . $t['cm'], $y);
             }
             $y += 3;
         }
@@ -316,9 +323,9 @@ class Configurator_PDF_Generator {
             foreach ($this->windows as $idx => $win) {
                 $size = isset($win['size']) ? $win['size'] : '-';
                 $pos  = isset($win['position']) ? $win['position'] : '-';
-                $pv   = isset($win['positionValue']) ? $win['positionValue'] : '-';
+                $pv   = $this->position_value_text(isset($win['positionValue']) ? $win['positionValue'] : null);
                 $y = $row($t['windows_section'] . ' ' . ($idx + 1),
-                    $size . ', ' . $pos . ', ' . $this->from_left_label() . ': ' . $pv . $t['cm'], $y);
+                    $size . ', ' . $pos . ', ' . $this->opening_position_label($pos) . ': ' . $pv . $t['cm'], $y);
             }
             $y += 3;
         }
@@ -479,6 +486,18 @@ class Configurator_PDF_Generator {
             'spad w prawo'     => 'right',
         ];
         return isset($map[$roof]) ? $map[$roof] : 'back';
+    }
+
+    private function single_pitch_profile_high_wall($roof) {
+        $map = [
+            'spad tyl'         => 'back',
+            'spad tył'         => 'back',
+            'spad przod'       => 'front',
+            'spad przód'       => 'front',
+            'spad w lewo'      => 'right',
+            'spad w prawo'     => 'left',
+        ];
+        return isset($map[$roof]) ? $map[$roof] : $this->single_pitch_high_wall($roof);
     }
 
     // -----------------------------------------------------------------
@@ -748,10 +767,17 @@ class Configurator_PDF_Generator {
             $scale = $this->calc_scale($drawing_w, $drawing_h, $vis_w, $max_h);
             $pw = $vis_w / 10 * $scale;
 
+            $profile_front_h = $front_h;
+            $profile_back_h  = $back_h;
+            if (in_array($roof, ['spad tyl', 'spad tył', 'spad przod', 'spad przód'])) {
+                $profile_front_h = $back_h;
+                $profile_back_h  = $front_h;
+            }
+
             // For left view: left=edge is front, right=edge is back.
             // For right view: left=edge is back, right=edge is front.
-            $near_h = ($side === 'left') ? $front_h : $back_h;
-            $far_h  = ($side === 'left') ? $back_h  : $front_h;
+            $near_h = ($side === 'left') ? $profile_front_h : $profile_back_h;
+            $far_h  = ($side === 'left') ? $profile_back_h  : $profile_front_h;
 
             $pn_h = $near_h / 10 * $scale;
             $pf_h = $far_h / 10 * $scale;
@@ -875,7 +901,7 @@ class Configurator_PDF_Generator {
             }
         } else {
             // Arrow showing slope direction.
-            $high_wall = $this->single_pitch_high_wall($roof);
+            $high_wall = $this->single_pitch_profile_high_wall($roof);
             $ax1 = $cx; $ay1 = $cy;
             switch ($high_wall) {
                 case 'front': $ax2 = $cx; $ay2 = $ty + 2; break;
@@ -946,8 +972,8 @@ class Configurator_PDF_Generator {
             $dh = (float) (isset($parts[1]) ? $parts[1] : 190);
             $dp = (float) (isset($door['positionValue']) ? $door['positionValue'] : 0);
 
-            $ox = $wall_lx + ($dp / 10) * $scale;
             $ow = ($dw / 10) * $scale;
+            $ox = $this->opening_x($wall, $wall_lx, $wall_pw_mm, $dp, $dw, $scale);
             $oh = ($dh / 10) * $scale;
             $oy = $wall_by - $oh;
 
@@ -975,8 +1001,8 @@ class Configurator_PDF_Generator {
             $wh = (float) (isset($parts[1]) ? $parts[1] : 60);
             $wp = (float) (isset($win['positionValue']) ? $win['positionValue'] : 0);
 
-            $ox = $wall_lx + ($wp / 10) * $scale;
             $ow = ($ww / 10) * $scale;
+            $ox = $this->opening_x($wall, $wall_lx, $wall_pw_mm, $wp, $ww, $scale);
             $oh = ($wh / 10) * $scale;
 
             // Windows are placed higher on the wall (approx 150cm from floor).
@@ -993,6 +1019,15 @@ class Configurator_PDF_Generator {
             $p->SetFillColorArray([255, 255, 210]);
             $p->Rect($ox, $oy, $ow, $oh, 'DF');
         }
+    }
+
+    private function opening_x($wall, $wall_lx, $wall_pw_mm, $position_cm, $opening_width_cm, $scale) {
+        $start_mm = ($position_cm / 10) * $scale;
+        $opening_mm = ($opening_width_cm / 10) * $scale;
+        if ($wall === 'left') {
+            return $wall_lx + $wall_pw_mm - $start_mm - $opening_mm;
+        }
+        return $wall_lx + $start_mm;
     }
 
     // =====================================================================
@@ -1085,7 +1120,13 @@ class Configurator_PDF_Generator {
                 $span = $this->width_cm;
                 $this->roof_direction = 'left-right';
             }
-            $this->roof_rise_cm = $span * tan(deg2rad(self::SINGLE_PITCH_ANGLE));
+            if (in_array($roof, ['spad tyl', 'spad tył', 'spad tyĹ‚'])) {
+                $this->roof_rise_cm = $this->rear_slope_rise_from_depth($span);
+            } elseif (in_array($roof, ['spad przod', 'spad przód', 'spad przĂłd'])) {
+                $this->roof_rise_cm = $this->front_slope_rise_from_depth($span);
+            } else {
+                $this->roof_rise_cm = $span * tan(deg2rad(self::SINGLE_PITCH_ANGLE));
+            }
         } elseif (in_array($roof, $dual_types)) {
             $this->roof_type = 'dual';
             if (in_array($roof, ['dwuspad'])) {
@@ -1103,6 +1144,18 @@ class Configurator_PDF_Generator {
             $this->roof_rise_cm = 0;
             $this->roof_direction = 'front-back';
         }
+    }
+
+    private function rear_slope_rise_from_depth($depth_cm) {
+        $depth_m = $depth_cm / 100;
+        return self::REAR_SLOPE_BASE_RISE_CM
+            + max(0, $depth_m - self::REAR_SLOPE_BASE_LENGTH_M) * self::REAR_SLOPE_EXTRA_RISE_CM_PER_METER;
+    }
+
+    private function front_slope_rise_from_depth($depth_cm) {
+        $depth_m = $depth_cm / 100;
+        return self::FRONT_SLOPE_BASE_RISE_CM
+            + max(0, $depth_m - self::FRONT_SLOPE_BASE_LENGTH_M) * self::FRONT_SLOPE_EXTRA_RISE_CM_PER_METER;
     }
 
     // =====================================================================
@@ -1127,6 +1180,20 @@ class Configurator_PDF_Generator {
     private function from_left_label() {
         $t = self::translations($this->lang);
         return $t['from_left'];
+    }
+
+    private function from_front_label() {
+        $t = self::translations($this->lang);
+        return isset($t['from_front']) ? $t['from_front'] : 'od przodu';
+    }
+
+    private function opening_position_label($position) {
+        $position = str_replace(['przĂłd', 'tyĹ‚', 'tył'], ['przod', 'tyl', 'tyl'], (string) $position);
+        return $position === 'lewo' ? $this->from_front_label() : $this->from_left_label();
+    }
+
+    private function position_value_text($value) {
+        return $value === null || $value === '' ? '-' : (string) $value;
     }
 
     private function format_m($cm) {

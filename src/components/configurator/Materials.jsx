@@ -224,22 +224,25 @@ function Materials(selectedOptions) {
       const curentDoor = doorNumber(num);
       const colorRal = curentDoor.colorRal ? curentDoor.colorRal : null;
       const color = curentDoor.color ? curentDoor.color : null;
+      const doorNormalMap = createDoorNormalMap(curentDoor.emboss, gateDirection);
       if (colorRal === null || colorRal === undefined) {
         doorMaterial = new MeshStandardMaterial({
           map:
             color === "Złoty Dąb"
               ? wallTexture
+              : color === "Ocynk"
+              ? ocynkTexture
               : color === "Złoty Dąb Ciemny"
               ? wallTextureDabDark
               : wallTextureOrzech,
-          normalMap: gateDirection === "poziom" ? normalGate : normalGate90,
+          normalMap: doorNormalMap,
           roughness: 0.8,
           metalness: 1,         
         });
       } else {
         doorMaterial = new MeshStandardMaterial({
           color: colorRal,
-          normalMap: gateDirection === "poziom" ? normalGate : normalGate90,
+          normalMap: doorNormalMap,
           roughness: 0.9,
           metalness: 0.2,
         });
@@ -299,13 +302,13 @@ function Materials(selectedOptions) {
 
   normalWall.repeat.set(
     1,
-    emboss === "wąskie" ? 5 * (height / 213) : 3.5 * (height / 213)
+    emboss !== "szerokie" ? 5 * (height / 213) : 3.5 * (height / 213)
   );
   normalWall.wrapS = THREE.RepeatWrapping;
   normalWall.wrapT = THREE.RepeatWrapping;
 
   normalwall90.repeat.set(
-    emboss === "wąskie" ? (11 * width) / 6 : (6 * width) / 6,
+    emboss !== "szerokie" ? (11 * width) / 6 : (6 * width) / 6,
     6
   );
   normalwall90.wrapS = THREE.RepeatWrapping;
@@ -319,13 +322,26 @@ function Materials(selectedOptions) {
   gateSegment.wrapS = THREE.RepeatWrapping;
   gateSegment.wrapT = THREE.RepeatWrapping;
 
-  normalGate.repeat.set(1, gateEmbose === "wąskie" ? 5.2 : 3, 1);
+  normalGate.repeat.set(1, gateEmbose !== "szerokie" ? 5.2 : 3, 1);
   normalGate.wrapS = THREE.RepeatWrapping;
   normalGate.wrapT = THREE.RepeatWrapping;
 
-  normalGate90.repeat.set(gateEmbose === "wąskie" ? 5.2 : 3, 1);
+  normalGate90.repeat.set(gateEmbose !== "szerokie" ? 5.2 : 3, 1);
   normalGate90.wrapS = THREE.RepeatWrapping;
   normalGate90.wrapT = THREE.RepeatWrapping;
+
+  const createDoorNormalMap = (doorEmboss, doorDirection) => {
+    const isHorizontal = doorDirection === "poziom";
+    const texture = (isHorizontal ? normalGate : normalGate90).clone();
+    const embossRepeat = doorEmboss === "szerokie" ? 3 : 5.2;
+
+    texture.repeat.set(isHorizontal ? 1 : embossRepeat, isHorizontal ? embossRepeat : 1);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.needsUpdate = true;
+
+    return texture;
+  };
 
   //materials
   const roofMaterial = new MeshStandardMaterial({
@@ -431,10 +447,12 @@ function Materials(selectedOptions) {
   let doorMaterial2;
   let doorMaterial3;
   let doorMaterial4;
+  let doorMaterial5;
   doorMaterial1 = door.length >= 1 ? doorColor(0) : doorMaterial1;
   doorMaterial2 = door.length >= 2 ? doorColor(1) : doorMaterial2;
   doorMaterial3 = door.length >= 3 ? doorColor(2) : doorMaterial3;
   doorMaterial4 = door.length >= 4 ? doorColor(3) : doorMaterial4;
+  doorMaterial5 = door.length >= 5 ? doorColor(4) : doorMaterial5;
 
   return {
     roofMaterial,
@@ -446,6 +464,7 @@ function Materials(selectedOptions) {
     doorMaterial2,
     doorMaterial3,
     doorMaterial4,
+    doorMaterial5,
     azuryMaterial,    
   };
 }

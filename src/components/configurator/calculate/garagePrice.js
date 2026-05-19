@@ -50,7 +50,8 @@ export function getPriceDataSync() {
 }
 
 const garagePrice = ({ selectedOptions }) => {
-  const { width, depth } = selectedOptions;
+  const width = Math.ceil(selectedOptions.width);
+  const depth = Math.ceil(selectedOptions.depth);
   const prices = cachedPrices || { standard: dataDefault, galvanized: dataOcynkDefault };
 
   if (selectedOptions.color === "Ocynk") {

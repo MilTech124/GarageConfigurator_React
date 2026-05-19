@@ -1,9 +1,28 @@
-﻿import React,{useState}from 'react';
+﻿import React,{useEffect}from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Grid, Card, CardActionArea, CardMedia } from '@mui/material';
 import { variable } from '../Variable';
 import { assetPath } from '../../../utils/assetPath';
 
 const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
+  const roofKey = String(selectedOptions.roof || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0142/g, "l")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const isRearSlope = roofKey === "spad tyl";
+  const availableHeights = isRearSlope
+    ? [200, ...variable.garageSizes.height.filter((height) => height !== 200)]
+    : variable.garageSizes.height.filter((height) => height !== 200);
+
+  useEffect(() => {
+    if (!isRearSlope && Number(selectedOptions.height) === 200) {
+      setSelectedOptions((current) => ({ ...current, height: 213 }));
+    }
+  }, [isRearSlope, selectedOptions.height, setSelectedOptions]);
+
   const colorLabel = (name) => {
     return o(name);
   };
@@ -28,7 +47,26 @@ const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
   ];
 
   const handleChange = (optionType) => (event) => {
-        setSelectedOptions({ ...selectedOptions, [optionType]: event.target.value });
+    const value = event.target.value;
+
+    if (optionType === "width") {
+      const width = Number(value);
+
+      setSelectedOptions((current) => ({
+        ...current,
+        width: value,
+        gateCount: width < 6 ? Math.min(Number(current.gateCount) || 1, 1) : current.gateCount,
+        gateWidth1: Math.min(Number(current.gateWidth1) || width, width),
+        gateWidth2: Math.min(Number(current.gateWidth2) || width, width),
+        gateWidth3: Math.min(Number(current.gateWidth3) || width, width),
+        gatePositionValue1: 0,
+        gatePositionValue2: width < 6 ? 0 : current.gatePositionValue2,
+        gatePositionValue3: width < 6 ? 0 : current.gatePositionValue3,
+      }));
+      return;
+    }
+
+    setSelectedOptions({ ...selectedOptions, [optionType]: value });
   };
 
   const handleSelectColor = (color,colorRal) => {
@@ -63,7 +101,7 @@ const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
             <FormControl fullWidth>
               <InputLabel>{t("height")}</InputLabel>
               <Select value={selectedOptions.height} label={t("height")} onChange={handleChange('height')}>
-                {variable.garageSizes.height.map((size) => (
+                {availableHeights.map((size) => (
                   <MenuItem key={size} value={size}>{size} cm</MenuItem>
                 ))}
               </Select>
@@ -91,6 +129,17 @@ const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
       </Grid>
 
       <Grid className='pt-2 flex gap-2' item xs={12} sm={4}>
+        <FormControl fullWidth>
+          <InputLabel>{t("emboss")}</InputLabel>
+          <Select value={selectedOptions.emboss} label={t("emboss")} onChange={handleChange('emboss')}>
+            {variable.garageEmbose.map((emboss) => (
+              <MenuItem key={emboss} value={emboss}>
+                {o(emboss)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <FormControl fullWidth>
           <InputLabel>{t("direction")}</InputLabel>
           <Select value={selectedOptions.direction} label={t("direction")} onChange={handleChange('direction')}>

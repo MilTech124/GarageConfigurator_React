@@ -36,6 +36,11 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
     gateType2,
     gateType3,
   } = selectedOptions;
+  const safeGateWidth1 = Math.min(Number(gateWidth1) || width, width);
+  const safeGatePositionValue1 = Math.min(
+    Number(gatePositionValue1) || 0,
+    Math.max(0, width * 100 - safeGateWidth1 * 100)
+  );
 
   const gateColor = [
     { name: "Złoty Dąb", url: assetPath("konfigurator/jasny-dab.webp") },
@@ -126,14 +131,33 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
   }, [gateCount]);
 
   useEffect(() => {
-    if(width < 6){
-      setSelectedOptions({
-        ...selectedOptions,
-        gateCount: 1,
-      });
+    const updates = {};
+
+    if (width < 6) {
+      updates.gateCount = 1;
       setGateCount(1);
     }
-  }, [width]);
+
+    if (width < gateWidth1) {
+      updates.gateWidth1 = width;
+      updates.gatePositionValue1 = 0;
+    }
+    if (width < gateWidth2) {
+      updates.gateWidth2 = width;
+      updates.gatePositionValue2 = 0;
+    }
+    if (width < gateWidth3) {
+      updates.gateWidth3 = width;
+      updates.gatePositionValue3 = 0;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setSelectedOptions({
+        ...selectedOptions,
+        ...updates,
+      });
+    }
+  }, [width, gateWidth1, gateWidth2, gateWidth3]);
  
 
 
@@ -250,14 +274,14 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                 <InputLabel>{t("width")}</InputLabel>
                 <Select
                   disabled={gateCount === 1 ? false : true}
-                  value={gateWidth1}
+                  value={safeGateWidth1}
                   label={t("width")}
                   onChange={handleChange("gateWidth1")}
                 >
                   {variable.gateSizes.width
                     .filter(
                       (widthVAR) =>
-                      gateType1 != "segmentowa" && (width / (widthVAR + gatePositionValue1 / 100) >= 1) && widthVAR <= 3.5
+                      gateType1 != "segmentowa" && (width / (widthVAR + gatePositionValue1 / 100) >= 1) && widthVAR <= 4
                       ? true
                       : gateType1 === "segmentowa" && (width / (widthVAR + gatePositionValue1 / 100) >= 1) ? true  :null
                     )
@@ -269,7 +293,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                 </Select>
               </FormControl>
             </div>
-            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight1-10} {t("height")}, {selectedOptions.gateWidth1*100-25} {t("width")} </p>
+            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight1-10} {t("height")}, {safeGateWidth1*100-25} {t("width")} </p>
           
             {/* Slider*/}
             <h5 className="text-sm text-center pt-2 text-slate-900">
@@ -278,12 +302,12 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
             <Slider
               disabled={gateCount === 1 ? false : true}
               aria-label="Default"
-              defaultValue={(width / 2) * 100 - (gateWidth1 / 2) * 100}
+              defaultValue={(width / 2) * 100 - (safeGateWidth1 / 2) * 100}
               valueLabelDisplay="auto"
               step={10}
               marks
               min={0}
-              max={width * 100 - gateWidth1 * 100}
+              max={Math.max(0, width * 100 - safeGateWidth1 * 100)}
               onChange={(event, newValue) =>
                 setSelectedOptions({
                   ...selectedOptions,
@@ -291,7 +315,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                 })
               }
             />
-            {gatePositionValue1} {t("fromLeftEdge")}
+            {safeGatePositionValue1} {t("fromLeftEdge")}
           </div>
         ) : null}
         {/* //second gate  */}
@@ -348,7 +372,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                   {variable.gateSizes.width
                     .filter(
                       (widthVAR) =>
-                      gateType2 != "segmentowa" && (width / (widthVAR + gatePositionValue2 / 100) >= 1) && widthVAR <= 3.5
+                      gateType2 != "segmentowa" && (width / (widthVAR + gatePositionValue2 / 100) >= 1) && widthVAR <= 4
                       ? true
                       : gateType2 === "segmentowa" && (width / (widthVAR + gatePositionValue2 / 100) >= 1) ? true  :null
                     )
@@ -449,7 +473,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                     {variable.gateSizes.width
                     .filter(
                       (widthVAR) =>
-                      gateType3 != "segmentowa" && (width / (widthVAR + gatePositionValue3 / 100) >= 1) && widthVAR <= 3.5
+                      gateType3 != "segmentowa" && (width / (widthVAR + gatePositionValue3 / 100) >= 1) && widthVAR <= 4
                       ? true
                       : gateType3 === "segmentowa" && (width / (widthVAR + gatePositionValue3 / 100) >= 1) ? true  :null
                     )

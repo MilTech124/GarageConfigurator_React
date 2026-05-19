@@ -17,6 +17,7 @@ function DoorSettings({ selectedOptions, setSelectedOptions, t, o }) {
   const doorColor = [
     { name: "Złoty Dąb", url: assetPath("konfigurator/jasny-dab.webp") },
     { name: "Orzech", url: assetPath("konfigurator/orzech.png") },
+    { name: "Ocynk", url: assetPath("konfigurator/ocynk.png") },
     { name: "Antracyt 7016", ral: "#272C38" },
     { name: "Ciemny BrÄ…z 8017", ral: "#2F1D1D" },
     { name: "BrÄ…z Jasny 8004", ral: "#85392C" },
@@ -34,7 +35,7 @@ function DoorSettings({ selectedOptions, setSelectedOptions, t, o }) {
   const handleDoor = (action) => {
     if (action === "+" && countDoor < 5) {
       setCountDoor(countDoor + 1);
-      const newDoor = new door("100x190", "lewe", "Złoty Dąb");
+      const newDoor = new door("100x190", "lewe", "Złoty Dąb", "waskie");
       setSelectedOptions({
         ...selectedOptions,
         door: [...selectedOptions.door, newDoor],
@@ -50,10 +51,11 @@ function DoorSettings({ selectedOptions, setSelectedOptions, t, o }) {
     }
   };
 
-  function door(size, type, color) {
+  function door(size, type, color, emboss) {
     this.size = size;
     this.type = type;
     this.color = color;
+    this.emboss = emboss;
     this.position = "lewo";
     this.positionValue = 20;
   }
@@ -96,6 +98,27 @@ function DoorSettings({ selectedOptions, setSelectedOptions, t, o }) {
               >
                 {variable.doorType.map((type) => (
                   <MenuItem key={type} value={type}>{o(type)}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+              <InputLabel id="demo-simple-select-standard-label">{t("emboss")}</InputLabel>
+              <Select
+                labelId="demo-simple-select-standard-label"
+                id="demo-simple-select-standard"
+                value={door.emboss || "waskie"}
+                onChange={(e) => {
+                  setSelectedOptions({
+                    ...selectedOptions,
+                    door: selectedOptions.door.map((item, i) =>
+                      i === index ? { ...item, emboss: e.target.value } : item
+                    ),
+                  });
+                }}
+                label={t("emboss")}
+              >
+                {variable.garageEmbose.map((emboss) => (
+                  <MenuItem key={emboss} value={emboss}>{o(emboss)}</MenuItem>
                 ))}
               </Select>
             </FormControl>

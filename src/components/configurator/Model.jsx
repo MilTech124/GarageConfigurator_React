@@ -66,6 +66,16 @@ export function Model(props) {
 
   } = Materials(props.selectedOptions);
 
+  const sideDoorXFromFront = (positionValue, size = "80x190") => {
+    const [doorWidthCm = 80] = String(size).split("x").map(Number);
+    return (2.86 * depth) / 6 - positionValue / 100 - doorWidthCm / 100 + 0.24;
+  };
+
+  const sideWindowXFromFront = (positionValue) =>
+    depth <= 6
+      ? (-2.4 * depth) / 6 + (depth - 1) - positionValue / 100
+      : (-2.7 * depth) / 6 + (depth - 1) - positionValue / 100;
+
   const Gate = ({ gateMaterial, position, scale, type }) => {
     return (
       <>      
@@ -165,9 +175,10 @@ export function Model(props) {
               ]
             : door[number].position === "lewo"
             ? [
-                (2.86 * depth - 0.6 * width) / 6 -
-                  (depth - 1) +
-                  door[number].positionValue / 100,
+                sideDoorXFromFront(
+                  door[number].positionValue,
+                  door[number].size
+                ),
                 1.054,
                 (2.965 * width) / 6,
               ]
@@ -1076,9 +1087,7 @@ export function Model(props) {
               ]
             : window[number].position === "lewo"
             ? [
-                depth <= 6
-                  ? (-2.4 * depth) / 6 + window[number].positionValue / 100
-                  : (-2.7 * depth) / 6 + window[number].positionValue / 100,
+                sideWindowXFromFront(window[number].positionValue),
                 1.631,
                 (3 * width) / 6,
               ]

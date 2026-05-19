@@ -73,6 +73,9 @@ const translations = {
     formMarketingText:
       "Wyrazam zgode na przetwarzanie moich danych osobowych, w tym adresu e-mail, w celu przesylania mi informacji handlowych i ofert promocyjnych.",
     formSend: "Wyslij",
+    priceLabel: "Cena",
+    priceNotice:
+      "Prosze pamietac, ze podana cena jest orientacyjna i nie stanowi oferty wiazacej.",
   },
   cs: {
     orderQuote: "Objednat cenovou nabidku",
@@ -146,6 +149,9 @@ const translations = {
     formMarketingText:
       "Souhlasim se zpracovanim osobnich udaju, vcetne e-mailove adresy, za ucelem zaslani obchodnich informaci a nabidek.",
     formSend: "Odeslat poptavku",
+    priceLabel: "Cena",
+    priceNotice:
+      "Upozornujeme, ze uvedena cena je orientacni a nepredstavuje zavaznou nabidku.",
   },
   sl: {
     orderQuote: "Objednat cenovu ponuku",
@@ -219,6 +225,9 @@ const translations = {
     formMarketingText:
       "Suhlasim so spracovanim osobnych udajov, vratane emailovej adresy, na ucely zasielania obchodnych informacii a ponuk.",
     formSend: "Odoslat dopyt",
+    priceLabel: "Cena",
+    priceNotice:
+      "Upozornujeme, ze uvedena cena je orientacna a nepredstavuje zavaznu ponuku.",
   },
   hu: {
     orderQuote: "Arajanlat kerese",
@@ -292,6 +301,9 @@ const translations = {
     formMarketingText:
       "Hozzajarulok szemelyes adataim, beleertve az email cimemet is, kereskedelmi informaciok es ajanlatok kuldesehez.",
     formSend: "Arajanlat kuldese",
+    priceLabel: "Ar",
+    priceNotice:
+      "Kerjuk, vegye figyelembe, hogy a megadott ar tajekoztato jellegu, es nem minosul kotelezo ajanlatnak.",
   },
 };
 

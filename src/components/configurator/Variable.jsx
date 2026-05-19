@@ -5,8 +5,8 @@ export const variable={
     garageEmbose:["szerokie","wąskie"],
     garageDirection:["pion","poziom"],
     garageSizes:{
-        width: [3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12],     
-        depth: [3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12],
+        width: [2,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12],     
+        depth: [2,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12],
         height: [213,223,233,243,253,263,273,283,293,303,313],
     },
 
@@ -18,7 +18,7 @@ export const variable={
     gateTypes:["dwuskrzydłowa", "uchylna"],   //"segmentowa" dodatkowa
     gateColors:["Złoty Dąb Jasny","Złoty Dąb Ciemny","Antracyt","Ciemny Brąz 8017","Brąz Jasny 8004","Ciemna Zieleń 6005","Jasna Zieleń 6029","Grafit 7016","Biały 9010","Szary 9002","Srebrny 9006","Piaskowy 1002","Czerwony 3011", "Wisniowy 3005", "Czarny 9005"],
     gateSizes:{
-        width: [3,3.5,4,4.5,5,5.5,6],     
+        width: [2,2.5,3,3.5,4,4.5,5,5.5,6],     
         height: [190,200,210,220,230,240,250,260],
     },
     gateEmbose:["szerokie","wąskie"],

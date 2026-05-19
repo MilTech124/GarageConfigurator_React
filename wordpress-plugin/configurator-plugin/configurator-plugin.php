@@ -298,18 +298,14 @@ final class ConfiguratorPlugin {
         ];
 
         $attachments = self::resolve_image_attachments($image_url);
+        $client_pdf_path = self::create_pdf_attachment_from_request($data);
 
-        // Generate PDF order document.
-        $pdf_path = null;
-        try {
-            $contact_arr = compact('name', 'email', 'phone', 'postal_code', 'city', 'address', 'message');
-            $pdf_gen = new Configurator_PDF_Generator($garage, $contact_arr, $price, $image_url, $lang);
-            $pdf_path = $pdf_gen->generate();
-            if ($pdf_path && file_exists($pdf_path)) {
-                $attachments[] = $pdf_path;
-            }
-        } catch (\Exception $e) {
-            // PDF generation failed — continue without it.
+        if ($client_pdf_path && file_exists($client_pdf_path)) {
+            $attachments[] = $client_pdf_path;
+        }
+
+        if (!$client_pdf_path) {
+            return new WP_Error('pdf_missing', 'Generated PDF attachment is missing', ['status' => 400]);
         }
 
         $sent = wp_mail(
@@ -321,8 +317,8 @@ final class ConfiguratorPlugin {
         );
 
         // Clean up temp PDF.
-        if ($pdf_path && file_exists($pdf_path)) {
-            @unlink($pdf_path);
+        if ($client_pdf_path && file_exists($client_pdf_path)) {
+            @unlink($client_pdf_path);
         }
 
         if (!$sent) {
@@ -356,6 +352,8 @@ final class ConfiguratorPlugin {
             'message' => 'Inquiry sent',
             'data' => [
                 'to' => $to_email,
+                'pdf_attached' => true,
+                'attachment_count' => count($attachments),
                 'client_confirmation_sent' => (bool) $client_confirmation_sent,
             ],
         ];
@@ -661,7 +659,7 @@ final class ConfiguratorPlugin {
               <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
                 <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['width']); ?></th><td><?php echo esc_html(self::garage_value($garage, 'width')); ?> <?php echo esc_html($t['m']); ?></td></tr>
                 <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['depth']); ?></th><td><?php echo esc_html(self::garage_value($garage, 'depth')); ?> <?php echo esc_html($t['m']); ?></td></tr>
-                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['height']); ?></th><td><?php echo esc_html(self::garage_value($garage, 'height')); ?> <?php echo esc_html($t['cm']); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['height']); ?></th><td><?php echo esc_html(self::format_cm_as_m(self::garage_value($garage, 'height'))); ?></td></tr>
                 <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['color']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'color'), $lang)); ?></td></tr>
                 <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['emboss']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'emboss'), $lang)); ?></td></tr>
                 <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['direction']); ?></th><td><?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'direction'), $lang)); ?></td></tr>
@@ -685,8 +683,8 @@ final class ConfiguratorPlugin {
                       <td>
                         <?php echo esc_html($t['type']); ?>: <?php echo esc_html(self::translate_config_value($gate_type, $lang)); ?>,
                         <?php echo esc_html($t['color']); ?>: <?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'gateColor' . $i), $lang)); ?>,
-                        <?php echo esc_html($t['size']); ?>: <?php echo esc_html(self::garage_value($garage, 'gateWidth' . $i)); ?> <?php echo esc_html($t['m']); ?> x <?php echo esc_html(self::garage_value($garage, 'gateHeight' . $i)); ?> <?php echo esc_html($t['cm']); ?>,
-                        <?php echo esc_html($t['position']); ?>: <?php echo esc_html(self::garage_value($garage, 'gatePositionValue' . $i)); ?> <?php echo esc_html($t['cm']); ?>
+                        <?php echo esc_html($t['size']); ?>: <?php echo esc_html(self::garage_value($garage, 'gateWidth' . $i)); ?> <?php echo esc_html($t['m']); ?> x <?php echo esc_html(self::format_cm_as_m(self::garage_value($garage, 'gateHeight' . $i))); ?>,
+                        <?php echo esc_html($t['position']); ?>: <?php echo esc_html(self::format_cm_as_m(self::garage_value($garage, 'gatePositionValue' . $i))); ?>
                       </td>
                     </tr>
                   <?php endif; ?>
@@ -793,6 +791,85 @@ final class ConfiguratorPlugin {
         }
         return !empty($value) ? 'Tak' : 'Nie';
     }
+
+    private static function format_cm_as_m($value) {
+        if ($value === null || $value === '') {
+            return '-';
+        }
+
+        $number = is_numeric($value) ? ((float) $value / 100) : null;
+        if ($number === null) {
+            return (string) $value;
+        }
+
+        $formatted = number_format($number, 2, '.', '');
+        $formatted = rtrim(rtrim($formatted, '0'), '.');
+
+        return $formatted . ' m';
+    }
+
+    private static function format_size_cm_as_m($size) {
+        $size = trim((string) $size);
+        if ($size === '' || $size === '-') {
+            return '-';
+        }
+
+        $parts = preg_split('/\s*x\s*/i', $size);
+        if (!is_array($parts) || count($parts) !== 2 || !is_numeric($parts[0]) || !is_numeric($parts[1])) {
+            return $size;
+        }
+
+        return self::format_cm_as_m($parts[0]) . ' x ' . self::format_cm_as_m($parts[1]);
+    }
+
+    private static function create_pdf_attachment_from_request($data) {
+        if (empty($data['pdf']) || !is_array($data['pdf'])) {
+            return null;
+        }
+
+        $pdf = $data['pdf'];
+        $content_base64 = isset($pdf['contentBase64']) ? (string) $pdf['contentBase64'] : '';
+        if ($content_base64 === '') {
+            return null;
+        }
+
+        if (strpos($content_base64, ',') !== false) {
+            $parts = explode(',', $content_base64, 2);
+            $content_base64 = $parts[1];
+        }
+
+        $binary = base64_decode($content_base64, true);
+        if ($binary === false || substr($binary, 0, 4) !== '%PDF') {
+            return null;
+        }
+
+        $max_size = 10 * 1024 * 1024;
+        if (strlen($binary) > $max_size) {
+            return null;
+        }
+
+        $filename = isset($pdf['filename']) ? sanitize_file_name((string) $pdf['filename']) : '';
+        if ($filename === '') {
+            $filename = 'zapytanie-garaz.pdf';
+        }
+        if (strtolower(pathinfo($filename, PATHINFO_EXTENSION)) !== 'pdf') {
+            $filename .= '.pdf';
+        }
+
+        $upload = wp_upload_dir();
+        $dir = isset($upload['path']) ? (string) $upload['path'] : sys_get_temp_dir();
+        if (!is_dir($dir)) {
+            wp_mkdir_p($dir);
+        }
+
+        $path = trailingslashit($dir) . 'mail-' . wp_generate_password(12, false) . '-' . $filename;
+        if (file_put_contents($path, $binary) === false) {
+            return null;
+        }
+
+        return $path;
+    }
+
     private static function resolve_image_attachments($image_url) {
         if (empty($image_url)) {
             return [];
@@ -844,11 +921,11 @@ final class ConfiguratorPlugin {
     }
 
         private static function format_door_line($door, $idx, $lang = 'pl') {
-        $size = isset($door['size']) ? (string) $door['size'] : '-';
+        $size = isset($door['size']) ? self::format_size_cm_as_m($door['size']) : '-';
         $door_type = self::translate_config_value(isset($door['type']) ? (string) $door['type'] : '-', $lang);
         $color = self::translate_config_value(isset($door['color']) ? (string) $door['color'] : '-', $lang);
         $position = self::translate_config_value(isset($door['position']) ? (string) $door['position'] : '-', $lang);
-        $position_value = isset($door['positionValue']) ? (string) $door['positionValue'] : '-';
+        $position_value = isset($door['positionValue']) ? self::format_cm_as_m($door['positionValue']) : '-';
         if ($lang === 'cs') {
             return esc_html(
                 'Dvere ' . $idx .
@@ -856,7 +933,7 @@ final class ConfiguratorPlugin {
                 ', typ ' . $door_type .
                 ', barva ' . $color .
                 ', pozice ' . $position .
-                ', vzdalenost ' . $position_value . ' cm'
+                ', vzdalenost ' . $position_value
             );
         }
         if ($lang === 'sl') {
@@ -866,7 +943,7 @@ final class ConfiguratorPlugin {
                 ', typ ' . $door_type .
                 ', farba ' . $color .
                 ', pozicia ' . $position .
-                ', vzdialenost ' . $position_value . ' cm'
+                ', vzdialenost ' . $position_value
             );
         }
         if ($lang === 'hu') {
@@ -876,7 +953,7 @@ final class ConfiguratorPlugin {
                 ', tipus ' . $door_type .
                 ', szin ' . $color .
                 ', pozicio ' . $position .
-                ', tavolsag ' . $position_value . ' cm'
+                ', tavolsag ' . $position_value
             );
         }
         return esc_html(
@@ -885,19 +962,19 @@ final class ConfiguratorPlugin {
             ', typ ' . $door_type .
             ', kolor ' . $color .
             ', pozycja ' . $position .
-            ', odleglosc ' . $position_value . ' cm'
+            ', odleglosc ' . $position_value
         );
     }
         private static function format_window_line($window, $idx, $lang = 'pl') {
-        $size = isset($window['size']) ? (string) $window['size'] : '-';
+        $size = isset($window['size']) ? self::format_size_cm_as_m($window['size']) : '-';
         $position = self::translate_config_value(isset($window['position']) ? (string) $window['position'] : '-', $lang);
-        $position_value = isset($window['positionValue']) ? (string) $window['positionValue'] : '-';
+        $position_value = isset($window['positionValue']) ? self::format_cm_as_m($window['positionValue']) : '-';
         if ($lang === 'cs') {
             return esc_html(
                 'Okno ' . $idx .
                 ': rozmer ' . $size .
                 ', pozice ' . $position .
-                ', vzdalenost ' . $position_value . ' cm'
+                ', vzdalenost ' . $position_value
             );
         }
         if ($lang === 'sl') {
@@ -905,7 +982,7 @@ final class ConfiguratorPlugin {
                 'Okno ' . $idx .
                 ': rozmer ' . $size .
                 ', pozicia ' . $position .
-                ', vzdialenost ' . $position_value . ' cm'
+                ', vzdialenost ' . $position_value
             );
         }
         if ($lang === 'hu') {
@@ -913,14 +990,14 @@ final class ConfiguratorPlugin {
                 'Ablak ' . $idx .
                 ': meret ' . $size .
                 ', pozicio ' . $position .
-                ', tavolsag ' . $position_value . ' cm'
+                ', tavolsag ' . $position_value
             );
         }
         return esc_html(
             'Okno ' . $idx .
             ': rozmiar ' . $size .
             ', pozycja ' . $position .
-            ', odleglosc ' . $position_value . ' cm'
+            ', odleglosc ' . $position_value
         );
     }
 
@@ -1152,11 +1229,28 @@ final class ConfiguratorPlugin {
 
     private static function get_effective_prices($type) {
         $option = $type === 'galvanized' ? self::OPTION_PRICES_GALVANIZED : self::OPTION_PRICES_STANDARD;
+        $defaults = self::get_default_prices($type);
         $custom = get_option($option, false);
         if ($custom !== false && is_array($custom) && !empty($custom)) {
-            return $custom;
+            $merged = self::build_price_lookup($defaults);
+            foreach ($custom as $item) {
+                $w = (int) $item['width'];
+                $d = (int) $item['depth'];
+                $merged[$w][$d] = (int) $item['price'];
+            }
+
+            $prices = [];
+            ksort($merged);
+            foreach ($merged as $w => $depths) {
+                ksort($depths);
+                foreach ($depths as $d => $price) {
+                    $prices[] = ['width' => (int) $w, 'depth' => (int) $d, 'price' => (int) $price];
+                }
+            }
+
+            return $prices;
         }
-        return self::get_default_prices($type);
+        return $defaults;
     }
 
     private static function build_price_lookup($prices) {
@@ -1308,16 +1402,16 @@ final class ConfiguratorPlugin {
                         <thead>
                             <tr>
                                 <th style="width:60px;">Gleb.\Szer.</th>
-                                <?php for ($w = 3; $w <= 12; $w++): ?>
+                                <?php for ($w = 2; $w <= 12; $w++): ?>
                                     <th style="text-align:center;"><?php echo $w; ?>m</th>
                                 <?php endfor; ?>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php for ($d = 3; $d <= 12; $d++): ?>
+                            <?php for ($d = 2; $d <= 12; $d++): ?>
                                 <tr>
                                     <th><?php echo $d; ?>m</th>
-                                    <?php for ($w = 3; $w <= 12; $w++): ?>
+                                    <?php for ($w = 2; $w <= 12; $w++): ?>
                                         <td>
                                             <input type="number"
                                                    name="prices[standard][<?php echo $w; ?>][<?php echo $d; ?>]"
@@ -1337,16 +1431,16 @@ final class ConfiguratorPlugin {
                         <thead>
                             <tr>
                                 <th style="width:60px;">Gleb.\Szer.</th>
-                                <?php for ($w = 3; $w <= 12; $w++): ?>
+                                <?php for ($w = 2; $w <= 12; $w++): ?>
                                     <th style="text-align:center;"><?php echo $w; ?>m</th>
                                 <?php endfor; ?>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php for ($d = 3; $d <= 12; $d++): ?>
+                            <?php for ($d = 2; $d <= 12; $d++): ?>
                                 <tr>
                                     <th><?php echo $d; ?>m</th>
-                                    <?php for ($w = 3; $w <= 12; $w++): ?>
+                                    <?php for ($w = 2; $w <= 12; $w++): ?>
                                         <td>
                                             <input type="number"
                                                    name="prices[galvanized][<?php echo $w; ?>][<?php echo $d; ?>]"

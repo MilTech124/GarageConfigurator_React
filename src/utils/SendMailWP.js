@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import { generateOrderPdf } from "./pdfGenerator";
 
 function resolveThankYouPath(wpConfig, lang) {
   if (lang === "cs") return wpConfig.thankYouPathCs || "/dekujeme";
@@ -36,6 +37,51 @@ function getToastCopy(lang) {
   };
 }
 
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+
+  return btoa(binary);
+}
+
+function buildPdfPayload(data, lang) {
+  const selectedOptions = data.data || {};
+  const doc = generateOrderPdf({
+    garage: {
+      ...selectedOptions,
+      doors: data.door || "",
+      windows: data.window || "",
+      doorList: Array.isArray(selectedOptions.door) ? selectedOptions.door : [],
+      windowList: Array.isArray(selectedOptions.window) ? selectedOptions.window : [],
+      doorCount: Array.isArray(selectedOptions.door) ? selectedOptions.door.length : 0,
+      windowCount: Array.isArray(selectedOptions.window) ? selectedOptions.window.length : 0,
+    },
+    contact: {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      postal_code: data.postalCode,
+      city: data.city,
+      address: data.address,
+      message: data.message || "",
+    },
+    price: data.price,
+    imageUrl: data.imageURL || "",
+    lang,
+  });
+
+  return {
+    filename: `zapytanie-garaz-${new Date().toISOString().slice(0, 10)}.pdf`,
+    mimeType: "application/pdf",
+    contentBase64: arrayBufferToBase64(doc.output("arraybuffer")),
+  };
+}
+
 // Send inquiry to WordPress REST API
 function SendEmailWP(data, templateType = "default", lang = "pl") {
   const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
@@ -50,6 +96,20 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
     closeOnClick: true,
     pauseOnHover: true,
   });
+
+  let pdfPayload = null;
+  try {
+    pdfPayload = buildPdfPayload(data, lang);
+  } catch (error) {
+    console.error("PDF generation failed before sending inquiry:", error);
+    toast.error(toastCopy.error + "Nie udalo sie wygenerowac PDF", {
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+    });
+    return;
+  }
 
   const emailData = {
     template_type: templateType,
@@ -112,6 +172,7 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
     },
     price: data.price,
     imageURL: data.imageURL,
+    pdf: pdfPayload,
   };
 
   fetch(wpApiUrl, {
@@ -122,11 +183,12 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
     },
     body: JSON.stringify(emailData),
   })
-    .then((response) => {
+    .then(async (response) => {
+      const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(result?.message || result?.code || `HTTP error! status: ${response.status}`);
       }
-      return response.json();
+      return result;
     })
     .then((result) => {
       if (result.success) {

@@ -52,7 +52,7 @@ function getAddon(key) {
   return a[key] !== undefined ? a[key] : DEFAULTS[key];
 }
 
-function CalcMain({ selectedOptions, price, setPrice }) {
+function CalcMain({ selectedOptions, price, setPrice, t = (key) => key }) {
   const SoloGaragePrice = garagePrice({ selectedOptions });
   const [showPrice, setShowPrice] = useState(true);
   const [addonsLoaded, setAddonsLoaded] = useState(false);
@@ -88,12 +88,20 @@ function CalcMain({ selectedOptions, price, setPrice }) {
     carportSide,
   } = selectedOptions;
 
-  const roofKey = roof === "spad tyl" || roof === "spad tyl" ? "spad tyl" : roof;
+  const roofKey = String(roof || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0142/g, "l")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
   const calcHeightPrice = () => {
     const standardHeight = 213;
-    const heightPrize = height - standardHeight;
-    return (heightPrize / 10) * getAddon("heightPerCm");
+    const heightDifference = Number(height) - standardHeight;
+    const heightSteps = Math.round(heightDifference / 10);
+    return heightSteps * getAddon("heightPerCm");
   };
 
   const calcCarportPrice = () => {
@@ -207,11 +215,11 @@ function CalcMain({ selectedOptions, price, setPrice }) {
   return (
     <div>
       <p className="text-4xl max-sm:text-base md:pt-5 text-red-800 font-bold">
-        Cena:
+        {t("priceLabel")}:
         <span className="underline ml-5 font-black">{price} zł</span>
       </p>
       <p className="md:text-sm text-xs md:pb-2">
-        Proszę pamiętać, że podana cena jest orientacyjna i nie stanowi oferty wiążącej.
+        {t("priceNotice")}
       </p>
     </div>
   );

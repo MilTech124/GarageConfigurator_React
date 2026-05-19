@@ -9,7 +9,6 @@ import LeftSettings from "./LeftSettings/LeftSettings";
 import CalcMain from "./calculate/CalcMain";
 import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
-import { generateOrderPdf } from "../../utils/pdfGenerator";
 import TagManager from 'react-gtm-module';
 import { LANG, t as translate, translateOption } from "./i18n";
 import { getPrices } from "./calculate/garagePrice";
@@ -31,7 +30,7 @@ function Main() {
     width: 6,
     depth: 6,
     height: 213,
-    emboss: "wąskie",
+    emboss: "waskie",
     direction: "poziom",
 
     roof: "dwuspad",
@@ -39,7 +38,7 @@ function Main() {
     roofColorRal: "#272C38",
     roofType: "trapezowa",
 
-    gateEmbose: "wąskie",
+    gateEmbose: "waskie",
     gateDirection: "poziom",
 
     gateCount: 2,   //2 wczesniej
@@ -97,7 +96,7 @@ function Main() {
   useEffect(() => {
     if (selectedOptions.color ==="Ocynk") {
       selectedOptions.direction = "pion";
-      selectedOptions.emboss = "wąskie";
+      selectedOptions.emboss = "waskie";
     }
   }, [selectedOptions.color]);
 
@@ -116,84 +115,6 @@ function Main() {
   const uploadEndpoint =
     wpConfig.uploadEndpoint ||
     `${window.location.origin}/wp-json/configurator/v1/upload-image`;
-
-  const [pdfLoading, setPdfLoading] = useState(false);
-
-  const generateTestPdf = () => {
-    setPdfLoading(true);
-    try {
-      const doc = generateOrderPdf({
-        garage: {
-          width: selectedOptions.width,
-          depth: selectedOptions.depth,
-          height: selectedOptions.height,
-          color: selectedOptions.color,
-          colorRal: selectedOptions.colorRal,
-          emboss: selectedOptions.emboss,
-          direction: selectedOptions.direction,
-          roof: selectedOptions.roof,
-          roofColor: selectedOptions.roofColor,
-          roofColorRal: selectedOptions.roofColorRal,
-          roofType: selectedOptions.roofType,
-          gateEmbose: selectedOptions.gateEmbose,
-          gateDirection: selectedOptions.gateDirection,
-          gateCount: selectedOptions.gateCount,
-          gateType1: selectedOptions.gateType1,
-          gateColor1: selectedOptions.gateColor1,
-          gateWidth1: selectedOptions.gateWidth1,
-          gateHeight1: selectedOptions.gateHeight1,
-          gatePositionValue1: selectedOptions.gatePositionValue1,
-          gateType2: selectedOptions.gateType2,
-          gateColor2: selectedOptions.gateColor2,
-          gateWidth2: selectedOptions.gateWidth2,
-          gateHeight2: selectedOptions.gateHeight2,
-          gatePositionValue2: selectedOptions.gatePositionValue2,
-          gateType3: selectedOptions.gateType3,
-          gateColor3: selectedOptions.gateColor3,
-          gateWidth3: selectedOptions.gateWidth3,
-          gateHeight3: selectedOptions.gateHeight3,
-          gatePositionValue3: selectedOptions.gatePositionValue3,
-          doors: selectedOptions.door?.map((d, i) => `Drzwi ${i + 1}: ${JSON.stringify(d)}`).join("\n") || "",
-          windows: selectedOptions.window?.map((w, i) => `Okno ${i + 1}: ${JSON.stringify(w)}`).join("\n") || "",
-          doorList: selectedOptions.door || [],
-          windowList: selectedOptions.window || [],
-          doorCount: selectedOptions.door?.length || 0,
-          windowCount: selectedOptions.window?.length || 0,
-          carport: selectedOptions.carport,
-          carportWidth: selectedOptions.carportWidth,
-          carportSide: selectedOptions.carportSide,
-          carportType: selectedOptions.carportType,
-          carportSides: selectedOptions.carportSides,
-          carportSides2: selectedOptions.carportSides2,
-          gutter: selectedOptions.gutter,
-          automatic: selectedOptions.automatic,
-          countAutomatic: selectedOptions.countAutomatic,
-          filc: selectedOptions.filc,
-          transport: selectedOptions.transport,
-          wojewodztwo: selectedOptions.wojewodztwo,
-        },
-        contact: {
-          name: "Test",
-          email: "test@test.pl",
-          phone: "000 000 000",
-          postal_code: "00-000",
-          city: "Testowo",
-          address: "ul. Testowa 1",
-          message: "Generowanie testowe PDF",
-        },
-        price: price ? String(price) : "",
-        imageUrl: imageURL || "",
-        lang: lang,
-      });
-
-      doc.save("zamowienie-test.pdf");
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("Błąd generowania PDF: " + err.message);
-    } finally {
-      setPdfLoading(false);
-    }
-  };
 
   // Funkcja do wysyĹ‚ania zdarzenia do GTM
   const sendGTMEvent = () => {
@@ -299,17 +220,7 @@ function Main() {
       <div id='capture' className="w-full md:h-[62vh] relative max-sm:order-1 max-sm:h-[40vh] max-sm:pb-[75px] ">
         <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture} lang={lang} setLang={setLang} />
         <div className="md:pl-[10%] relative flex justify-center items-center p-2 border-2 border-slate-800">
-          <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} />
-
-          <Button
-            onClick={generateTestPdf}
-            disabled={pdfLoading}
-            variant="outlined"
-            size="large"
-            sx={{ fontSize: "0.85rem", px: 2, py: 1.2, fontWeight: 600, mr: 1, borderColor: "#666", color: "#333", "&:hover": { borderColor: "#333", bgcolor: "rgba(0,0,0,0.04)" } }}
-          >
-            {pdfLoading ? "Generowanie..." : "Test PDF"}
-          </Button>
+          <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} t={t} />
 
           <Button
             onClick={() => {
