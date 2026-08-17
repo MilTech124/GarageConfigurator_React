@@ -4,7 +4,12 @@
       "Bash(findstr /n \"manifest index.html .vite\" \"g:\\\\Materiały_firmy\\\\newgarage\\\\Configurator\\\\wordpress-plugin\\\\configurator-plugin\\\\configurator-plugin.php\")",
       "Bash(git checkout *)",
       "Bash(curl -L -o tcpdf.zip \"https://github.com/tecnickcom/TCPDF/archive/refs/tags/6.7.7.zip\")",
-      "Bash(unzip -q tcpdf.zip)"
+      "Bash(unzip -q tcpdf.zip)",
+      "Bash(node -e ' *)",
+      "Bash(cp \"g:/Materiały_firmy/newgarage/Configurator/wordpress-plugin/configurator-plugin/configurator-plugin.php\" \"C:/Users/jaros/Local Sites/szpistal/app/public/wp-content/plugins/configurator-plugin/configurator-plugin.php\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\jaros\\Local Sites\\szpistal\\app\\public\\wp-content\\plugins\\configurator-plugin"
     ]
   }
 }

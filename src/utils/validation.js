@@ -116,7 +116,7 @@ export const validateName = (name) => {
   }
 
   // Sprawdź czy zawiera tylko litery, spacje i myślniki
-  const nameRegex = /^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$/;
+  const nameRegex = /^[\p{L}\s-]+$/u;
   if (!nameRegex.test(trimmedName)) {
     return { isValid: false, error: 'Imię i nazwisko mogą zawierać tylko litery, spacje i myślniki' };
   }

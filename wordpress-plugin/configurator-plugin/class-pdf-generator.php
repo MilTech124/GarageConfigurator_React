@@ -73,6 +73,7 @@ class Configurator_PDF_Generator {
     private $price;
     private $image_url;
     private $lang;
+    private $czk_exchange_rate;
 
     // Normalized dimensions in cm.
     private $width_cm;
@@ -125,6 +126,7 @@ class Configurator_PDF_Generator {
                 'type'           => 'Typ',
                 'size'           => 'Rozmiar',
                 'position'       => 'Pozycja',
+                'drive'          => 'Napęd',
                 'doors_section'  => 'Drzwi',
                 'door_count'     => 'Liczba drzwi',
                 'details'        => 'Szczegóły',
@@ -134,6 +136,10 @@ class Configurator_PDF_Generator {
                 'side'           => 'Strona',
                 'addons'         => 'Dodatki',
                 'gutter'         => 'Rynny',
+                'roof_flashings' => 'Obróbki dachu',
+                'garage_flashings' => 'Obróbki garażu',
+                'same_as_roof'   => 'Jak dach',
+                'same_as_garage' => 'Jak garaż',
                 'automation'     => 'Automatyka',
                 'filc'           => 'Filc antykondensacyjny',
                 'transport'      => 'Transport',
@@ -152,16 +158,78 @@ class Configurator_PDF_Generator {
                 'from_left'      => 'od lewej',
                 'from_front'     => 'od przodu',
             ],
+            'cs' => [
+                'title'          => 'POPTAVKA',
+                'date'           => 'Datum',
+                'contact'        => 'Kontaktni udaje',
+                'full_name'      => 'Jmeno a prijmeni',
+                'email'          => 'Email',
+                'phone'          => 'Telefon',
+                'postal_code'    => 'PSC',
+                'city'           => 'Mesto',
+                'address'        => 'Adresa montaze',
+                'message'        => 'Zprava',
+                'config'         => 'Konfigurace garaze',
+                'basic'          => 'Zakladni parametry',
+                'width'          => 'Sirka',
+                'depth'          => 'Delka',
+                'height'         => 'Vyska',
+                'color'          => 'Barva',
+                'emboss'         => 'Prolis',
+                'direction'      => 'Smer prolisu',
+                'roof'           => 'Strecha',
+                'roof_slope'     => 'Typ spadu',
+                'roof_color'     => 'Barva strechy',
+                'roof_type'      => 'Typ krytiny',
+                'gates'          => 'Brany',
+                'gate_count'     => 'Pocet bran',
+                'gate'           => 'Brana',
+                'type'           => 'Typ',
+                'size'           => 'Rozmer',
+                'position'       => 'Pozice',
+                'drive'          => 'Pohon',
+                'doors_section'  => 'Dvere',
+                'door_count'     => 'Pocet dveri',
+                'details'        => 'Podrobnosti',
+                'windows_section'=> 'Okna',
+                'window_count'   => 'Pocet oken',
+                'carport'        => 'Pristresek',
+                'side'           => 'Strana',
+                'addons'         => 'Doplnky',
+                'gutter'         => 'Okapy',
+                'roof_flashings' => 'Střešní lemování',
+                'garage_flashings' => 'Lemování garáže',
+                'same_as_roof'   => 'Jako střecha',
+                'same_as_garage' => 'Jako garáž',
+                'automation'     => 'Automatika',
+                'filc'           => 'Antikondenzacni filc',
+                'transport'      => 'Doprava',
+                'price'          => 'Cena',
+                'drawings'       => 'TECHNICKE VYKRESY',
+                'view_front'     => 'POHLED ZEPREDU',
+                'view_back'      => 'POHLED ZEZADU',
+                'view_left'      => 'POHLED ZLEVA',
+                'view_right'     => 'POHLED ZPRAVA',
+                'view_top'       => 'POHLED SHORA',
+                'yes'            => 'Ano',
+                'no'             => 'Ne',
+                'pcs'            => ' ks',
+                'm'              => ' m',
+                'cm'             => ' cm',
+                'from_left'      => 'od leve',
+                'from_front'     => 'od predu',
+            ],
         ];
         return isset($t[$lang]) ? $t[$lang] : $t['pl'];
     }
 
-    public function __construct($garage, $contact, $price, $image_url, $lang = 'pl') {
+    public function __construct($garage, $contact, $price, $image_url, $lang = 'pl', $czk_exchange_rate = 6) {
         $this->garage   = is_array($garage) ? $garage : [];
         $this->contact  = is_array($contact) ? $contact : [];
         $this->price    = $price;
         $this->image_url = $image_url;
         $this->lang     = in_array($lang, ['pl','cs','sl','hu'], true) ? $lang : 'pl';
+        $this->czk_exchange_rate = (float) $czk_exchange_rate > 0 ? (float) $czk_exchange_rate : 6;
 
         // Normalize dimensions to cm.
         $this->width_cm  = (float) $this->gv('width') * 100;
@@ -179,7 +247,7 @@ class Configurator_PDF_Generator {
         $this->pdf = new Configurator_TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
         $this->pdf->SetCreator('Configurator Plugin');
         $this->pdf->SetAuthor('NewGarage');
-        $this->pdf->SetTitle('Zapytanie ofertowe - garaż');
+        $this->pdf->SetTitle($this->lang === 'cs' ? 'Poptavka - garaz' : 'Zapytanie ofertowe - garaz');
         $this->pdf->setPrintHeader(false);
         $this->pdf->setPrintFooter(false);
         $this->pdf->SetMargins(self::MARGIN, self::MARGIN, self::MARGIN);
@@ -298,6 +366,9 @@ class Configurator_PDF_Generator {
                 . ', ' . $t['size'] . ': ' . $this->gv('gateWidth' . $i) . $t['m']
                 . ' x ' . $this->gv('gateHeight' . $i) . $t['cm']
                 . ', ' . $this->from_left_label() . ': ' . $this->gv('gatePositionValue' . $i) . $t['cm'];
+            if ($gt === 'segmentowa') {
+                $desc .= ', ' . $t['drive'] . ': CAME + 2 piloty';
+            }
             $y = $row($t['gate'] . ' ' . $i, $desc, $y);
         }
         $y += 3;
@@ -333,6 +404,20 @@ class Configurator_PDF_Generator {
         // --- Addons ---
         $y = $section($t['addons'], $y);
         $y = $row($t['gutter'],     $this->yes_no($this->gv('gutter')),    $y);
+        $roof_flashing_value = $this->yes_no($this->gv('roofFlashing'));
+        if ($this->gv('roofFlashing')) {
+            $roof_flashing_value .= ' - ' . ($this->gv('roofFlashingColorMode') === 'custom'
+                ? $this->gv('roofFlashingColor', $this->gv('roofFlashingColorRal', '-'))
+                : $t['same_as_roof']);
+        }
+        $y = $row($t['roof_flashings'], $roof_flashing_value, $y);
+        $garage_flashing_value = $this->yes_no($this->gv('garageFlashing'));
+        if ($this->gv('garageFlashing')) {
+            $garage_flashing_value .= ' - ' . ($this->gv('garageFlashingColorMode') === 'custom'
+                ? $this->gv('garageFlashingColor', $this->gv('garageFlashingColorRal', '-'))
+                : $t['same_as_garage']);
+        }
+        $y = $row($t['garage_flashings'], $garage_flashing_value, $y);
         $y = $row($t['automation'],  $this->yes_no($this->gv('automatic'))
             . ($this->gv('automatic') ? ' (' . $this->gv('countAutomatic', 0) . $t['pcs'] . ')' : ''), $y);
         $y = $row($t['filc'],       $this->yes_no($this->gv('filc')),      $y);
@@ -343,7 +428,7 @@ class Configurator_PDF_Generator {
         if (!empty($this->price)) {
             $p->SetFont('dejavusans', 'B', 12);
             $p->SetXY($x0, $y);
-            $p->Cell(0, 8, $t['price'] . ': ' . $this->price . ' PLN', 0, 1, 'R');
+            $p->Cell(0, 8, $t['price'] . ': ' . $this->format_price(), 0, 1, 'R');
             $y += 10;
         }
 
@@ -1194,6 +1279,29 @@ class Configurator_PDF_Generator {
 
     private function position_value_text($value) {
         return $value === null || $value === '' ? '-' : (string) $value;
+    }
+
+    private function format_price() {
+        $price_pln = $this->parse_price($this->price);
+        if ($price_pln === null) {
+            return (string) $this->price . ($this->lang === 'cs' ? ' CZK' : ' PLN');
+        }
+
+        if ($this->lang === 'cs') {
+            return number_format(round($price_pln * $this->czk_exchange_rate), 0, ',', ' ') . ' CZK';
+        }
+
+        return number_format(round($price_pln), 0, ',', ' ') . ' PLN';
+    }
+
+    private function parse_price($price) {
+        $normalized = preg_replace('/[^\d,.\-]/', '', (string) $price);
+        if ($normalized === '' || $normalized === '-' || $normalized === null) {
+            return null;
+        }
+
+        $normalized = str_replace(',', '.', $normalized);
+        return is_numeric($normalized) ? (float) $normalized : null;
     }
 
     private function format_m($cm) {

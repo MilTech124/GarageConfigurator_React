@@ -15,3 +15,31 @@
   width: 0px; /* Ukrywa pasek przewijania w WebKit */
   background: transparent; /* Opcjonalnie */
 }
+
+@media (max-width: 767px) {
+  .configurator-viewer-sticky {
+    position: sticky !important;
+    top: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    z-index: 40;
+    background: rgb(226 232 240);
+  }
+
+  .configurator-canvas-area {
+    height: 30vh !important;
+    min-height: 30vh !important;
+    max-height: 30vh !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .configurator-viewer-sticky {
+    position: sticky;
+    top: 0;
+  }
+
+  .admin-bar .configurator-viewer-sticky {
+    top: 32px;
+  }
+}

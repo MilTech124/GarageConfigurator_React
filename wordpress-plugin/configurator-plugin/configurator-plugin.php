@@ -14,16 +14,32 @@ final class ConfiguratorPlugin {
     const OPTION_EMAIL = 'configurator_inquiry_email';
     const OPTION_PRICES_STANDARD = 'configurator_prices_standard';
     const OPTION_PRICES_GALVANIZED = 'configurator_prices_galvanized';
+    const OPTION_PRICES_STANDING_SEAM = 'configurator_prices_standing_seam';
+    const OPTION_SECTIONAL_GATE_PRICES = 'configurator_sectional_gate_prices';
     const OPTION_SHOW_PRICE = 'configurator_show_price';
     const OPTION_ADDON_PRICES = 'configurator_addon_prices';
+    const OPTION_PDF_LANGUAGE = 'configurator_pdf_language';
+    const OPTION_PDF_CZK_EXCHANGE_RATE = 'configurator_pdf_czk_exchange_rate';
     const SHORTCODE = 'configurator_plugin';
     const REST_NS = 'configurator/v1';
     private static $shortcode_assets_rendered = false;
+    private static $sizes = [2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12];
+    private static $sectional_widths = [2200,2300,2400,2500,2600,2700,2800,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000,5100,5200,5300,5400,5500,5600,5700,5800,5900,6000];
+    private static $sectional_heights = [2000,2120,2200,2300,2400,2500,2630,2740,2850,3020];
+
+    private static function size_key($size) {
+        return str_replace('.', '_', (string) $size);
+    }
+
+    private static function key_size($key) {
+        return (float) str_replace('_', '.', (string) $key);
+    }
 
     public static function init() {
         add_shortcode(self::SHORTCODE, [__CLASS__, 'render_shortcode']);
         add_action('rest_api_init', [__CLASS__, 'register_rest_routes']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
+        add_action('admin_init', [__CLASS__, 'handle_price_csv_export']);
         add_action('admin_menu', [__CLASS__, 'add_admin_menu']);
         add_filter('script_loader_tag', [__CLASS__, 'force_module_script_tag'], 10, 3);
     }
@@ -109,7 +125,7 @@ final class ConfiguratorPlugin {
 
         $entry = $manifest['index.html'];
         $base_url = plugin_dir_url(__FILE__) . 'assets/dist/';
-        $html = '';
+        $html = '<style id="configurator-plugin-layout-css">' . self::layout_css() . '</style>';
 
         if (!empty($entry['css']) && is_array($entry['css'])) {
             foreach ($entry['css'] as $css_file) {
@@ -123,6 +139,8 @@ final class ConfiguratorPlugin {
             'uploadEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/upload-image',
             'pricesEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/prices',
             'showPrice' => (bool) get_option(self::OPTION_SHOW_PRICE, true),
+            'pdfLanguage' => self::get_pdf_language(),
+            'pdfCzkExchangeRate' => self::get_pdf_czk_exchange_rate(),
             'assetsBaseUrl' => trailingslashit($base_url),
             'lang' => self::resolve_frontend_lang(),
             'locale' => get_locale(),
@@ -134,9 +152,8 @@ final class ConfiguratorPlugin {
             'thankYouPathSl' => '/dakujeme',
             'thankYouPathHu' => '/koszonjuk',
             'thankYouPath' => '/thank-you',
+            'isAdmin' => current_user_can('administrator'),
         ];
-
-        $html .= '<style>' . self::layout_css() . '</style>' . "\n";
         $html .= '<script>window.__CONFIGURATOR_PLUGIN__ = ' . wp_json_encode($config) . ';' . self::layout_js() . '</script>' . "\n";
         $html .= '<script type="module" src="' . esc_url($base_url . ltrim($entry['file'], '/')) . '"></script>' . "\n";
 
@@ -188,6 +205,8 @@ final class ConfiguratorPlugin {
             'uploadEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/upload-image',
             'pricesEndpoint' => untrailingslashit(rest_url(self::REST_NS)) . '/prices',
             'showPrice' => (bool) get_option(self::OPTION_SHOW_PRICE, true),
+            'pdfLanguage' => self::get_pdf_language(),
+            'pdfCzkExchangeRate' => self::get_pdf_czk_exchange_rate(),
             'assetsBaseUrl' => trailingslashit($base_url),
             'lang' => self::resolve_frontend_lang(),
             'locale' => get_locale(),
@@ -199,6 +218,7 @@ final class ConfiguratorPlugin {
             'thankYouPathSl' => '/dakujeme',
             'thankYouPathHu' => '/koszonjuk',
             'thankYouPath' => '/thank-you',
+            'isAdmin' => current_user_can('administrator'),
         ];
 
         wp_add_inline_script(
@@ -458,6 +478,7 @@ final class ConfiguratorPlugin {
             'type' => 'Typ',
             'size' => 'Rozmer',
             'position' => 'Pozice',
+            'drive' => 'Pohon',
             'door' => 'Dvere',
             'door_count' => 'Pocet dveri',
             'details' => 'Detaily',
@@ -469,6 +490,10 @@ final class ConfiguratorPlugin {
             'walls2' => 'Steny 2',
             'addons' => 'Doplnky',
             'gutter' => 'Okapy',
+            'roof_flashings' => 'Střešní lemování',
+            'garage_flashings' => 'Lemování garáže',
+            'same_as_roof' => 'Jako střecha',
+            'same_as_garage' => 'Jako garáž',
             'automation' => 'Automatika',
             'filc' => 'Antikondenzacni filc',
             'transport' => 'Doprava',
@@ -507,6 +532,7 @@ final class ConfiguratorPlugin {
             'type' => 'Typ',
             'size' => 'Rozmer',
             'position' => 'Pozicia',
+            'drive' => 'Pohon',
             'door' => 'Dvere',
             'door_count' => 'Pocet dveri',
             'details' => 'Detaily',
@@ -518,6 +544,10 @@ final class ConfiguratorPlugin {
             'walls2' => 'Steny 2',
             'addons' => 'Doplnky',
             'gutter' => 'Odkvapy',
+            'roof_flashings' => 'Strešné lemovanie',
+            'garage_flashings' => 'Lemovanie garáže',
+            'same_as_roof' => 'Ako strecha',
+            'same_as_garage' => 'Ako garáž',
             'automation' => 'Automatika',
             'filc' => 'Antikondenzacna plst',
             'transport' => 'Doprava',
@@ -556,6 +586,7 @@ final class ConfiguratorPlugin {
             'type' => 'Tipus',
             'size' => 'Meret',
             'position' => 'Pozicio',
+            'drive' => 'Meghajtas',
             'door' => 'Ajtok',
             'door_count' => 'Ajtok szama',
             'details' => 'Reszletek',
@@ -567,6 +598,10 @@ final class ConfiguratorPlugin {
             'walls2' => 'Oldalfalak 2',
             'addons' => 'Kiegeszitok',
             'gutter' => 'Ereszcsatorna',
+            'roof_flashings' => 'Tetőszegélyek',
+            'garage_flashings' => 'Garázsszegélyek',
+            'same_as_roof' => 'Mint a tető',
+            'same_as_garage' => 'Mint a garázs',
             'automation' => 'Automatika',
             'filc' => 'Paracseppgatlo filc',
             'transport' => 'Szallitas',
@@ -605,6 +640,7 @@ final class ConfiguratorPlugin {
             'type' => 'Typ',
             'size' => 'Rozmiar',
             'position' => 'Pozycja',
+            'drive' => 'Naped',
             'door' => 'Drzwi',
             'door_count' => 'Liczba drzwi',
             'details' => 'Szczegoly',
@@ -616,6 +652,10 @@ final class ConfiguratorPlugin {
             'walls2' => 'Sciany 2',
             'addons' => 'Dodatki',
             'gutter' => 'Rynny',
+            'roof_flashings' => 'Obróbki dachu',
+            'garage_flashings' => 'Obróbki garażu',
+            'same_as_roof' => 'Jak dach',
+            'same_as_garage' => 'Jak garaż',
             'automation' => 'Automatyka',
             'filc' => 'Filc',
             'transport' => 'Transport',
@@ -685,6 +725,9 @@ final class ConfiguratorPlugin {
                         <?php echo esc_html($t['color']); ?>: <?php echo esc_html(self::translate_config_value(self::garage_value($garage, 'gateColor' . $i), $lang)); ?>,
                         <?php echo esc_html($t['size']); ?>: <?php echo esc_html(self::garage_value($garage, 'gateWidth' . $i)); ?> <?php echo esc_html($t['m']); ?> x <?php echo esc_html(self::format_cm_as_m(self::garage_value($garage, 'gateHeight' . $i))); ?>,
                         <?php echo esc_html($t['position']); ?>: <?php echo esc_html(self::format_cm_as_m(self::garage_value($garage, 'gatePositionValue' . $i))); ?>
+                        <?php if ($gate_type === 'segmentowa'): ?>,
+                          <?php echo esc_html($t['drive']); ?>: CAME + 2 piloty
+                        <?php endif; ?>
                       </td>
                     </tr>
                   <?php endif; ?>
@@ -721,6 +764,24 @@ final class ConfiguratorPlugin {
               <h4 style="margin:14px 0 8px;"><?php echo esc_html($t['addons']); ?></h4>
               <table cellpadding="6" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
                 <tr><th align="left" style="background:#f5f5f5; width:220px;"><?php echo esc_html($t['gutter']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'gutter'), $lang)); ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['roof_flashings']); ?></th><td><?php
+                  $roof_flashing = self::yes_no(self::garage_value($garage, 'roofFlashing'), $lang);
+                  if (self::garage_value($garage, 'roofFlashing')) {
+                      $roof_flashing .= ' - ' . (self::garage_value($garage, 'roofFlashingColorMode') === 'custom'
+                          ? self::translate_config_value(self::garage_value($garage, 'roofFlashingColor', self::garage_value($garage, 'roofFlashingColorRal')), $lang)
+                          : $t['same_as_roof']);
+                  }
+                  echo esc_html($roof_flashing);
+                ?></td></tr>
+                <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['garage_flashings']); ?></th><td><?php
+                  $garage_flashing = self::yes_no(self::garage_value($garage, 'garageFlashing'), $lang);
+                  if (self::garage_value($garage, 'garageFlashing')) {
+                      $garage_flashing .= ' - ' . (self::garage_value($garage, 'garageFlashingColorMode') === 'custom'
+                          ? self::translate_config_value(self::garage_value($garage, 'garageFlashingColor', self::garage_value($garage, 'garageFlashingColorRal')), $lang)
+                          : $t['same_as_garage']);
+                  }
+                  echo esc_html($garage_flashing);
+                ?></td></tr>
                 <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['automation']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'automatic'), $lang)); ?><?php echo !empty(self::garage_value($garage, 'automatic')) ? ' (' . esc_html((string) self::garage_value($garage, 'countAutomatic', 0)) . $t['pieces'] . ')' : ''; ?></td></tr>
                 <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['filc']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'filc'), $lang)); ?></td></tr>
                 <tr><th align="left" style="background:#f5f5f5;"><?php echo esc_html($t['transport']); ?></th><td><?php echo esc_html(self::yes_no(self::garage_value($garage, 'transport'), $lang)); ?></td></tr>
@@ -770,6 +831,27 @@ final class ConfiguratorPlugin {
             return 'hu';
         }
         return 'pl';
+    }
+
+    private static function get_pdf_language() {
+        $lang = (string) get_option(self::OPTION_PDF_LANGUAGE, 'pl');
+        return in_array($lang, ['pl', 'cs'], true) ? $lang : 'pl';
+    }
+
+    private static function get_pdf_czk_exchange_rate() {
+        $rate = get_option(self::OPTION_PDF_CZK_EXCHANGE_RATE, 6);
+        $rate = is_string($rate) ? str_replace(',', '.', $rate) : $rate;
+        $rate = (float) $rate;
+        return $rate > 0 ? $rate : 6;
+    }
+
+    private static function resolve_pdf_language($requested_lang = '') {
+        $configured_lang = self::get_pdf_language();
+        if ($configured_lang !== '') {
+            return $configured_lang;
+        }
+
+        return in_array($requested_lang, ['pl', 'cs'], true) ? $requested_lang : 'pl';
     }
 
     private static function garage_value($garage, $key, $default = '') {
@@ -1003,6 +1085,15 @@ final class ConfiguratorPlugin {
 
     private static function translate_config_value($value, $lang = 'pl') {
         $source = is_scalar($value) ? (string) $value : '';
+        $special = [
+            'na_rabek' => ['pl' => 'na rabek', 'cs' => 'stojata drazka', 'sl' => 'stojata drazka', 'hu' => 'allokorcos'],
+            'segmentowa' => ['pl' => 'segmentowa', 'cs' => 'sekcni', 'sl' => 'sekcna', 'hu' => 'szekcionalt'],
+            'none' => ['pl' => 'bez napedu', 'cs' => 'bez pohonu', 'sl' => 'bez pohonu', 'hu' => 'meghajtas nelkul'],
+            'came' => ['pl' => 'CAME + 2 piloty', 'cs' => 'CAME + 2 ovladace', 'sl' => 'CAME + 2 ovladace', 'hu' => 'CAME + 2 taviranyito'],
+        ];
+        if (isset($special[$source])) {
+            return isset($special[$source][$lang]) ? $special[$source][$lang] : $special[$source]['pl'];
+        }
         if ($source === '' || $lang === 'pl') {
             return $source;
         }
@@ -1157,11 +1248,12 @@ final class ConfiguratorPlugin {
         $image_url = isset($data['imageURL']) ? esc_url_raw($data['imageURL']) : '';
         $allowed_langs = ['pl', 'cs', 'sl', 'hu'];
         $lang = isset($data['lang']) && in_array($data['lang'], $allowed_langs, true) ? $data['lang'] : 'pl';
+        $pdf_lang = self::resolve_pdf_language($lang);
 
         // Catch everything — errors, exceptions, and output buffering issues.
         ob_start();
         try {
-            $pdf_gen = new Configurator_PDF_Generator($garage, $contact, $price, $image_url, $lang);
+            $pdf_gen = new Configurator_PDF_Generator($garage, $contact, $price, $image_url, $pdf_lang, self::get_pdf_czk_exchange_rate());
             $pdf_path = $pdf_gen->generate();
 
             if (!$pdf_path || !file_exists($pdf_path)) {
@@ -1219,7 +1311,10 @@ final class ConfiguratorPlugin {
     }
 
     private static function get_default_prices($type) {
-        $file = plugin_dir_path(__FILE__) . 'defaults/' . ($type === 'galvanized' ? 'dataOcynk.json' : 'data.json');
+        $filename = $type === 'galvanized'
+            ? 'dataOcynk.json'
+            : ($type === 'standing_seam' ? 'dataStandingSeam.json' : 'data.json');
+        $file = plugin_dir_path(__FILE__) . 'defaults/' . $filename;
         if (!file_exists($file)) {
             return [];
         }
@@ -1228,23 +1323,35 @@ final class ConfiguratorPlugin {
     }
 
     private static function get_effective_prices($type) {
+        if ($type === 'standing_seam') {
+            $standing = get_option(self::OPTION_PRICES_STANDING_SEAM, false);
+            if ($standing === false || !is_array($standing) || empty($standing)) {
+                $standing = self::get_effective_prices('standard');
+                update_option(self::OPTION_PRICES_STANDING_SEAM, $standing);
+            }
+            return $standing;
+        }
+
         $option = $type === 'galvanized' ? self::OPTION_PRICES_GALVANIZED : self::OPTION_PRICES_STANDARD;
         $defaults = self::get_default_prices($type);
         $custom = get_option($option, false);
         if ($custom !== false && is_array($custom) && !empty($custom)) {
             $merged = self::build_price_lookup($defaults);
             foreach ($custom as $item) {
-                $w = (int) $item['width'];
-                $d = (int) $item['depth'];
+                $w = (string) (float) $item['width'];
+                $d = (string) (float) $item['depth'];
                 $merged[$w][$d] = (int) $item['price'];
             }
 
             $prices = [];
-            ksort($merged);
-            foreach ($merged as $w => $depths) {
-                ksort($depths);
-                foreach ($depths as $d => $price) {
-                    $prices[] = ['width' => (int) $w, 'depth' => (int) $d, 'price' => (int) $price];
+            $ws = array_keys($merged);
+            usort($ws, function($a, $b) { return floatval($a) - floatval($b); });
+            foreach ($ws as $w) {
+                $depths = $merged[$w];
+                $ds = array_keys($depths);
+                usort($ds, function($a, $b) { return floatval($a) - floatval($b); });
+                foreach ($ds as $d) {
+                    $prices[] = ['width' => (float) $w, 'depth' => (float) $d, 'price' => (int) $depths[$d]];
                 }
             }
 
@@ -1253,11 +1360,56 @@ final class ConfiguratorPlugin {
         return $defaults;
     }
 
+    private static function get_default_sectional_prices() {
+        $file = plugin_dir_path(__FILE__) . 'defaults/sectionalGates.json';
+        if (!file_exists($file)) {
+            return [];
+        }
+        $decoded = json_decode(file_get_contents($file), true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        if (isset($decoded[0]['widthMm'])) {
+            return $decoded;
+        }
+        $widths = isset($decoded['widthsMm']) && is_array($decoded['widthsMm']) ? $decoded['widthsMm'] : [];
+        $prices = [];
+        foreach ((isset($decoded['rows']) && is_array($decoded['rows']) ? $decoded['rows'] : []) as $row) {
+            $height = isset($row['heightMm']) ? (int) $row['heightMm'] : 0;
+            foreach ($widths as $index => $width) {
+                $price = isset($row['prices'][$index]) ? (int) $row['prices'][$index] : 0;
+                if ($height > 0 && (int) $width > 0 && $price > 0) {
+                    $prices[] = ['widthMm' => (int) $width, 'heightMm' => $height, 'price' => $price];
+                }
+            }
+        }
+        return $prices;
+    }
+
+    private static function get_effective_sectional_prices($include_unavailable = false) {
+        $custom = get_option(self::OPTION_SECTIONAL_GATE_PRICES, false);
+        $prices = is_array($custom) && !empty($custom) ? $custom : self::get_default_sectional_prices();
+        if ($include_unavailable) {
+            return $prices;
+        }
+        return array_values(array_filter($prices, function($item) {
+            return isset($item['price']) && (int) $item['price'] > 0;
+        }));
+    }
+
+    private static function build_sectional_price_lookup($prices) {
+        $map = [];
+        foreach ($prices as $item) {
+            $map[(int) $item['heightMm']][(int) $item['widthMm']] = (int) $item['price'];
+        }
+        return $map;
+    }
+
     private static function build_price_lookup($prices) {
         $map = [];
         foreach ($prices as $item) {
-            $w = (int) $item['width'];
-            $d = (int) $item['depth'];
+            $w = (string) (float) $item['width'];
+            $d = (string) (float) $item['depth'];
             $map[$w][$d] = (int) $item['price'];
         }
         return $map;
@@ -1280,6 +1432,7 @@ final class ConfiguratorPlugin {
             'carportPerHalfMeter' => 500,
             'carportVariable' => 1000,
             'gutterPerMeter' => 100,
+            'includedUpAndOverGate' => 0,
             'transportNear' => 250,
             'transportFar' => 500,
         ];
@@ -1293,16 +1446,200 @@ final class ConfiguratorPlugin {
         return array_merge(self::get_addon_defaults(), $custom);
     }
 
+    private static function csv_cell($row, $headers, $name, $default = '') {
+        if (!isset($headers[$name])) {
+            return $default;
+        }
+        $index = $headers[$name];
+        return isset($row[$index]) ? trim((string) $row[$index]) : $default;
+    }
+
+    private static function csv_number($value) {
+        $value = str_replace(["\xc2\xa0", ' '], '', (string) $value);
+        return str_replace(',', '.', $value);
+    }
+
+    private static function read_csv_rows($file_path) {
+        if (!is_readable($file_path)) {
+            return [[], []];
+        }
+
+        $probe = fopen($file_path, 'r');
+        if (!$probe) {
+            return [[], []];
+        }
+        $first_line = (string) fgets($probe);
+        fclose($probe);
+        $delimiter = substr_count($first_line, ';') >= substr_count($first_line, ',') ? ';' : ',';
+        $handle = fopen($file_path, 'r');
+        if (!$handle) {
+            return [[], []];
+        }
+
+        $headers = [];
+        $rows = [];
+        $first = fgetcsv($handle, 0, $delimiter);
+        if (is_array($first)) {
+            foreach ($first as $index => $header) {
+                $key = strtolower(trim((string) $header));
+                $key = preg_replace('/^\xEF\xBB\xBF/', '', $key);
+                $headers[$key] = $index;
+            }
+        }
+
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            if (is_array($row) && count(array_filter($row, function($value) { return trim((string) $value) !== ''; })) > 0) {
+                $rows[] = $row;
+            }
+        }
+        fclose($handle);
+
+        return [$headers, $rows];
+    }
+
+    private static function import_price_csv($active_tab, $file_path) {
+        [$headers, $rows] = self::read_csv_rows($file_path);
+        if (empty($headers) || empty($rows)) {
+            return 0;
+        }
+
+        if ($active_tab === 'addons') {
+            $addons = self::get_effective_addons();
+            $addon_key_map = [];
+            foreach (array_keys(self::get_addon_defaults()) as $default_key) {
+                $addon_key_map[strtolower($default_key)] = $default_key;
+            }
+            $count = 0;
+            foreach ($rows as $row) {
+                $raw_key = trim(self::csv_cell($row, $headers, 'key', self::csv_cell($row, $headers, 'addon')));
+                $key_lookup = strtolower($raw_key);
+                $key = isset($addon_key_map[$key_lookup]) ? $addon_key_map[$key_lookup] : $raw_key;
+                $price = self::csv_number(self::csv_cell($row, $headers, 'price', self::csv_cell($row, $headers, 'cena')));
+                if ($key !== '' && array_key_exists($key, self::get_addon_defaults()) && is_numeric($price)) {
+                    $addons[$key] = (int) $price;
+                    $count++;
+                }
+            }
+            if ($count > 0) {
+                update_option(self::OPTION_ADDON_PRICES, $addons);
+            }
+            return $count;
+        }
+
+        if ($active_tab === 'sectional_gates') {
+            $prices = [];
+            foreach ($rows as $row) {
+                $width = self::csv_number(self::csv_cell($row, $headers, 'widthmm', self::csv_cell($row, $headers, 'width')));
+                $height = self::csv_number(self::csv_cell($row, $headers, 'heightmm', self::csv_cell($row, $headers, 'height')));
+                $price = self::csv_number(self::csv_cell($row, $headers, 'price', self::csv_cell($row, $headers, 'cena')));
+                if (is_numeric($width) && is_numeric($height) && is_numeric($price)) {
+                    $prices[] = [
+                        'widthMm' => (int) $width,
+                        'heightMm' => (int) $height,
+                        'price' => max(0, (int) $price),
+                    ];
+                }
+            }
+            if (!empty($prices)) {
+                update_option(self::OPTION_SECTIONAL_GATE_PRICES, $prices);
+            }
+            return count($prices);
+        }
+
+        $prices = [];
+        foreach ($rows as $row) {
+            $width = self::csv_number(self::csv_cell($row, $headers, 'width', self::csv_cell($row, $headers, 'szerokosc')));
+            $depth = self::csv_number(self::csv_cell($row, $headers, 'depth', self::csv_cell($row, $headers, 'glebokosc')));
+            $price = self::csv_number(self::csv_cell($row, $headers, 'price', self::csv_cell($row, $headers, 'cena')));
+            if (is_numeric($width) && is_numeric($depth) && is_numeric($price)) {
+                $prices[] = [
+                    'width' => (float) $width,
+                    'depth' => (float) $depth,
+                    'price' => max(0, (int) $price),
+                ];
+            }
+        }
+
+        if (!empty($prices)) {
+            $option = $active_tab === 'galvanized'
+                ? self::OPTION_PRICES_GALVANIZED
+                : ($active_tab === 'standing_seam' ? self::OPTION_PRICES_STANDING_SEAM : self::OPTION_PRICES_STANDARD);
+            update_option($option, $prices);
+        }
+
+        return count($prices);
+    }
+
+    private static function export_price_csv($active_tab) {
+        $filename = 'configurator-prices-' . $active_tab . '-' . date('Y-m-d') . '.csv';
+        nocache_headers();
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+
+        if ($active_tab === 'addons') {
+            fputcsv($out, ['key', 'price'], ';');
+            foreach (self::get_effective_addons() as $key => $price) {
+                fputcsv($out, [$key, (int) $price], ';');
+            }
+        } elseif ($active_tab === 'sectional_gates') {
+            fputcsv($out, ['widthMm', 'heightMm', 'price'], ';');
+            foreach (self::get_effective_sectional_prices(true) as $item) {
+                fputcsv($out, [(int) $item['widthMm'], (int) $item['heightMm'], (int) $item['price']], ';');
+            }
+        } else {
+            fputcsv($out, ['type', 'width', 'depth', 'price'], ';');
+            $type = $active_tab === 'galvanized'
+                ? 'galvanized'
+                : ($active_tab === 'standing_seam' ? 'standing_seam' : 'standard');
+            foreach (self::get_effective_prices($type) as $item) {
+                fputcsv($out, [$type, $item['width'], $item['depth'], (int) $item['price']], ';');
+            }
+        }
+
+        fclose($out);
+        exit;
+    }
+
+    public static function handle_price_csv_export() {
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
+        if (empty($_GET['configurator_export_prices']) || empty($_GET['page']) || $_GET['page'] !== 'configurator-prices') {
+            return;
+        }
+
+        $valid_tabs = ['standard', 'galvanized', 'standing_seam', 'sectional_gates', 'addons'];
+        $requested_tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'standard';
+        $active_tab = in_array($requested_tab, $valid_tabs, true) ? $requested_tab : 'standard';
+        $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+
+        if (!wp_verify_nonce($nonce, 'configurator_export_prices_' . $active_tab)) {
+            wp_die('Nieprawidlowy token eksportu.');
+        }
+
+        self::export_price_csv($active_tab);
+    }
+
     public static function handle_get_prices(WP_REST_Request $request) {
         $standard = self::get_effective_prices('standard');
         $galvanized = self::get_effective_prices('galvanized');
+        $standing_seam = self::get_effective_prices('standing_seam');
+        $sectional_gates = self::get_effective_sectional_prices();
         return [
             'success' => true,
             'data' => [
                 'standard' => $standard,
                 'galvanized' => $galvanized,
+                'standingSeam' => $standing_seam,
+                'sectionalGates' => $sectional_gates,
                 'showPrice' => (bool) get_option(self::OPTION_SHOW_PRICE, true),
                 'addons' => self::get_effective_addons(),
+                'pdfLanguage' => self::get_pdf_language(),
+                'pdfCzkExchangeRate' => self::get_pdf_czk_exchange_rate(),
             ],
         ];
     }
@@ -1313,38 +1650,110 @@ final class ConfiguratorPlugin {
         }
 
         $notice = '';
+        $valid_tabs = ['standard', 'galvanized', 'standing_seam', 'sectional_gates', 'addons'];
+        $requested_tab = isset($_POST['configurator_active_tab'])
+            ? sanitize_key(wp_unslash($_POST['configurator_active_tab']))
+            : (isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'standard');
+        $active_tab = in_array($requested_tab, $valid_tabs, true) ? $requested_tab : 'standard';
 
         if (isset($_POST['configurator_reset_prices']) && check_admin_referer('configurator_prices_save', 'configurator_prices_nonce')) {
-            delete_option(self::OPTION_PRICES_STANDARD);
-            delete_option(self::OPTION_PRICES_GALVANIZED);
-            delete_option(self::OPTION_ADDON_PRICES);
+            if ($active_tab === 'standard') {
+                delete_option(self::OPTION_PRICES_STANDARD);
+            } elseif ($active_tab === 'galvanized') {
+                delete_option(self::OPTION_PRICES_GALVANIZED);
+            } elseif ($active_tab === 'standing_seam') {
+                update_option(self::OPTION_PRICES_STANDING_SEAM, self::get_effective_prices('standard'));
+            } elseif ($active_tab === 'sectional_gates') {
+                delete_option(self::OPTION_SECTIONAL_GATE_PRICES);
+            } elseif ($active_tab === 'addons') {
+                delete_option(self::OPTION_ADDON_PRICES);
+            }
             $notice = '<div class="notice notice-success is-dismissible"><p>Ceny zostaly przywrocone do domyslnych.</p></div>';
+        }
+
+        if (isset($_POST['configurator_import_prices']) && check_admin_referer('configurator_prices_save', 'configurator_prices_nonce')) {
+            if (!empty($_FILES['configurator_prices_csv']['tmp_name'])) {
+                $imported = self::import_price_csv($active_tab, $_FILES['configurator_prices_csv']['tmp_name']);
+                if ($imported > 0) {
+                    $notice = '<div class="notice notice-success is-dismissible"><p>Zaimportowano ' . esc_html($imported) . ' pozycji z pliku CSV.</p></div>';
+                } else {
+                    $notice = '<div class="notice notice-error is-dismissible"><p>Nie zaimportowano danych. Sprawdz format pliku CSV.</p></div>';
+                }
+            } else {
+                $notice = '<div class="notice notice-error is-dismissible"><p>Wybierz plik CSV do importu.</p></div>';
+            }
         }
 
         if (isset($_POST['configurator_save_prices']) && check_admin_referer('configurator_prices_save', 'configurator_prices_nonce')) {
             $prices_standard = [];
             $prices_galvanized = [];
+            $prices_standing_seam = [];
+            $prices_sectional_gates = [];
 
             if (isset($_POST['prices']['standard']) && is_array($_POST['prices']['standard'])) {
                 foreach ($_POST['prices']['standard'] as $w => $depths) {
+                    $wf = self::key_size($w);
                     foreach ($depths as $d => $price) {
-                        $prices_standard[] = ['width' => intval($w), 'depth' => intval($d), 'price' => intval($price)];
+                        $df = self::key_size($d);
+                        $prices_standard[] = ['width' => $wf, 'depth' => $df, 'price' => intval($price)];
                     }
                 }
             }
             if (isset($_POST['prices']['galvanized']) && is_array($_POST['prices']['galvanized'])) {
                 foreach ($_POST['prices']['galvanized'] as $w => $depths) {
+                    $wf = self::key_size($w);
                     foreach ($depths as $d => $price) {
-                        $prices_galvanized[] = ['width' => intval($w), 'depth' => intval($d), 'price' => intval($price)];
+                        $df = self::key_size($d);
+                        $prices_galvanized[] = ['width' => $wf, 'depth' => $df, 'price' => intval($price)];
+                    }
+                }
+            }
+            if (isset($_POST['prices']['standing_seam']) && is_array($_POST['prices']['standing_seam'])) {
+                foreach ($_POST['prices']['standing_seam'] as $w => $depths) {
+                    $wf = self::key_size($w);
+                    foreach ($depths as $d => $price) {
+                        $prices_standing_seam[] = [
+                            'width' => $wf,
+                            'depth' => self::key_size($d),
+                            'price' => max(0, intval($price)),
+                        ];
+                    }
+                }
+            }
+            if (isset($_POST['sectional_prices']) && is_array($_POST['sectional_prices'])) {
+                foreach ($_POST['sectional_prices'] as $height_mm => $widths) {
+                    if (!is_array($widths)) continue;
+                    foreach ($widths as $width_mm => $price) {
+                        $prices_sectional_gates[] = [
+                            'widthMm' => absint($width_mm),
+                            'heightMm' => absint($height_mm),
+                            'price' => max(0, intval($price)),
+                        ];
                     }
                 }
             }
 
-            update_option(self::OPTION_PRICES_STANDARD, $prices_standard);
-            update_option(self::OPTION_PRICES_GALVANIZED, $prices_galvanized);
+            if ($active_tab === 'standard' && !empty($prices_standard)) {
+                update_option(self::OPTION_PRICES_STANDARD, $prices_standard);
+            }
+            if ($active_tab === 'galvanized' && !empty($prices_galvanized)) {
+                update_option(self::OPTION_PRICES_GALVANIZED, $prices_galvanized);
+            }
+            if ($active_tab === 'standing_seam' && !empty($prices_standing_seam)) {
+                update_option(self::OPTION_PRICES_STANDING_SEAM, $prices_standing_seam);
+            }
+            if ($active_tab === 'sectional_gates' && !empty($prices_sectional_gates)) {
+                update_option(self::OPTION_SECTIONAL_GATE_PRICES, $prices_sectional_gates);
+            }
             update_option(self::OPTION_SHOW_PRICE, !empty($_POST['configurator_show_price']) ? 1 : 0);
+            $pdf_language = isset($_POST['configurator_pdf_language']) ? sanitize_key(wp_unslash($_POST['configurator_pdf_language'])) : 'pl';
+            update_option(self::OPTION_PDF_LANGUAGE, in_array($pdf_language, ['pl', 'cs'], true) ? $pdf_language : 'pl');
+            $czk_exchange_rate = isset($_POST['configurator_pdf_czk_exchange_rate'])
+                ? (float) str_replace(',', '.', sanitize_text_field(wp_unslash($_POST['configurator_pdf_czk_exchange_rate'])))
+                : self::get_pdf_czk_exchange_rate();
+            update_option(self::OPTION_PDF_CZK_EXCHANGE_RATE, $czk_exchange_rate > 0 ? $czk_exchange_rate : self::get_pdf_czk_exchange_rate());
 
-            if (isset($_POST['addons']) && is_array($_POST['addons'])) {
+            if ($active_tab === 'addons' && isset($_POST['addons']) && is_array($_POST['addons'])) {
                 $addons = [];
                 foreach (self::get_addon_defaults() as $key => $default) {
                     $addons[$key] = isset($_POST['addons'][$key]) ? intval($_POST['addons'][$key]) : $default;
@@ -1357,11 +1766,15 @@ final class ConfiguratorPlugin {
 
         $standard = self::get_effective_prices('standard');
         $galvanized = self::get_effective_prices('galvanized');
+        $standing_seam = self::get_effective_prices('standing_seam');
+        $sectional_gates = self::get_effective_sectional_prices(true);
         $standard_map = self::build_price_lookup($standard);
         $galvanized_map = self::build_price_lookup($galvanized);
+        $standing_seam_map = self::build_price_lookup($standing_seam);
+        $sectional_gate_map = self::build_sectional_price_lookup($sectional_gates);
         $addons = self::get_effective_addons();
-        $valid_tabs = ['standard', 'galvanized', 'addons'];
-        $active_tab = isset($_GET['tab']) && in_array($_GET['tab'], $valid_tabs) ? $_GET['tab'] : 'standard';
+        $pdf_language = self::get_pdf_language();
+        $pdf_czk_exchange_rate = self::get_pdf_czk_exchange_rate();
         $addon_labels = [
             'heightPerCm' => 'Wysokosc (zl / 10cm powyzej 213cm)',
             'ocynkExtra' => 'Dodatek ocynk (zl)',
@@ -1378,9 +1791,14 @@ final class ConfiguratorPlugin {
             'carportPerHalfMeter' => 'Wiata - zl / 0.5m szerokosci',
             'carportVariable' => 'Wiata - stala (zl)',
             'gutterPerMeter' => 'Rynny (zl / m)',
+            'includedUpAndOverGate' => 'Brama uchylna zawarta w cenie bazowej (zl / szt)',
             'transportNear' => 'Transport - blisko (zl)',
             'transportFar' => 'Transport - daleko (zl)',
         ];
+        $export_url = wp_nonce_url(
+            admin_url('admin.php?page=configurator-prices&tab=' . rawurlencode($active_tab) . '&configurator_export_prices=1'),
+            'configurator_export_prices_' . $active_tab
+        );
         ?>
         <div class="wrap">
             <h1>Ceny konfiguratora garazy</h1>
@@ -1389,70 +1807,143 @@ final class ConfiguratorPlugin {
             <h2 class="nav-tab-wrapper">
                 <a href="?page=configurator-prices&tab=standard" class="nav-tab <?php echo $active_tab === 'standard' ? 'nav-tab-active' : ''; ?>">Standard</a>
                 <a href="?page=configurator-prices&tab=galvanized" class="nav-tab <?php echo $active_tab === 'galvanized' ? 'nav-tab-active' : ''; ?>">Ocynk</a>
+                <a href="?page=configurator-prices&tab=standing_seam" class="nav-tab <?php echo $active_tab === 'standing_seam' ? 'nav-tab-active' : ''; ?>">Na rabek</a>
+                <a href="?page=configurator-prices&tab=sectional_gates" class="nav-tab <?php echo $active_tab === 'sectional_gates' ? 'nav-tab-active' : ''; ?>">Bramy segmentowe</a>
                 <a href="?page=configurator-prices&tab=addons" class="nav-tab <?php echo $active_tab === 'addons' ? 'nav-tab-active' : ''; ?>">Dodatki</a>
             </h2>
 
-            <form method="post" action="">
+            <form method="post" action="" enctype="multipart/form-data">
                 <?php wp_nonce_field('configurator_prices_save', 'configurator_prices_nonce'); ?>
+                <input type="hidden" name="configurator_active_tab" value="<?php echo esc_attr($active_tab); ?>">
 
                 <?php if ($active_tab === 'standard'): ?>
                     <h3>Ceny standardowe (zl)</h3>
-                    <p class="description">Szerokosc (kolumny) x Glebokosc (wiersze) w metrach. Ceny w PLN.</p>
+                    <p class="description">Szerokosc (kolumny) x Glebokosc (wiersze) w metrach. Ceny w PLN. Tlo szare = wymiary polowkowe.</p>
+                    <div style="overflow-x:auto;">
                     <table class="widefat fixed striped" style="margin-top:10px;">
                         <thead>
                             <tr>
-                                <th style="width:60px;">Gleb.\Szer.</th>
-                                <?php for ($w = 2; $w <= 12; $w++): ?>
-                                    <th style="text-align:center;"><?php echo $w; ?>m</th>
-                                <?php endfor; ?>
+                                <th style="width:50px; position:sticky; left:0; background:#fff; z-index:2;">Gleb.\Szer.</th>
+                                <?php foreach (self::$sizes as $w): ?>
+                                    <th style="text-align:center; min-width:55px; <?php echo strpos((string)$w, '.') !== false ? 'background:#e8e8e8;' : ''; ?>"><?php echo $w; ?></th>
+                                <?php endforeach; ?>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php for ($d = 2; $d <= 12; $d++): ?>
-                                <tr>
-                                    <th><?php echo $d; ?>m</th>
-                                    <?php for ($w = 2; $w <= 12; $w++): ?>
+                            <?php foreach (self::$sizes as $d): ?>
+                                <tr style="<?php echo strpos((string)$d, '.') !== false ? 'background:#f6f6f6;' : ''; ?>">
+                                    <th style="position:sticky; left:0; <?php echo strpos((string)$d, '.') !== false ? 'background:#e8e8e8;' : 'background:#fff;'; ?> z-index:1;"><?php echo $d; ?></th>
+                                    <?php foreach (self::$sizes as $w): ?>
+                                        <?php $wk = (string)$w; $dk = (string)$d; ?>
                                         <td>
                                             <input type="number"
-                                                   name="prices[standard][<?php echo $w; ?>][<?php echo $d; ?>]"
-                                                   value="<?php echo esc_attr(isset($standard_map[$w][$d]) ? $standard_map[$w][$d] : 0); ?>"
+                                                   name="prices[standard][<?php echo self::size_key($w); ?>][<?php echo self::size_key($d); ?>]"
+                                                   value="<?php echo esc_attr(isset($standard_map[$wk][$dk]) ? $standard_map[$wk][$dk] : 0); ?>"
                                                    min="0" step="100"
-                                                   style="width:80px; text-align:right;">
+                                                   style="width:55px; text-align:right; font-size:12px;">
                                         </td>
-                                    <?php endfor; ?>
+                                    <?php endforeach; ?>
                                 </tr>
-                            <?php endfor; ?>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 <?php elseif ($active_tab === 'galvanized'): ?>
                     <h3>Ceny ocynk (zl)</h3>
-                    <p class="description">Szerokosc (kolumny) x Glebokosc (wiersze) w metrach. Ceny w PLN.</p>
+                    <p class="description">Szerokosc (kolumny) x Glebokosc (wiersze) w metrach. Ceny w PLN. Tlo szare = wymiary polowkowe.</p>
+                    <div style="overflow-x:auto;">
                     <table class="widefat fixed striped" style="margin-top:10px;">
                         <thead>
                             <tr>
-                                <th style="width:60px;">Gleb.\Szer.</th>
-                                <?php for ($w = 2; $w <= 12; $w++): ?>
-                                    <th style="text-align:center;"><?php echo $w; ?>m</th>
-                                <?php endfor; ?>
+                                <th style="width:50px; position:sticky; left:0; background:#fff; z-index:2;">Gleb.\Szer.</th>
+                                <?php foreach (self::$sizes as $w): ?>
+                                    <th style="text-align:center; min-width:55px; <?php echo strpos((string)$w, '.') !== false ? 'background:#e8e8e8;' : ''; ?>"><?php echo $w; ?></th>
+                                <?php endforeach; ?>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php for ($d = 2; $d <= 12; $d++): ?>
-                                <tr>
-                                    <th><?php echo $d; ?>m</th>
-                                    <?php for ($w = 2; $w <= 12; $w++): ?>
+                            <?php foreach (self::$sizes as $d): ?>
+                                <tr style="<?php echo strpos((string)$d, '.') !== false ? 'background:#f6f6f6;' : ''; ?>">
+                                    <th style="position:sticky; left:0; <?php echo strpos((string)$d, '.') !== false ? 'background:#e8e8e8;' : 'background:#fff;'; ?> z-index:1;"><?php echo $d; ?></th>
+                                    <?php foreach (self::$sizes as $w): ?>
+                                        <?php $wk = (string)$w; $dk = (string)$d; ?>
                                         <td>
                                             <input type="number"
-                                                   name="prices[galvanized][<?php echo $w; ?>][<?php echo $d; ?>]"
-                                                   value="<?php echo esc_attr(isset($galvanized_map[$w][$d]) ? $galvanized_map[$w][$d] : 0); ?>"
+                                                   name="prices[galvanized][<?php echo self::size_key($w); ?>][<?php echo self::size_key($d); ?>]"
+                                                   value="<?php echo esc_attr(isset($galvanized_map[$wk][$dk]) ? $galvanized_map[$wk][$dk] : 0); ?>"
                                                    min="0" step="100"
-                                                   style="width:80px; text-align:right;">
+                                                   style="width:55px; text-align:right; font-size:12px;">
                                         </td>
-                                    <?php endfor; ?>
+                                    <?php endforeach; ?>
                                 </tr>
-                            <?php endfor; ?>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
+                <?php elseif ($active_tab === 'standing_seam'): ?>
+                    <h3>Ceny garazy z blacha na rabek (zl)</h3>
+                    <p class="description">Cennik calego garazu stosowany, gdy blacha na rabek jest wybrana na scianach lub na dachu. Szerokosc (kolumny) x glebokosc (wiersze) w metrach.</p>
+                    <div style="overflow-x:auto;">
+                    <table class="widefat fixed striped" style="margin-top:10px;">
+                        <thead>
+                            <tr>
+                                <th style="width:50px; position:sticky; left:0; background:#fff; z-index:2;">Gleb.\Szer.</th>
+                                <?php foreach (self::$sizes as $w): ?>
+                                    <th style="text-align:center; min-width:55px; <?php echo strpos((string)$w, '.') !== false ? 'background:#e8e8e8;' : ''; ?>"><?php echo esc_html($w); ?></th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach (self::$sizes as $d): ?>
+                                <tr style="<?php echo strpos((string)$d, '.') !== false ? 'background:#f6f6f6;' : ''; ?>">
+                                    <th style="position:sticky; left:0; <?php echo strpos((string)$d, '.') !== false ? 'background:#e8e8e8;' : 'background:#fff;'; ?> z-index:1;"><?php echo esc_html($d); ?></th>
+                                    <?php foreach (self::$sizes as $w): ?>
+                                        <?php $wk = (string)$w; $dk = (string)$d; ?>
+                                        <td>
+                                            <input type="number"
+                                                   name="prices[standing_seam][<?php echo esc_attr(self::size_key($w)); ?>][<?php echo esc_attr(self::size_key($d)); ?>]"
+                                                   value="<?php echo esc_attr(isset($standing_seam_map[$wk][$dk]) ? $standing_seam_map[$wk][$dk] : 0); ?>"
+                                                   min="0" step="100" data-round="100"
+                                                   style="width:55px; text-align:right; font-size:12px;">
+                                        </td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    </div>
+                <?php elseif ($active_tab === 'sectional_gates'): ?>
+                    <h3>Ceny bram segmentowych netto (zl)</h3>
+                    <p class="description">Dokladne wymiary w milimetrach. Puste pole oznacza niedostepna kombinacje. Cena zawiera naped CAME i 2 piloty.</p>
+                    <div style="overflow-x:auto;">
+                    <table class="widefat fixed striped" style="margin-top:10px;">
+                        <thead>
+                            <tr>
+                                <th style="width:70px; position:sticky; left:0; background:#fff; z-index:2;">Wys.\Szer.</th>
+                                <?php foreach (self::$sectional_widths as $width_mm): ?>
+                                    <th style="text-align:center; min-width:62px;"><?php echo esc_html($width_mm); ?></th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach (self::$sectional_heights as $height_mm): ?>
+                                <tr>
+                                    <th style="position:sticky; left:0; background:#fff; z-index:1;"><?php echo esc_html($height_mm); ?></th>
+                                    <?php foreach (self::$sectional_widths as $width_mm): ?>
+                                        <?php $sectional_value = isset($sectional_gate_map[$height_mm][$width_mm]) && $sectional_gate_map[$height_mm][$width_mm] > 0 ? $sectional_gate_map[$height_mm][$width_mm] : ''; ?>
+                                        <td>
+                                            <input type="number"
+                                                   name="sectional_prices[<?php echo esc_attr($height_mm); ?>][<?php echo esc_attr($width_mm); ?>]"
+                                                   value="<?php echo esc_attr($sectional_value); ?>"
+                                                   placeholder="---" min="0" step="5" data-round="5"
+                                                   style="width:60px; text-align:right; font-size:12px;">
+                                        </td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    </div>
                 <?php elseif ($active_tab === 'addons'): ?>
                     <h3>Ceny dodatkow</h3>
                     <p class="description">Zmiana cen dodatkow. Wartosci ujemne = znizka. Ceny w PLN.</p>
@@ -1471,7 +1962,7 @@ final class ConfiguratorPlugin {
                                         <input type="number"
                                                name="addons[<?php echo esc_attr($key); ?>]"
                                                value="<?php echo esc_attr($addons[$key]); ?>"
-                                               step="1"
+                                               step="1" data-round="1"
                                                style="width:100px; text-align:right;">
                                     </td>
                                 </tr>
@@ -1481,9 +1972,36 @@ final class ConfiguratorPlugin {
                 <?php endif; ?>
 
                 <div style="margin-top:12px; padding:10px; background:#f9f9f9; border:1px solid #ddd; border-radius:4px;">
+                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:10px;">
+                        <a href="<?php echo esc_url($export_url); ?>" class="button">Eksport CSV</a>
+                        <input type="file" name="configurator_prices_csv" accept=".csv,text/csv" style="max-width:260px;">
+                        <button type="submit" name="configurator_import_prices" value="1" class="button" onclick="return confirm('Zaimportowac CSV i nadpisac aktywna zakladke cennika?');">Import CSV</button>
+                        <span class="description">CSV otworzysz i zapiszesz w Excelu. Import dotyczy aktywnej zakladki.</span>
+                    </div>
+
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:8px;">
                         <input type="checkbox" name="configurator_show_price" value="1" <?php checked(get_option(self::OPTION_SHOW_PRICE, false), 1); ?>>
                         <strong>Pokazuj cene na frontendzie</strong>
+                    </label>
+
+                    <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <strong>Jezyk PDF</strong>
+                        <select name="configurator_pdf_language">
+                            <option value="pl" <?php selected($pdf_language, 'pl'); ?>>Polski</option>
+                            <option value="cs" <?php selected($pdf_language, 'cs'); ?>>Czeski</option>
+                        </select>
+                    </label>
+
+                    <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <strong>Kurs PDF CZK</strong>
+                        <span>1 PLN =</span>
+                        <input type="number"
+                               name="configurator_pdf_czk_exchange_rate"
+                               value="<?php echo esc_attr($pdf_czk_exchange_rate); ?>"
+                               min="0.01"
+                               step="0.01"
+                               style="width:90px; text-align:right;">
+                        <span>CZK</span>
                     </label>
 
                     <div style="display:inline-flex; align-items:center; gap:8px;">
@@ -1508,7 +2026,8 @@ final class ConfiguratorPlugin {
                 var inputs = document.querySelectorAll('table input[type="number"]');
                 for (var i = 0; i < inputs.length; i++) {
                     var val = parseInt(inputs[i].value, 10) || 0;
-                    inputs[i].value = Math.round(val * factor / 100) * 100;
+                    var rounding = parseInt(inputs[i].getAttribute('data-round') || inputs[i].step || '100', 10) || 1;
+                    inputs[i].value = Math.round((val * factor) / rounding) * rounding;
                 }
             }
             </script>
@@ -1522,10 +2041,11 @@ final class ConfiguratorPlugin {
         return '
 .configurator-plugin-shell {
   position: relative;
-  width: 100vw;
-  max-width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .configurator-plugin-shell #configurator-plugin-root {
@@ -1535,6 +2055,46 @@ final class ConfiguratorPlugin {
 
 body.configurator-plugin-active {
   overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  .configurator-plugin-shell .configurator-viewer-sticky {
+    position: relative !important;
+    top: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    will-change: transform;
+    z-index: 20;
+  }
+
+  .configurator-plugin-shell .configurator-canvas-area {
+    height: 30vh !important;
+    min-height: 30vh !important;
+    max-height: 30vh !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .configurator-plugin-shell {
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding: 0;
+  }
+
+  .configurator-plugin-shell,
+  .configurator-plugin-shell #configurator-plugin-root {
+    overflow: visible !important;
+    contain: none !important;
+  }
+
+  .configurator-plugin-shell .configurator-viewer-sticky {
+    position: relative !important;
+    top: 0 !important;
+    align-self: flex-start;
+    will-change: transform;
+  }
 }
 
 /* Raise configurator only on selected page */
@@ -1547,6 +2107,60 @@ body.configurator-plugin-active {
   var shell = document.querySelector(".configurator-plugin-shell");
   if (!shell) return;
   document.body.classList.add("configurator-plugin-active");
+
+  function installViewerFollower() {
+    var viewer = shell.querySelector(".configurator-viewer-sticky");
+    if (!viewer || viewer.dataset.wpFollowerReady === "1") return !!viewer;
+
+    viewer.dataset.wpFollowerReady = "1";
+    var container = viewer.parentElement;
+    var framePending = false;
+
+    function updateViewerPosition() {
+      framePending = false;
+
+      var containerRect = container.getBoundingClientRect();
+      var containerTop = containerRect.top + window.scrollY;
+      var viewerHeight = viewer.offsetHeight;
+      var adminOffset = document.body.classList.contains("admin-bar")
+        ? (window.innerWidth >= 783 ? 32 : 46)
+        : 0;
+      var maxTravel = Math.max(0, containerRect.height - viewerHeight);
+      var travel = Math.min(
+        maxTravel,
+        Math.max(0, window.scrollY + adminOffset - containerTop)
+      );
+
+      viewer.style.setProperty("position", "relative", "important");
+      viewer.style.setProperty("top", "0", "important");
+      viewer.style.setProperty("will-change", "transform");
+      viewer.style.setProperty("transform", "translate3d(0, " + travel + "px, 0)");
+    }
+
+    function scheduleViewerUpdate() {
+      if (framePending) return;
+      framePending = true;
+      window.requestAnimationFrame(updateViewerPosition);
+    }
+
+    window.addEventListener("scroll", scheduleViewerUpdate, { passive: true });
+    window.addEventListener("resize", scheduleViewerUpdate, { passive: true });
+    if (typeof ResizeObserver !== "undefined") {
+      var viewerResizeObserver = new ResizeObserver(scheduleViewerUpdate);
+      viewerResizeObserver.observe(container);
+      viewerResizeObserver.observe(viewer);
+    }
+    scheduleViewerUpdate();
+    return true;
+  }
+
+  if (!installViewerFollower()) {
+    var viewerMountObserver = new MutationObserver(function () {
+      if (installViewerFollower()) viewerMountObserver.disconnect();
+    });
+    viewerMountObserver.observe(shell, { childList: true, subtree: true });
+  }
+
   var titleSelectors = [
     ".entry-title",
     ".post-title",

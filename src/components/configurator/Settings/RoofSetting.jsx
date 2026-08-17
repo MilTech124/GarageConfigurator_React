@@ -1,11 +1,14 @@
 ﻿import { FormControl, InputLabel, Select, MenuItem, Grid, Card, CardActionArea, CardMedia } from '@mui/material';
 import { useEffect } from 'react';
 import { assetPath } from '../../../utils/assetPath';
+import FlashingControl from './FlashingControl';
+import ImageOptionCard from './ImageOptionCard';
 
-function RoofSetting({selectedOptions, setSelectedOptions, o}) {
+function RoofSetting({selectedOptions, setSelectedOptions, o, t = (value) => value}) {
   const roof =[
     {name: "blachodachówka", url: assetPath("images/blachodachowka.jpg") },
     {name: "trapezowa", url: assetPath("images/trapezowa.jpg") },
+    {name: "na_rabek", url: assetPath("images/rabek.webp") },
   ];
 
   const roofColor = [
@@ -31,30 +34,47 @@ function RoofSetting({selectedOptions, setSelectedOptions, o}) {
 
   return (
     <div className='py-2'>
-      <div className="flex gap-0 flex-wrap justify-evenly">
+      <div className="grid grid-cols-3 gap-2">
         {roof.map((type) => (
-          <div key={type.name}>
-            <img
-              onClick={() => setSelectedOptions({...selectedOptions, roofType: type.name})}
-              className={`w-32 h-16 object-cover ${selectedOptions.roofType ===type.name ? "border-4" :null}`}
-              src={type.url}
-              alt={o(type.name)}
-            />
-            <p className='text-center text-black'>{o(type.name)}</p>
-          </div>
+          <ImageOptionCard
+            key={type.name}
+            value={type.name}
+            label={o(type.name)}
+            image={type.url}
+            selected={selectedOptions.roofType === type.name}
+            onSelect={(roofType) =>
+              setSelectedOptions((current) => ({ ...current, roofType }))
+            }
+          />
         ))}
       </div>
 
       <Grid item xs={12} className='pt-2'>
         <div className='flex flex-wrap gap-2 ' spacing={2}>
           {roofColor.map((color) => (
-            <div key={color.name} className={`max-w-[80px] ${selectedOptions.roofColor===color.name ? ' font-bold' : null}`}>
-              <div className='w-14 h-14 rounded-full' style={{backgroundColor:color.ral}} onClick={() => {handleSelectColor(color.name,color.ral)}}></div>
-              <p className='text-xs text-center text-black'>{o(color.name)}</p>
-            </div>
+            <button
+              type="button"
+              key={color.name}
+              aria-label={o(color.name)}
+              aria-pressed={selectedOptions.roofColor === color.name}
+              onClick={() => handleSelectColor(color.name, color.ral)}
+              className={`max-w-[80px] rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${selectedOptions.roofColor === color.name ? 'font-bold ring-2 ring-slate-900' : ''}`}
+            >
+              <span className='mx-auto block h-14 w-14 rounded-full border border-slate-300' style={{backgroundColor:color.ral}}></span>
+              <span className='block text-xs text-center text-black'>{o(color.name)}</span>
+            </button>
           ))}
         </div>
       </Grid>
+      <FlashingControl
+        kind="roof"
+        selectedOptions={selectedOptions}
+        setSelectedOptions={setSelectedOptions}
+        label={t("roofFlashings")}
+        inheritedLabel={t("sameAsRoof")}
+        colorLabel={t("flashingColor")}
+        o={o}
+      />
     </div>
   )
 }

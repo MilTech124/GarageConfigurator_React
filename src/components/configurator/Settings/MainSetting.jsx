@@ -1,7 +1,9 @@
 ﻿import React,{useEffect}from 'react';
-import { FormControl, InputLabel, Select, MenuItem, Grid, Card, CardActionArea, CardMedia } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Grid } from '@mui/material';
 import { variable } from '../Variable';
 import { assetPath } from '../../../utils/assetPath';
+import FlashingControl from './FlashingControl';
+import ImageOptionCard from './ImageOptionCard';
 
 const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
   const roofKey = String(selectedOptions.roof || "")
@@ -44,6 +46,12 @@ const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
     {name: "Czerwony 3011", ral: "#781416"},
     {name: "Wisniowy 3005", ral: "#4F121A"},
     {name: "Czarny 9005", ral: "#2C2C2C"}
+  ];
+
+  const embossOptions = [
+    { name: "szerokie", profile: "T-14", url: assetPath("images/przetloczenia-t14.jpg") },
+    { name: "waskie", profile: "T-8", url: assetPath("images/przetloczenia-t8.jpg") },
+    { name: "na_rabek", url: assetPath("images/rabek.webp") },
   ];
 
   const handleChange = (optionType) => (event) => {
@@ -128,29 +136,56 @@ const MainGarage = ({ selectedOptions, setSelectedOptions, t, o, lang }) => {
         </div>
       </Grid>
 
-      <Grid className='pt-2 flex gap-2' item xs={12} sm={4}>
-        <FormControl fullWidth>
-          <InputLabel>{t("emboss")}</InputLabel>
-          <Select value={selectedOptions.emboss} label={t("emboss")} onChange={handleChange('emboss')}>
-            {variable.garageEmbose.map((emboss) => (
-              <MenuItem key={emboss} value={emboss}>
-                {o(emboss)}
-              </MenuItem>
+      <Grid className='pt-3' item xs={12} sm={4}>
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium text-slate-800">{t("emboss")}</legend>
+          <div className="grid grid-cols-3 gap-2">
+            {embossOptions.map((emboss) => (
+              <ImageOptionCard
+                key={emboss.name}
+                value={emboss.name}
+                label={emboss.profile ? `${o(emboss.name)} (${emboss.profile})` : o(emboss.name)}
+                image={emboss.url}
+                selected={selectedOptions.emboss === emboss.name}
+                onSelect={(value) =>
+                  setSelectedOptions((current) => ({
+                    ...current,
+                    emboss: value,
+                    direction: value === "na_rabek" ? "pion" : current.direction,
+                  }))
+                }
+              />
             ))}
-          </Select>
-        </FormControl>
+          </div>
+        </fieldset>
 
-        <FormControl fullWidth>
-          <InputLabel>{t("direction")}</InputLabel>
-          <Select value={selectedOptions.direction} label={t("direction")} onChange={handleChange('direction')}>
-            {variable.garageDirection.map((direction) => (
-              <MenuItem key={direction} value={selectedOptions.color === "Ocynk" ? "pion" : direction}>
-                {selectedOptions.color === "Ocynk" ? o("pion") : o(direction)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <div className="mt-3">
+          <FormControl fullWidth>
+            <InputLabel>{t("direction")}</InputLabel>
+            <Select
+              value={selectedOptions.direction}
+              label={t("direction")}
+              onChange={handleChange('direction')}
+              disabled={selectedOptions.emboss === "na_rabek" || selectedOptions.color === "Ocynk"}
+            >
+              {variable.garageDirection.map((direction) => (
+                <MenuItem key={direction} value={selectedOptions.color === "Ocynk" ? "pion" : direction}>
+                  {selectedOptions.color === "Ocynk" ? o("pion") : o(direction)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
       </Grid>
+      <FlashingControl
+        kind="garage"
+        selectedOptions={selectedOptions}
+        setSelectedOptions={setSelectedOptions}
+        label={t("garageFlashings")}
+        inheritedLabel={t("sameAsGarage")}
+        colorLabel={t("flashingColor")}
+        o={o}
+      />
     </Grid>
   );
 };

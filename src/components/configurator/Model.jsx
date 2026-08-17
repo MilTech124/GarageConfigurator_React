@@ -6,6 +6,8 @@ import React, { useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import Materials from "./Materials";
 import { assetPath } from "../../utils/assetPath";
+import GutterSystem from "./GutterSystem";
+import FlashingSystem from "./FlashingSystem";
 
 
 export function Model(props) {
@@ -52,6 +54,8 @@ export function Model(props) {
   const {
     roofMaterial,
     wallMaterial,
+    roofFlashingMaterial,
+    garageFlashingMaterial,
     gateMaterial1,
     gateMaterial3,
     gateMaterial2,
@@ -1679,6 +1683,12 @@ export function Model(props) {
 
       <Roof />
       <RoofCenter/>
+      <FlashingSystem
+        selectedOptions={props.selectedOptions}
+        roofFlashingMaterial={roofFlashingMaterial}
+        garageFlashingMaterial={garageFlashingMaterial}
+      />
+      <GutterSystem selectedOptions={props.selectedOptions} />
       {/* {carport && <Carport /> } */}
 
       <RoofDirection />

@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { translateOption } from "../components/configurator/i18n";
 
 const ROOF_RISE_CM_PER_METER = 10;
 const REAR_SLOPE_BASE_RISE_CM = 23;
@@ -26,6 +27,126 @@ const PW = 210, PH = 297, ML = 12;
 const OVERHANG_CM = 40;
 const SIDE_KEYS = ["lewo","prawo","przod","tyl"];
 
+const PDF_LABELS = {
+  pl: {
+    title: "ZAPYTANIE OFERTOWE",
+    date: "Data",
+    contact: "Dane kontaktowe",
+    fullName: "Imie i nazwisko",
+    email: "Email",
+    phone: "Telefon",
+    postalCode: "Kod pocztowy",
+    city: "Miasto",
+    address: "Adres dostawy",
+    message: "Wiadomosc",
+    config: "Konfiguracja garazu",
+    width: "Szerokosc",
+    depth: "Glebokosc",
+    height: "Wysokosc",
+    color: "Kolor",
+    emboss: "Tloczenie",
+    direction: "Kierunek",
+    roofSlope: "Typ spadu",
+    roofColor: "Kolor dachu",
+    roofCover: "Pokrycie dachu",
+    gates: "Bramy",
+    gate: "Brama",
+    gateEmboss: "Tloczenie bram",
+    gateDirection: "Kierunek bram",
+    gateDrive: "Naped",
+    doors: "Drzwi",
+    windows: "Okna",
+    carport: "Wiata",
+    side: "Strona",
+    type: "Typ",
+    sideWalls: "Sciany boczne",
+    louvers: "Azury",
+    addons: "Dodatki",
+    gutters: "Rynny",
+    roofFlashings: "Obróbki dachu",
+    garageFlashings: "Obróbki garażu",
+    sameAsRoof: "Jak dach",
+    sameAsGarage: "Jak garaż",
+    automation: "Automatyka",
+    felt: "Filc",
+    transport: "Transport",
+    yes: "Tak",
+    price: "Cena",
+    drawings: "RYSUNKI TECHNICZNE",
+    frontView: "WIDOK PRZOD",
+    backView: "WIDOK TYL",
+    leftView: "WIDOK LEWO",
+    rightView: "WIDOK PRAWO",
+    topView: "WIDOK Z GORY",
+    fromLeft: "od lewej",
+  },
+  cs: {
+    title: "POPTAVKA",
+    date: "Datum",
+    contact: "Kontaktni udaje",
+    fullName: "Jmeno a prijmeni",
+    email: "Email",
+    phone: "Telefon",
+    postalCode: "PSC",
+    city: "Mesto",
+    address: "Adresa montaze",
+    message: "Zprava",
+    config: "Konfigurace garaze",
+    width: "Sirka",
+    depth: "Delka",
+    height: "Vyska",
+    color: "Barva",
+    emboss: "Prolis",
+    direction: "Smer",
+    roofSlope: "Typ spadu",
+    roofColor: "Barva strechy",
+    roofCover: "Typ krytiny",
+    gates: "Brany",
+    gate: "Brana",
+    gateEmboss: "Prolis bran",
+    gateDirection: "Smer bran",
+    gateDrive: "Pohon",
+    doors: "Dvere",
+    windows: "Okna",
+    carport: "Pristresek",
+    side: "Strana",
+    type: "Typ",
+    sideWalls: "Bocni steny",
+    louvers: "Zaluziove vyplne",
+    addons: "Doplnky",
+    gutters: "Okapy",
+    roofFlashings: "Střešní lemování",
+    garageFlashings: "Lemování garáže",
+    sameAsRoof: "Jako střecha",
+    sameAsGarage: "Jako garáž",
+    automation: "Automatika",
+    felt: "Filc",
+    transport: "Doprava",
+    yes: "Ano",
+    price: "Cena",
+    drawings: "TECHNICKE VYKRESY",
+    frontView: "POHLED ZEPREDU",
+    backView: "POHLED ZEZADU",
+    leftView: "POHLED ZLEVA",
+    rightView: "POHLED ZPRAVA",
+    topView: "POHLED SHORA",
+    fromLeft: "od leve",
+  },
+};
+
+function pdfLang(lang) {
+  return lang === "cs" ? "cs" : "pl";
+}
+
+function tr(lang, key) {
+  const normalizedLang = pdfLang(lang);
+  return PDF_LABELS[normalizedLang]?.[key] ?? PDF_LABELS.pl[key] ?? key;
+}
+
+function opt(lang, value) {
+  return translateOption(pdfLang(lang), value);
+}
+
 function t(text) {
   if (!text) return "";
   return String(text).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l").replace(/Ł/g, "L");
@@ -46,12 +167,34 @@ function positionKey(value) {
   return roofKey(value).replace("przod", "front").replace("tyl", "back");
 }
 
-function openingPositionLabel(position) {
-  return positionKey(position) === "lewo" ? "od przodu" : "od lewej";
+function openingPositionLabel(position, lang = "pl") {
+  if (positionKey(position) === "lewo") {
+    return pdfLang(lang) === "cs" ? "od predu" : "od przodu";
+  }
+  return tr(lang, "fromLeft");
 }
 
 function positionValueText(value) {
   return value === undefined || value === null || value === "" ? "-" : String(value);
+}
+
+function parsePrice(price) {
+  const normalized = String(price ?? "").replace(/[^\d,.-]/g, "").replace(",", ".");
+  if (!normalized || normalized === "-") return null;
+  const value = Number(normalized);
+  return Number.isFinite(value) ? value : null;
+}
+
+function formatPdfPrice(price, lang, czkExchangeRate = 6) {
+  const pricePln = parsePrice(price);
+  const rate = Number(czkExchangeRate) > 0 ? Number(czkExchangeRate) : 6;
+  if (pricePln === null) {
+    return `${price || ""} ${pdfLang(lang) === "cs" ? "CZK" : "PLN"}`.trim();
+  }
+  if (pdfLang(lang) === "cs") {
+    return `${Math.round(pricePln * rate).toLocaleString("cs-CZ").replace(/\s/g, " ")} CZK`;
+  }
+  return `${Math.round(pricePln).toLocaleString("pl-PL").replace(/\s/g, " ")} PLN`;
 }
 
 function topViewSideOpeningY(wall, startMm, openingMm, garageTy, garageBy) {
@@ -71,7 +214,8 @@ function elevationOpeningX(wall, wallLeftMm, wallWidthMm, startCm, openingCm, sc
 }
 
 export function generateOrderPdf(config) {
-  const { garage, contact, price, lang = "pl" } = config;
+  const { garage, contact, price, lang = "pl", czkExchangeRate = 6 } = config;
+  const resolvedLang = pdfLang(lang);
   const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
   doc.setFont("helvetica");
 
@@ -89,9 +233,9 @@ export function generateOrderPdf(config) {
   let y = ML;
   const x0 = ML;
   doc.setFontSize(18); doc.setFont("helvetica", "bold");
-  doc.text("ZAPYTANIE OFERTOWE", PW / 2, y + 6, { align: "center" }); y += 10;
+  doc.text(tr(resolvedLang, "title"), PW / 2, y + 6, { align: "center" }); y += 10;
   doc.setFontSize(9); doc.setFont("helvetica", "normal");
-  doc.text(t(`Data: ${new Date().toLocaleString("pl-PL")}`), PW / 2, y + 4, { align: "center" }); y += 10;
+  doc.text(t(`${tr(resolvedLang, "date")}: ${new Date().toLocaleString(resolvedLang === "cs" ? "cs-CZ" : "pl-PL")}`), PW / 2, y + 4, { align: "center" }); y += 10;
 
   const section = (title, yy) => {
     doc.setFillColor(31, 41, 55); doc.setTextColor(255, 255, 255);
@@ -106,80 +250,93 @@ export function generateOrderPdf(config) {
     doc.text(t(String(value || "-")), x0 + 57, yy + 4); return yy + 5.5;
   };
 
-  y = section("Dane kontaktowe", y);
-  y = row("Imie i nazwisko", contact.name, y);
-  y = row("Email", contact.email, y);
-  y = row("Telefon", contact.phone, y);
-  y = row("Kod pocztowy", contact.postal_code, y);
-  y = row("Miasto", contact.city, y);
-  y = row("Adres dostawy", contact.address, y);
-  y = row("Wiadomosc", contact.message, y); y += 3;
+  y = section(tr(resolvedLang, "contact"), y);
+  y = row(tr(resolvedLang, "fullName"), contact.name, y);
+  y = row(tr(resolvedLang, "email"), contact.email, y);
+  y = row(tr(resolvedLang, "phone"), contact.phone, y);
+  y = row(tr(resolvedLang, "postalCode"), contact.postal_code, y);
+  y = row(tr(resolvedLang, "city"), contact.city, y);
+  y = row(tr(resolvedLang, "address"), contact.address, y);
+  y = row(tr(resolvedLang, "message"), contact.message, y); y += 3;
 
-  y = section("Konfiguracja garazu", y);
-  y = row("Szerokosc", `${garage.width} m`, y);
-  y = row("Glebokosc", `${garage.depth} m`, y);
-  y = row("Wysokosc", `${garage.height} cm`, y);
-  y = row("Kolor", t(garage.color) + (garage.colorRal ? ` (${garage.colorRal})` : ""), y);
-  y = row("Tloczenie", t(garage.emboss), y);
-  y = row("Kierunek", t(garage.direction), y);
-  y = row("Typ spadu", t(garage.roof), y);
-  y = row("Kolor dachu", t(garage.roofColor) + (garage.roofColorRal ? ` (${garage.roofColorRal})` : ""), y);
-  y = row("Pokrycie dachu", t(garage.roofType), y); y += 3;
+  y = section(tr(resolvedLang, "config"), y);
+  y = row(tr(resolvedLang, "width"), `${garage.width} m`, y);
+  y = row(tr(resolvedLang, "depth"), `${garage.depth} m`, y);
+  y = row(tr(resolvedLang, "height"), `${garage.height} cm`, y);
+  y = row(tr(resolvedLang, "color"), t(opt(resolvedLang, garage.color)) + (garage.colorRal ? ` (${garage.colorRal})` : ""), y);
+  y = row(tr(resolvedLang, "emboss"), t(opt(resolvedLang, garage.emboss)), y);
+  y = row(tr(resolvedLang, "direction"), t(opt(resolvedLang, garage.direction)), y);
+  y = row(tr(resolvedLang, "roofSlope"), t(opt(resolvedLang, garage.roof)), y);
+  y = row(tr(resolvedLang, "roofColor"), t(opt(resolvedLang, garage.roofColor)) + (garage.roofColorRal ? ` (${garage.roofColorRal})` : ""), y);
+  y = row(tr(resolvedLang, "roofCover"), t(opt(resolvedLang, garage.roofType)), y); y += 3;
 
   const gc = parseInt(garage.gateCount) || 0;
-  y = section(`Bramy (${gc})`, y);
-  if (garage.gateEmbose) y = row("Tloczenie bram", t(garage.gateEmbose), y);
-  if (garage.gateDirection) y = row("Kierunek bram", t(garage.gateDirection), y);
+  y = section(`${tr(resolvedLang, "gates")} (${gc})`, y);
+  if (garage.gateEmbose) y = row(tr(resolvedLang, "gateEmboss"), t(opt(resolvedLang, garage.gateEmbose)), y);
+  if (garage.gateDirection) y = row(tr(resolvedLang, "gateDirection"), t(opt(resolvedLang, garage.gateDirection)), y);
   for (let i = 1; i <= Math.min(3, gc); i++) {
     const gt = garage[`gateType${i}`]; if (!gt) continue;
     const gc2 = garage[`gateColor${i}`];
-    y = row(`Brama ${i}`, `${t(gt)}, ${gc2?t(gc2)+", ":""}${garage[`gateWidth${i}`]}m x ${garage[`gateHeight${i}`]}cm, od lewej: ${garage[`gatePositionValue${i}`] || 0}cm`, y);
+    const drive = gt === "segmentowa" ? `, ${tr(resolvedLang, "gateDrive")}: CAME + 2 piloty` : "";
+    y = row(`${tr(resolvedLang, "gate")} ${i}`, `${t(opt(resolvedLang, gt))}, ${gc2?t(opt(resolvedLang, gc2))+", ":""}${garage[`gateWidth${i}`]}m x ${garage[`gateHeight${i}`]}cm, ${tr(resolvedLang, "fromLeft")}: ${garage[`gatePositionValue${i}`] || 0}cm${drive}`, y);
   } y += 3;
 
-  if (doors.length > 0) { y = section(`Drzwi (${doors.length})`, y); doors.forEach((d, i) => { y = row(`Drzwi ${i+1}`, `${d.size||"-"}, ${t(d.position)||"-"}, ${openingPositionLabel(d.position)}: ${positionValueText(d.positionValue)}cm`, y); }); y += 3; }
-  if (windows.length > 0) { y = section(`Okna (${windows.length})`, y); windows.forEach((w, i) => { y = row(`Okno ${i+1}`, `${w.size||"-"}, ${t(w.position)||"-"}, ${openingPositionLabel(w.position)}: ${positionValueText(w.positionValue)}cm`, y); }); y += 3; }
+  if (doors.length > 0) { y = section(`${tr(resolvedLang, "doors")} (${doors.length})`, y); doors.forEach((d, i) => { y = row(`${tr(resolvedLang, "doors")} ${i+1}`, `${d.size||"-"}, ${t(opt(resolvedLang, d.position))||"-"}, ${openingPositionLabel(d.position, resolvedLang)}: ${positionValueText(d.positionValue)}cm`, y); }); y += 3; }
+  if (windows.length > 0) { y = section(`${tr(resolvedLang, "windows")} (${windows.length})`, y); windows.forEach((w, i) => { y = row(`${tr(resolvedLang, "windows")} ${i+1}`, `${w.size||"-"}, ${t(opt(resolvedLang, w.position))||"-"}, ${openingPositionLabel(w.position, resolvedLang)}: ${positionValueText(w.positionValue)}cm`, y); }); y += 3; }
   if (hasCarport) {
-    y = section("Wiata", y);
-    y = row("Szerokosc", `${garage.carportWidth} m`, y);
-    y = row("Strona", t(carportSide), y);
-    if (garage.carportType) y = row("Typ", t(garage.carportType), y);
+    y = section(tr(resolvedLang, "carport"), y);
+    y = row(tr(resolvedLang, "width"), `${garage.carportWidth} m`, y);
+    y = row(tr(resolvedLang, "side"), t(opt(resolvedLang, carportSide)), y);
+    if (garage.carportType) y = row(tr(resolvedLang, "type"), t(opt(resolvedLang, garage.carportType)), y);
     if (garage.carportSides) {
       const s = garage.carportSides;
       const sides = selectedCarportSides(s, garage.roof);
-      if (sides.length) y = row("Sciany boczne", sides.map(t).join(", "), y);
+      if (sides.length) y = row(tr(resolvedLang, "sideWalls"), sides.map((side) => t(opt(resolvedLang, side))).join(", "), y);
     }
     if (garage.carportSides2) {
       const s2 = garage.carportSides2;
       const sides2 = selectedCarportSides(s2, garage.roof);
-      if (sides2.length) y = row("Ażury", sides2.map(t).join(", "), y);
+      if (sides2.length) y = row(tr(resolvedLang, "louvers"), sides2.map((side) => t(opt(resolvedLang, side))).join(", "), y);
     }
     y += 3;
   }
 
   const addons = [];
-  if (garage.gutter) addons.push(["Rynny", "Tak"]);
-  if (garage.automatic) addons.push(["Automatyka", `Tak (${garage.countAutomatic||1} szt.)`]);
-  if (garage.filc) addons.push(["Filc", "Tak"]);
-  if (garage.transport) addons.push(["Transport", "Tak" + (garage.wojewodztwo ? ` (${t(garage.wojewodztwo)})` : "")]);
+  if (garage.gutter) addons.push([tr(resolvedLang, "gutters"), tr(resolvedLang, "yes")]);
+  if (garage.roofFlashing) {
+    const roofFlashingColor = garage.roofFlashingColorMode === "custom"
+      ? `${t(opt(resolvedLang, garage.roofFlashingColor))}${garage.roofFlashingColorRal ? ` (${garage.roofFlashingColorRal})` : ""}`
+      : tr(resolvedLang, "sameAsRoof");
+    addons.push([tr(resolvedLang, "roofFlashings"), roofFlashingColor]);
+  }
+  if (garage.garageFlashing) {
+    const garageFlashingColor = garage.garageFlashingColorMode === "custom"
+      ? `${t(opt(resolvedLang, garage.garageFlashingColor))}${garage.garageFlashingColorRal ? ` (${garage.garageFlashingColorRal})` : ""}`
+      : tr(resolvedLang, "sameAsGarage");
+    addons.push([tr(resolvedLang, "garageFlashings"), garageFlashingColor]);
+  }
+  if (garage.automatic) addons.push([tr(resolvedLang, "automation"), `${tr(resolvedLang, "yes")} (${garage.countAutomatic||1} szt.)`]);
+  if (garage.filc) addons.push([tr(resolvedLang, "felt"), tr(resolvedLang, "yes")]);
+  if (garage.transport) addons.push([tr(resolvedLang, "transport"), tr(resolvedLang, "yes") + (garage.wojewodztwo ? ` (${t(opt(resolvedLang, garage.wojewodztwo))})` : "")]);
   if (addons.length > 0) {
-    y = section("Dodatki", y);
+    y = section(tr(resolvedLang, "addons"), y);
     addons.forEach(([label, value]) => { y = row(label, value, y); });
   }
-  if (price) { doc.setFontSize(12); doc.setFont("helvetica","bold"); doc.text(t(`Cena: ${price} PLN`), PW-ML, y+6, {align:"right"}); }
+  if (price) { doc.setFontSize(12); doc.setFont("helvetica","bold"); doc.text(t(`${tr(resolvedLang, "price")}: ${formatPdfPrice(price, resolvedLang, czkExchangeRate)}`), PW-ML, y+6, {align:"right"}); }
 
   // ===== PAGE 2 =====
   doc.addPage("a4", "p");
   doc.setFontSize(14); doc.setFont("helvetica","bold");
-  doc.text("RYSUNKI TECHNICZNE", PW/2, ML+6, {align:"center"});
+  doc.text(tr(resolvedLang, "drawings"), PW/2, ML+6, {align:"center"});
 
   const colW=92, rowH=85, gapX=6, gapY=5, x0v=10, y0v=20;
   const shared = {widthCm, depthCm, heightCm, garage, doors, windows, roofGeo, hasCarport, carportWidthCm, carportSide};
 
   [
-    {wall:"front", label:"WIDOK PRZOD"},
-    {wall:"back", label:"WIDOK TYL"},
-    {wall:"left", label:"WIDOK LEWO"},
-    {wall:"right", label:"WIDOK PRAWO"},
+    {wall:"front", label:tr(resolvedLang, "frontView")},
+    {wall:"back", label:tr(resolvedLang, "backView")},
+    {wall:"left", label:tr(resolvedLang, "leftView")},
+    {wall:"right", label:tr(resolvedLang, "rightView")},
   ].forEach((v,i) => {
     const col=i%2, r=Math.floor(i/2);
     const xx=x0v+col*(colW+gapX), yy=y0v+r*(rowH+gapY);
@@ -188,7 +345,7 @@ export function generateOrderPdf(config) {
   });
 
   const topY=y0v+2*(rowH+gapY), topX=x0v;
-  drawViewFrame(doc, topX, topY, colW, rowH, "WIDOK Z GORY");
+  drawViewFrame(doc, topX, topY, colW, rowH, tr(resolvedLang, "topView"));
   drawTopView(doc, {vx:topX, vy:topY, colW, rowH, ...shared});
   return doc;
 }

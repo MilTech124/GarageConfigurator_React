@@ -1,15 +1,10 @@
-﻿import React from "react";
 import { Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
 import { assetPath } from "../../../utils/assetPath";
 
 function Accessories({ selectedOptions, setSelectedOptions, t }) {
   const { filc, gutter, automatic } = selectedOptions;
-
   const handleChange = (event) => {
-    setSelectedOptions({
-      ...selectedOptions,
-      [event.target.name]: event.target.checked,
-    });
+    setSelectedOptions({ ...selectedOptions, [event.target.name]: event.target.checked });
   };
 
   return (
@@ -26,7 +21,7 @@ function Accessories({ selectedOptions, setSelectedOptions, t }) {
           <img src={assetPath("images/automat.jpg")} className="w-[200px] flex items-center justify-center" alt="" />
           <Select
             value={selectedOptions.countAutomatic}
-            onChange={(e) => setSelectedOptions({ ...selectedOptions, countAutomatic: e.target.value })}
+            onChange={(event) => setSelectedOptions({ ...selectedOptions, countAutomatic: event.target.value })}
           >
             <MenuItem value={1}>1 szt</MenuItem>
             <MenuItem value={2}>2 szt</MenuItem>

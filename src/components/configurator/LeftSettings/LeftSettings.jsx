@@ -15,7 +15,7 @@ import Accessories from '../Settings/Accessories';
 
 export default function LeftSettings({ selectedOptions, setSelectedOptions, t, o, lang }) {
   return (
-    <div className='md:w-[430px] md:max-w-[44vw] shrink-0 h-full min-h-0 overflow-y-auto max-sm:order-2 max-sm:h-auto max-sm:overflow-visible'>
+    <div className='md:w-[430px] md:max-w-[44vw] shrink-0 max-md:order-2'>
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1-content" id="panel1-header">
           <h3>{t("sectionDimensions")}</h3>
@@ -37,7 +37,7 @@ export default function LeftSettings({ selectedOptions, setSelectedOptions, t, o
           <h3>{t("sectionRoofType")}</h3>
         </AccordionSummary>
         <AccordionDetails>
-          <RoofSetting selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} o={o} />
+          <RoofSetting selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} o={o} t={t} />
         </AccordionDetails>
       </Accordion>
       <Accordion>

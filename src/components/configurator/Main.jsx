@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import GarageConfigurator from "./GarageConfigurator";
@@ -9,6 +9,7 @@ import LeftSettings from "./LeftSettings/LeftSettings";
 import CalcMain from "./calculate/CalcMain";
 import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
+import { generateOrderPdf } from "../../utils/pdfGenerator";
 import TagManager from 'react-gtm-module';
 import { LANG, t as translate, translateOption } from "./i18n";
 import { getPrices } from "./calculate/garagePrice";
@@ -48,6 +49,7 @@ function Main() {
     gateWidth1: 3,
     gateHeight1: 200,
     gatePositionValue1: 0,
+    gateDrive1: "came",
 
     gateType2: "uchylna",
     gateColor2: "Złoty Dąb",
@@ -55,6 +57,7 @@ function Main() {
     gateWidth2: 3,
     gateHeight2: 200,
     gatePositionValue2: 300,
+    gateDrive2: "came",
 
     gateType3: "uchylna",
     gateColor3: "Złoty Dąb",
@@ -62,6 +65,7 @@ function Main() {
     gateWidth3: 3,
     gateHeight3: 200,
     gatePositionValue3: 600,
+    gateDrive3: "came",
 
     door: [],
     window: [],
@@ -75,38 +79,78 @@ function Main() {
     carportSides2:{lewo:false,prawo:false,przod:false,tyl:false},
 
     gutter: false,
+    roofFlashing: false,
+    roofFlashingColorMode: "roof",
+    roofFlashingColor: "",
+    roofFlashingColorRal: null,
+    garageFlashing: false,
+    garageFlashingColorMode: "garage",
+    garageFlashingColor: "",
+    garageFlashingColorRal: null,
     automatic: false,
     countAutomatic: 1,
     filc: false,
-    transport: false,   
+    transport: false,
     wojewodztwo: ""
   });
   const [modal, setModal] = useState(false);
   const [capture, setCapture] = useState(false);
   const [imageURL, setImageURL] = useState(null);
   const [price, setPrice] = useState(0);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [showPrice, setShowPrice] = useState(true);
 
   useEffect(() => {
-    getPrices();
+    getPrices().then((cfg) => {
+      if (cfg) setShowPrice(cfg.showPrice !== false);
+    });
   }, []);
 
 
   //use effects helpers
 
   useEffect(() => {
-    if (selectedOptions.color ==="Ocynk") {
-      selectedOptions.direction = "pion";
-      selectedOptions.emboss = "waskie";
+    const isStandingSeam = selectedOptions.emboss === "na_rabek";
+    const isGalvanized = selectedOptions.color === "Ocynk";
+    if (!isStandingSeam && !isGalvanized) return;
+
+    const updates = { direction: "pion" };
+    if (isGalvanized && !isStandingSeam) updates.emboss = "waskie";
+    if (isGalvanized) {
+      Object.assign(updates, {
+        gateType1: "dwuskrzydłowa",
+        gateType2: "dwuskrzydłowa",
+        roofColorRal: "#A7ABA7",
+        gateColor1: "Ocynk",
+        gateColor2: "Ocynk",
+        gateColor3: "Ocynk",
+      });
     }
-  }, [selectedOptions.color]);
+    const changed = Object.entries(updates).some(([key, value]) => selectedOptions[key] !== value);
+    if (changed) setSelectedOptions((current) => ({ ...current, ...updates }));
+  }, [selectedOptions.color, selectedOptions.emboss, selectedOptions.direction]);
 
   useEffect(() => {
-    if(selectedOptions.color === "Ocynk") {
-    
-      setSelectedOptions({...selectedOptions, gateType1:"dwuskrzydłowa",gateType2:"dwuskrzydłowa", roofColorRal: "#A7ABA7",gateColor1:"Ocynk",gateColor2:"Ocynk",gateColor3:"Ocynk"})
-    }}
-  ,[selectedOptions.color])
-
+    const updates = {};
+    for (let index = 1; index <= 3; index += 1) {
+      if (
+        selectedOptions[`gateType${index}`] === "segmentowa" &&
+        selectedOptions[`gateDrive${index}`] !== "came"
+      ) {
+        updates[`gateDrive${index}`] = "came";
+      }
+    }
+    if (Object.keys(updates).length) {
+      setSelectedOptions((current) => ({ ...current, ...updates }));
+    }
+  }, [
+    selectedOptions.gateType1,
+    selectedOptions.gateType2,
+    selectedOptions.gateType3,
+    selectedOptions.gateDrive1,
+    selectedOptions.gateDrive2,
+    selectedOptions.gateDrive3,
+  ]);
 
 
 
@@ -116,14 +160,106 @@ function Main() {
     wpConfig.uploadEndpoint ||
     `${window.location.origin}/wp-json/configurator/v1/upload-image`;
 
-  // Funkcja do wysyĹ‚ania zdarzenia do GTM
+  const isAdmin = wpConfig.isAdmin === true;
+
+  const generateTestPdf = () => {
+    setPdfLoading(true);
+    try {
+      const pdfLang = globalThis?.__CONFIGURATOR_PLUGIN__?.pdfLanguage || lang;
+      const czkExchangeRate = globalThis?.__CONFIGURATOR_PLUGIN__?.pdfCzkExchangeRate || 6;
+      const doc = generateOrderPdf({
+        garage: {
+          width: selectedOptions.width,
+          depth: selectedOptions.depth,
+          height: selectedOptions.height,
+          color: selectedOptions.color,
+          colorRal: selectedOptions.colorRal,
+          emboss: selectedOptions.emboss,
+          direction: selectedOptions.direction,
+          roof: selectedOptions.roof,
+          roofColor: selectedOptions.roofColor,
+          roofColorRal: selectedOptions.roofColorRal,
+          roofType: selectedOptions.roofType,
+          gateEmbose: selectedOptions.gateEmbose,
+          gateDirection: selectedOptions.gateDirection,
+          gateCount: selectedOptions.gateCount,
+          gateType1: selectedOptions.gateType1,
+          gateColor1: selectedOptions.gateColor1,
+          gateWidth1: selectedOptions.gateWidth1,
+          gateHeight1: selectedOptions.gateHeight1,
+          gatePositionValue1: selectedOptions.gatePositionValue1,
+          gateDrive1: selectedOptions.gateDrive1,
+          gateType2: selectedOptions.gateType2,
+          gateColor2: selectedOptions.gateColor2,
+          gateWidth2: selectedOptions.gateWidth2,
+          gateHeight2: selectedOptions.gateHeight2,
+          gatePositionValue2: selectedOptions.gatePositionValue2,
+          gateDrive2: selectedOptions.gateDrive2,
+          gateType3: selectedOptions.gateType3,
+          gateColor3: selectedOptions.gateColor3,
+          gateWidth3: selectedOptions.gateWidth3,
+          gateHeight3: selectedOptions.gateHeight3,
+          gatePositionValue3: selectedOptions.gatePositionValue3,
+          gateDrive3: selectedOptions.gateDrive3,
+          doors: selectedOptions.door?.map((d, i) => `Drzwi ${i + 1}: ${JSON.stringify(d)}`).join("\n") || "",
+          windows: selectedOptions.window?.map((w, i) => `Okno ${i + 1}: ${JSON.stringify(w)}`).join("\n") || "",
+          doorList: selectedOptions.door || [],
+          windowList: selectedOptions.window || [],
+          doorCount: selectedOptions.door?.length || 0,
+          windowCount: selectedOptions.window?.length || 0,
+          carport: selectedOptions.carport,
+          carportWidth: selectedOptions.carportWidth,
+          carportSide: selectedOptions.carportSide,
+          carportType: selectedOptions.carportType,
+          carportSides: selectedOptions.carportSides,
+          carportSides2: selectedOptions.carportSides2,
+          gutter: selectedOptions.gutter,
+          roofFlashing: selectedOptions.roofFlashing,
+          roofFlashingColorMode: selectedOptions.roofFlashingColorMode,
+          roofFlashingColor: selectedOptions.roofFlashingColor,
+          roofFlashingColorRal: selectedOptions.roofFlashingColorRal,
+          garageFlashing: selectedOptions.garageFlashing,
+          garageFlashingColorMode: selectedOptions.garageFlashingColorMode,
+          garageFlashingColor: selectedOptions.garageFlashingColor,
+          garageFlashingColorRal: selectedOptions.garageFlashingColorRal,
+          automatic: selectedOptions.automatic,
+          countAutomatic: selectedOptions.countAutomatic,
+          filc: selectedOptions.filc,
+          transport: selectedOptions.transport,
+          wojewodztwo: selectedOptions.wojewodztwo,
+        },
+        contact: {
+          name: "Test",
+          email: "test@test.pl",
+          phone: "000 000 000",
+          postal_code: "00-000",
+          city: "Testowo",
+          address: "ul. Testowa 1",
+          message: "Generowanie testowe PDF",
+        },
+        price: price ? String(price) : "",
+        imageUrl: imageURL || "",
+        lang: pdfLang,
+        czkExchangeRate,
+      });
+
+      doc.save(pdfLang === "cs" ? "poptavka-test.pdf" : "zamowienie-test.pdf");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Blad generowania PDF: " + err.message);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  // Funkcja do wysylania zdarzenia do GTM
   const sendGTMEvent = () => {
     TagManager.dataLayer({
       dataLayer: {
         event: 'order_button_click',
         eventCategory: 'Configurator',
         eventAction: 'Click',
-        eventLabel: 'ZamĂłw Button',      
+        eventLabel: 'Zamow Button',
       }
     });
   };
@@ -132,17 +268,17 @@ function Main() {
 
     const fetchResponse = await fetch(image);
     const blob = await fetchResponse.blob();
-  
+
     const resizeImage = (blob, maxWidth, maxHeight) => {
       return new Promise((resolve) => {
         const img = new Image();
         img.src = URL.createObjectURL(blob);
-  
+
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-  
+
           // Calculate the new dimensions while maintaining the aspect ratio
           if (width > height) {
             if (width > maxWidth) {
@@ -155,27 +291,27 @@ function Main() {
               height = maxHeight;
             }
           }
-  
+
           canvas.width = width;
           canvas.height = height;
-  
+
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-  
+
           canvas.toBlob((resizedBlob) => {
             resolve(resizedBlob);
           }, 'image/png');
         };
-       
+
       });
-      
+
     };
-  
+
     const resizedBlob = await resizeImage(blob, 800, 600); // Set your desired max width and height
-  
+
     const formData = new FormData();
     formData.append('file', resizedBlob, 'screenshot.png');
-  
+
     try {
       // Use the custom upload endpoint instead of WordPress media endpoint
       const response = await axios.post(
@@ -189,7 +325,7 @@ function Main() {
         }
       );
       console.log("Response", response.data);
-  
+
       if (response.data.success) {
         await setImageURL(response.data.url);
       } else {
@@ -201,12 +337,12 @@ function Main() {
       await setImageURL("");
     }
     await setCapture(false);
-   
+
   };
- 
+
   return (
-    <div className="bg-slate-200 relative w-screen h-screen min-h-0 flex overflow-hidden max-sm:flex-col max-sm:h-auto max-sm:min-h-screen max-sm:overflow-y-auto">
-   
+    <div className="bg-slate-200 relative w-full min-h-screen flex items-start max-md:flex-col max-md:h-auto max-md:min-h-screen">
+
    {capture && <div class="absolute top-0 left-0 w-full h-full flex-col gap-4  flex items-center justify-center !z-50 bg-black/50 ">
         <div class="w-28 h-28 border-8 text-blue-400 text-4xl animate-spin border-gray-300 flex items-center justify-center border-t-blue-400 rounded-full">
           <svg viewBox="0 0 24 24" fill="currentColor" height="1em" width="1em" class="animate-ping">
@@ -214,13 +350,29 @@ function Main() {
           </svg>
         </div>
       </div> }
-   
+
       <LeftSettings selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} t={t} o={o} lang={lang} />
       <Modal selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions} modal={modal} price={price} setModal={setModal} setCapture={setCapture} capture={capture} imageURL={imageURL} setImageURL={setImageURL} t={t} lang={lang} />
-      <div id='capture' className="w-full md:h-[62vh] relative max-sm:order-1 max-sm:h-[40vh] max-sm:pb-[75px] ">
-        <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture} lang={lang} setLang={setLang} />
-        <div className="md:pl-[10%] relative flex justify-center items-center p-2 border-2 border-slate-800">
-          <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} t={t} />
+      <div id='capture' className="configurator-viewer-sticky w-full md:self-start md:h-[62vh] relative flex flex-col max-md:order-1 max-md:h-auto">
+        <div className="configurator-canvas-area relative w-full min-h-0 flex-1 max-md:h-[30vh] max-md:flex-none">
+          <GarageViewer selectedOptions={selectedOptions} captureScreenshot={captureScreenshot} capture={capture} lang={lang} setLang={setLang} />
+        </div>
+        <div className="md:pl-[10%] relative flex shrink-0 justify-center items-center gap-2 p-2 border-2 border-slate-800 bg-slate-200">
+          <div className="min-w-0 flex-1">
+            <CalcMain selectedOptions={selectedOptions} price={price} setPrice={setPrice} t={t} />
+          </div>
+
+          {isAdmin && (
+            <Button
+              onClick={generateTestPdf}
+              disabled={pdfLoading}
+              variant="outlined"
+              size="large"
+              sx={{ fontSize: "0.85rem", px: 2, py: 1.2, fontWeight: 600, mr: 1, borderColor: "#666", color: "#333", "&:hover": { borderColor: "#333", bgcolor: "rgba(0,0,0,0.04)" } }}
+            >
+              {pdfLoading ? "Generowanie..." : "Test PDF"}
+            </Button>
+          )}
 
           <Button
             onClick={() => {
@@ -228,31 +380,29 @@ function Main() {
               setModal(true);
             }}
             variant="contained"
+            disabled={price === null}
             size="large"
             endIcon={<SendIcon />}
             sx={{ fontSize: "1.1rem", px: 3, py: 1.2, fontWeight: 700 }}
           >
-            {t("orderQuote")}
+            {showPrice ? t("order") : t("orderQuote")}
           </Button>
 
         </div>
-       
+
         {/* <button
           onClick={() => (setModal(true))}
           className="fixed z-50 btn-acel max-sm:py-2 w-full py-5 text-2xl bottom-0 right-0  animate-pulse  bg-slate-900 text-white rounded-md"
         >
-          WyĹ›lij wycenÄ™
+          Wyslij wycene
         </button> */}
-        
-        
-      </div>
-   
 
-      
+
+      </div>
+
+
     </div>
   );
 }
 
 export default Main;
-
-

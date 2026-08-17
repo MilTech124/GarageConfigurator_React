@@ -9,6 +9,9 @@ import {
 } from "@mui/material";
 import { variable } from "../Variable";
 import { assetPath } from "../../../utils/assetPath";
+import { getPrices, getPriceDataSync } from "../calculate/garagePrice";
+import { findSectionalGatePrice } from "../calculate/sectionalGatePrice";
+import GateTypeSelector from "./GateTypeSelector";
 
 function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
   const [gateCount, setGateCount] = useState(2);
@@ -36,6 +39,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
     gateType2,
     gateType3,
   } = selectedOptions;
+  const [sectionalPrices, setSectionalPrices] = useState(
+    () => getPriceDataSync().sectionalGates || []
+  );
   const safeGateWidth1 = Math.min(Number(gateWidth1) || width, width);
   const safeGatePositionValue1 = Math.min(
     Number(gatePositionValue1) || 0,
@@ -90,6 +96,60 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
   const handleChange = (prop) => (event) => {
     setSelectedOptions({ ...selectedOptions, [prop]: event.target.value });
   };
+
+  const handleGateTypeChange = (number) => (type) => {
+    const updates = { [`gateType${number}`]: type };
+    if (type === "segmentowa") {
+      const currentWidth = Number(selectedOptions[`gateWidth${number}`]);
+      const currentHeightMm = Number(selectedOptions[`gateHeight${number}`]) * 10;
+      const available = sectionalPrices.filter(
+        (item) => item.widthMm <= Number(width) * 1000 && item.heightMm <= Number(height) * 10
+      );
+      const selected = available.sort((a, b) =>
+        Math.abs(a.widthMm - currentWidth * 1000) + Math.abs(a.heightMm - currentHeightMm) -
+        (Math.abs(b.widthMm - currentWidth * 1000) + Math.abs(b.heightMm - currentHeightMm))
+      )[0];
+      if (selected) {
+        updates[`gateWidth${number}`] = selected.widthMm / 1000;
+        updates[`gateHeight${number}`] = selected.heightMm / 10;
+        updates[`gateDrive${number}`] = "came";
+      }
+    }
+    setSelectedOptions({ ...selectedOptions, ...updates });
+  };
+
+  const gateHeights = (type, gateWidth) => {
+    if (type !== "segmentowa") return variable.gateSizes.height.filter((value) => Number(height) >= value);
+    return [...new Set(sectionalPrices
+      .filter((item) => item.widthMm === Math.round(Number(gateWidth) * 1000) && item.heightMm <= Number(height) * 10)
+      .map((item) => item.heightMm / 10))];
+  };
+
+  const gateWidths = (type, gateHeight, gatePosition) => {
+    const maxWidth = Number(width) - Number(gatePosition || 0) / 100;
+    if (type !== "segmentowa") return variable.gateSizes.width.filter((value) => value <= 4 && value <= maxWidth);
+    return [...new Set(sectionalPrices
+      .filter((item) => item.heightMm === Math.round(Number(gateHeight) * 10) && item.widthMm <= maxWidth * 1000)
+      .map((item) => item.widthMm / 1000))];
+  };
+
+  const hasSectionalForGarage = sectionalPrices.some(
+    (item) => item.widthMm <= Number(width) * 1000 && item.heightMm <= Number(height) * 10
+  );
+  const invalidSectionalSelection = [1, 2, 3]
+    .slice(0, Number(selectedOptions.gateCount) || 0)
+    .some((number) =>
+      selectedOptions[`gateType${number}`] === "segmentowa" &&
+      findSectionalGatePrice(
+        sectionalPrices,
+        selectedOptions[`gateWidth${number}`],
+        selectedOptions[`gateHeight${number}`]
+      ) === null
+    );
+
+  useEffect(() => {
+    getPrices().then((config) => setSectionalPrices(config.sectionalGates || []));
+  }, []);
 
   const changeColor = (prop, ralProp) => (event) => {
     const colorRal = gateColor.find(
@@ -162,7 +222,12 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
 
 
   return (
-    <div>      
+    <div>
+      {invalidSectionalSelection && (
+        <p className="mb-3 rounded bg-red-100 p-2 text-sm font-semibold text-red-800">
+          {t("sectionalPriceUnavailable")}
+        </p>
+      )}
       <div className="relative">
       {/* <p className="text-red-500 text-center text-xl pb-5">
           Min. szerokoĹ›Ä‡ garaĹĽu 6m aby dodaÄ‡ bramÄ™.
@@ -238,20 +303,13 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                 ))}
               </Select>
             </FormControl>
-            <FormControl className="!mt-5" fullWidth>
-              <InputLabel>{t("firstGate")}</InputLabel>
-              <Select
-                value={gateType1}
-                label={t("firstGate")}
-                onChange={handleChange("gateType1")}
-              >
-                {variable.gateTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {o(type)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <GateTypeSelector
+              label={t("firstGate")}
+              value={gateType1}
+              onChange={handleGateTypeChange(1)}
+              translateOption={o}
+              sectionalDisabled={!hasSectionalForGarage}
+            />
             <div className="flex pt-3 gap-1">
               <FormControl fullWidth>
                 <InputLabel>{t("height")}</InputLabel>
@@ -261,13 +319,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                   label={t("height")}
                   onChange={handleChange("gateHeight1")}
                 >
-                  {variable.gateSizes.height.map((gateHeight) =>
-                    height >= gateHeight ? (
-                      <MenuItem key={gateHeight} value={gateHeight}>
-                        {gateHeight} cm
-                      </MenuItem>
-                    ) : null
-                  )}
+                  {gateHeights(gateType1, gateWidth1).map((gateHeight) => (
+                    <MenuItem key={gateHeight} value={gateHeight}>{gateHeight} cm</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth>
@@ -278,22 +332,17 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                   label={t("width")}
                   onChange={handleChange("gateWidth1")}
                 >
-                  {variable.gateSizes.width
-                    .filter(
-                      (widthVAR) =>
-                      gateType1 != "segmentowa" && (width / (widthVAR + gatePositionValue1 / 100) >= 1) && widthVAR <= 4
-                      ? true
-                      : gateType1 === "segmentowa" && (width / (widthVAR + gatePositionValue1 / 100) >= 1) ? true  :null
-                    )
-                    .map((width) => (
+                  {gateWidths(gateType1, gateHeight1, gatePositionValue1).map((width) => (
                       <MenuItem key={width} value={width}>
                         {width} m
                       </MenuItem>
-                    ))}
+                  ))}
                 </Select>
               </FormControl>
             </div>
-            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight1-10} {t("height")}, {safeGateWidth1*100-25} {t("width")} </p>
+            {gateType1 !== "segmentowa" && (
+              <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight1-10} {t("height")}, {safeGateWidth1*100-25} {t("width")} </p>
+            )}
           
             {/* Slider*/}
             <h5 className="text-sm text-center pt-2 text-slate-900">
@@ -329,20 +378,13 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
             >
               -
             </button>
-            <FormControl fullWidth>
-              <InputLabel>{t("secondGate")}</InputLabel>
-              <Select
-                value={gateType2}
-                label={t("secondGate")}
-                onChange={handleChange("gateType2")}
-              >
-                {variable.gateTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {o(type)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <GateTypeSelector
+              label={t("secondGate")}
+              value={gateType2}
+              onChange={handleGateTypeChange(2)}
+              translateOption={o}
+              sectionalDisabled={!hasSectionalForGarage}
+            />
             <div className="flex pt-3 gap-1">
               <FormControl fullWidth>
                 <InputLabel>{t("height")}</InputLabel>
@@ -352,13 +394,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                   label={t("height")}
                   onChange={handleChange("gateHeight2")}
                 >
-                  {variable.gateSizes.height.map((heightGate) =>
-                    height >= heightGate ? (
-                      <MenuItem key={heightGate} value={heightGate}>
-                        {heightGate} m
-                      </MenuItem>
-                    ) : null
-                  )}
+                  {gateHeights(gateType2, gateWidth2).map((heightGate) => (
+                    <MenuItem key={heightGate} value={heightGate}>{heightGate} cm</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth>
@@ -369,18 +407,11 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                   label={t("width")}
                   onChange={handleChange("gateWidth2")}
                 >
-                  {variable.gateSizes.width
-                    .filter(
-                      (widthVAR) =>
-                      gateType2 != "segmentowa" && (width / (widthVAR + gatePositionValue2 / 100) >= 1) && widthVAR <= 4
-                      ? true
-                      : gateType2 === "segmentowa" && (width / (widthVAR + gatePositionValue2 / 100) >= 1) ? true  :null
-                    )
-                    .map((width) => (
+                  {gateWidths(gateType2, gateHeight2, gatePositionValue2).map((width) => (
                       <MenuItem key={width} value={width}>
                         {width} m
                       </MenuItem>
-                    ))}
+                  ))}
                 </Select>
               </FormControl>
             </div>
@@ -399,7 +430,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
               </Select>
             </FormControl> */}
             {/* Slider 2*/}
-            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight2-10} {t("height")},{selectedOptions.gateWidth2*100-25} {t("width")}</p>
+            {gateType2 !== "segmentowa" && (
+              <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight2-10} {t("height")},{selectedOptions.gateWidth2*100-25} {t("width")}</p>
+            )}
             <h5 className="text-sm text-center pt-2 text-slate-900">
               {t("gatePosition")}
             </h5>
@@ -434,20 +467,13 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
             >
               -
             </button>
-            <FormControl fullWidth>
-              <InputLabel>{t("thirdGate")}</InputLabel>
-              <Select
-                value={gateType3}
-                label={t("thirdGate")}
-                onChange={handleChange("gateType3")}
-              >
-                {variable.gateTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {o(type)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <GateTypeSelector
+              label={t("thirdGate")}
+              value={gateType3}
+              onChange={handleGateTypeChange(3)}
+              translateOption={o}
+              sectionalDisabled={!hasSectionalForGarage}
+            />
             <div className="flex pt-3 gap-1">
               <FormControl fullWidth>
                 <InputLabel>{t("height")}</InputLabel>
@@ -456,9 +482,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                   label={t("height")}
                   onChange={handleChange("gateHeight3")}
                 >
-                  {variable.gateSizes.height.map((height) => (
-                    <MenuItem key={height} value={height}>
-                      {height} m
+                  {gateHeights(gateType3, gateWidth3).map((heightValue) => (
+                    <MenuItem key={heightValue} value={heightValue}>
+                      {heightValue} cm
                     </MenuItem>
                   ))}
                 </Select>
@@ -470,14 +496,7 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
                   label={t("width")}
                   onChange={handleChange("gateWidth3")}
                 >
-                    {variable.gateSizes.width
-                    .filter(
-                      (widthVAR) =>
-                      gateType3 != "segmentowa" && (width / (widthVAR + gatePositionValue3 / 100) >= 1) && widthVAR <= 4
-                      ? true
-                      : gateType3 === "segmentowa" && (width / (widthVAR + gatePositionValue3 / 100) >= 1) ? true  :null
-                    )
-                    .map((width) => (
+                    {gateWidths(gateType3, gateHeight3, gatePositionValue3).map((width) => (
                       <MenuItem key={width} value={width}>
                         {width} m
                       </MenuItem>
@@ -500,7 +519,9 @@ function GateSetting2({ selectedOptions, setSelectedOptions, t, o }) {
               </Select>
             </FormControl> */}
             {/* Slider*/}
-            <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight3-10} {t("height")} ,{selectedOptions.gateWidth3*100-25} {t("width")}</p>
+            {gateType3 !== "segmentowa" && (
+              <p className="text-orange-400"> {t("gateClearance")}: {selectedOptions.gateHeight3-10} {t("height")} ,{selectedOptions.gateWidth3*100-25} {t("width")}</p>
+            )}
             <h5 className="text-sm text-center pt-2 text-slate-900">
               {t("gatePosition")}
             </h5>

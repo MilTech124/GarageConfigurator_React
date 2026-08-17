@@ -2,7 +2,7 @@ export const variable={
 
     garageColors: ["Złoty Dąb Jasny","Złoty Dąb Ciemny","Orzech","Antracyt","Ciemny Brąz 8017","Brąz Jasny 8004","Ciemna Zieleń 6005","Jasna Zieleń 6029","Grafit 7016","Biały 9010","Szary 9002","Srebrny 9006","Piaskowy 1002","Czerwony 3011", "Wisniowy 3005", "Czarny 9005"],
 
-    garageEmbose:["szerokie","wąskie"],
+    garageEmbose:["szerokie","waskie","na_rabek"],
     garageDirection:["pion","poziom"],
     garageSizes:{
         width: [2,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12],     
@@ -12,16 +12,16 @@ export const variable={
 
     roof:["spad tył","spad przód","spad w prawo", "spad w lewo", "dwuspad","dwuspad przod-tył"],
     roofColors:["Antracyt 7016","Ciemny Brąz 8017","Brąz Jasny 8004","Ciemna Zieleń 6005","Jasna Zieleń 6029","Biały 9010","Szary 9002","Srebrny 9006","Piaskowy 1002","Czerwony 3011", "Wisniowy 3005", "Czarny 9005"],
-    roofType:["blachodachówka","trapezowa"],
+    roofType:["blachodachówka","trapezowa","na_rabek"],
     
    
-    gateTypes:["dwuskrzydłowa", "uchylna"],   //"segmentowa" dodatkowa
+    gateTypes:["dwuskrzydłowa", "uchylna", "segmentowa"],
     gateColors:["Złoty Dąb Jasny","Złoty Dąb Ciemny","Antracyt","Ciemny Brąz 8017","Brąz Jasny 8004","Ciemna Zieleń 6005","Jasna Zieleń 6029","Grafit 7016","Biały 9010","Szary 9002","Srebrny 9006","Piaskowy 1002","Czerwony 3011", "Wisniowy 3005", "Czarny 9005"],
     gateSizes:{
         width: [2,2.5,3,3.5,4,4.5,5,5.5,6],     
         height: [190,200,210,220,230,240,250,260],
     },
-    gateEmbose:["szerokie","wąskie"],
+    gateEmbose:["szerokie","waskie"],
     gateDirection:["pion","poziom"],
 
     doorSize:["100x190","90x190","80x190"],

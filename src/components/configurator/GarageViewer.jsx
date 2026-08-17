@@ -107,7 +107,7 @@ function GarageViewer({ selectedOptions, captureScreenshot, capture, lang, setLa
         </div>
       ) : null}
 
-      <p className="absolute font-semibold bottom-20 max-sm:text-xs md:bottom-5 md:right-10 right-2 text-slate-800 z-20 hover:text-red-800 hover:cursor-pointer">
+      <p className="absolute font-semibold bottom-2 max-sm:text-xs md:bottom-5 md:right-10 right-2 text-slate-800 z-20 hover:text-red-800 hover:cursor-pointer">
         Realizacja <a className="font-bold" target="_blank" href="https://www.mil-tech.pl/">MIL-TECH</a>
       </p>
 

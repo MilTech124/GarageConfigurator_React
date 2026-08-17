@@ -30,7 +30,8 @@ function TypeGarage({ selectedOptions, setSelectedOptions, o }) {
               roof: type.name,
               height: roofKey(type.name) === "spad tyl" ? selectedOptions.height : (Number(selectedOptions.height) === 200 ? 213 : selectedOptions.height),
             })}
-            className={`w-16 h-16 object-cover ${selectedOptions.roof === type.name ? "border-4" : null}`}
+            className="w-16 h-16 object-cover rounded-md"
+            style={selectedOptions.roof === type.name ? { border: "3px solid #1a1a2e", borderRadius: "6px" } : { border: "1px solid #ccc", borderRadius: "6px" }}
             src={type.url}
             alt={o(type.name)}
             title={o(type.name)}

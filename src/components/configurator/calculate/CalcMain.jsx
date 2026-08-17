@@ -1,29 +1,12 @@
-import React, { useState, useEffect } from "react";
-import garagePrice from "./garagePrice.js";
+import React, { useEffect, useState } from "react";
+import garagePrice, { getPrices, getPriceDataSync } from "./garagePrice.js";
+import { getGutterLength, normalizeRoofKey } from "../domain/gutters.js";
+import {
+  calculateGateAdjustments,
+} from "./sectionalGatePrice.js";
 
 let priceConfigCache = null;
-
-async function fetchPriceConfig() {
-  if (priceConfigCache !== null) return priceConfigCache;
-  const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
-  const endpoint = wpConfig.pricesEndpoint;
-  if (!endpoint) {
-    priceConfigCache = { showPrice: true, addons: null };
-    return priceConfigCache;
-  }
-  try {
-    const res = await fetch(endpoint);
-    const result = await res.json();
-    priceConfigCache = {
-      showPrice: result.data.showPrice !== false,
-      addons: result.data.addons || null,
-    };
-    return priceConfigCache;
-  } catch {
-    priceConfigCache = { showPrice: true, addons: null };
-    return priceConfigCache;
-  }
-}
+let cachedAddons = null;
 
 const DEFAULTS = {
   heightPerCm: 700,
@@ -41,186 +24,169 @@ const DEFAULTS = {
   carportPerHalfMeter: 500,
   carportVariable: 1000,
   gutterPerMeter: 100,
+  includedUpAndOverGate: 0,
   transportNear: 250,
   transportFar: 500,
 };
 
-let cachedAddons = null;
+async function fetchPriceConfig() {
+  if (priceConfigCache) return priceConfigCache;
+  const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
+  try {
+    const result = await getPrices();
+    priceConfigCache = {
+      showPrice: result.showPrice !== false,
+      addons: result.addons || null,
+      pdfLanguage: wpConfig.pdfLanguage || "pl",
+      pdfCzkExchangeRate: wpConfig.pdfCzkExchangeRate || 6,
+    };
+  } catch {
+    priceConfigCache = {
+      showPrice: true,
+      addons: null,
+      pdfLanguage: wpConfig.pdfLanguage || "pl",
+      pdfCzkExchangeRate: wpConfig.pdfCzkExchangeRate || 6,
+    };
+  }
+  return priceConfigCache;
+}
 
 function getAddon(key) {
-  const a = cachedAddons || DEFAULTS;
-  return a[key] !== undefined ? a[key] : DEFAULTS[key];
+  const source = cachedAddons || DEFAULTS;
+  return source[key] !== undefined ? Number(source[key]) : DEFAULTS[key];
 }
 
 function CalcMain({ selectedOptions, price, setPrice, t = (key) => key }) {
-  const SoloGaragePrice = garagePrice({ selectedOptions });
+  const baseGaragePrice = garagePrice({ selectedOptions });
   const [showPrice, setShowPrice] = useState(true);
-  const [addonsLoaded, setAddonsLoaded] = useState(false);
+  const [pdfLanguage, setPdfLanguage] = useState((globalThis.__CONFIGURATOR_PLUGIN__ || {}).pdfLanguage || "pl");
+  const [pdfCzkExchangeRate, setPdfCzkExchangeRate] = useState((globalThis.__CONFIGURATOR_PLUGIN__ || {}).pdfCzkExchangeRate || 6);
+  const [pricingRevision, setPricingRevision] = useState(0);
 
   useEffect(() => {
-    fetchPriceConfig().then((cfg) => {
-      setShowPrice(cfg.showPrice);
-      if (cfg.addons) cachedAddons = cfg.addons;
-      setAddonsLoaded(true);
+    fetchPriceConfig().then((config) => {
+      setShowPrice(config.showPrice);
+      setPdfLanguage(config.pdfLanguage || "pl");
+      setPdfCzkExchangeRate(Number(config.pdfCzkExchangeRate) > 0 ? Number(config.pdfCzkExchangeRate) : 6);
+      if (config.addons) cachedAddons = config.addons;
+      setPricingRevision((revision) => revision + 1);
     });
   }, []);
 
-  const {
-    width,
-    depth,
-    roof,
-    height,
-    automatic,
-    roofType,
-    filc,
-    door,
-    window,
-    carport,
-    carportWidth,
-    gutter,
-    carportType,
-    wojewodztwo,
-    countAutomatic,
-    gateType1,
-    gateType2,
-    gateType3,
-    gateCount,
-    carportSide,
-  } = selectedOptions;
+  useEffect(() => {
+    const {
+      width,
+      depth,
+      roof,
+      height,
+      automatic,
+      roofType,
+      filc,
+      door,
+      window,
+      carport,
+      carportWidth,
+      gutter,
+      carportType,
+      wojewodztwo,
+      countAutomatic,
+      gateCount,
+      carportSide,
+    } = selectedOptions;
 
-  const roofKey = String(roof || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\u0142/g, "l")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const calcHeightPrice = () => {
+    const roofKey = normalizeRoofKey(roof);
     const standardHeight = 213;
-    const heightDifference = Number(height) - standardHeight;
-    const heightSteps = Math.round(heightDifference / 10);
-    return heightSteps * getAddon("heightPerCm");
-  };
+    const heightSteps = Math.round((Number(height) - standardHeight) / 10);
+    const heightPrice = heightSteps * getAddon("heightPerCm");
 
-  const calcCarportPrice = () => {
-    if (!carport) return 0;
-    const typePrice =
-      carportType === "brak"
-        ? getAddon("carportBrak")
-        : carportType === "oblachowane"
-        ? getAddon("carportOblachowane")
-        : getAddon("carportAzury");
-    return (
-      ((carportWidth - 1) / 0.5) * getAddon("carportPerHalfMeter") +
-      typePrice +
-      getAddon("carportVariable")
-    );
-  };
+    const carportPrice = carport
+      ? ((Number(carportWidth) - 1) / 0.5) * getAddon("carportPerHalfMeter") +
+        (carportType === "brak"
+          ? getAddon("carportBrak")
+          : carportType === "oblachowane"
+          ? getAddon("carportOblachowane")
+          : getAddon("carportAzury")) +
+        getAddon("carportVariable")
+      : 0;
 
-  const calcGutterPrice = () => {
-    const perMeter = getAddon("gutterPerMeter");
-    let resault = 0;
-    if (roof === "dwuspad" || roof === "dwuspad przod-tyl") {
-      if (carport && roof === "dwuspad" && (carportSide === "przod" || carportSide === "tyl")) {
-        return (resault = (width + carportWidth) * 2 * perMeter);
-      }
-      resault = depth * 2 * perMeter;
-      if (
-        carport &&
-        roof === "dwuspad przod-tyl" &&
-        (carportSide === "lewo" || carportSide === "prawo")
-      ) {
-        resault = (depth + carportWidth) * 2 * perMeter;
-      }
-    } else {
-      if (carportSide === "lewo" || carportSide === "prawo") {
-        if (carport) {
-          return (resault = (depth + carportWidth) * perMeter);
-        }
-        return (resault = depth * perMeter);
-      }
-      if (carport) {
-        return (resault = width * perMeter);
-      }
-      return (resault = width * perMeter);
+    const gutterPrice = gutter
+      ? getGutterLength({ width, depth, roof, carport, carportWidth, carportSide }) * getAddon("gutterPerMeter")
+      : 0;
+
+    const activeGateCount = Math.min(3, Math.max(0, Number(gateCount) || 0));
+    const gateTypes = [selectedOptions.gateType1, selectedOptions.gateType2, selectedOptions.gateType3];
+    const gateWidths = [selectedOptions.gateWidth1, selectedOptions.gateWidth2, selectedOptions.gateWidth3];
+    const gateHeights = [selectedOptions.gateHeight1, selectedOptions.gateHeight2, selectedOptions.gateHeight3];
+    const sectionalPrices = getPriceDataSync().sectionalGates;
+    const gates = calculateGateAdjustments({
+      gates: gateTypes.slice(0, activeGateCount).map((type, index) => ({
+        type,
+        width: gateWidths[index],
+        height: gateHeights[index],
+      })),
+      prices: sectionalPrices,
+      includedUpAndOverGate: getAddon("includedUpAndOverGate"),
+      doubleLeafAdjustment: getAddon("gateDwuskrzydlowa"),
+    });
+
+    if (baseGaragePrice === null || !gates.valid) {
+      setPrice(null);
+      return;
     }
-    return resault;
-  };
 
-  const transportPrice = (woj) => {
-    const near = getAddon("transportNear");
-    const far = getAddon("transportFar");
-    if (
-      woj === "dolnośląskie" || woj === "lubelskie" || woj === "lubuskie" ||
-      woj === "łódzkie" || woj === "małopolskie" || woj === "mazowieckie" ||
-      woj === "opolskie" || woj === "podkarpackie" || woj === "śląskie" ||
-      woj === "świętokrzyskie" || woj === "wielkopolskie"
-    ) {
-      return near;
-    }
-    if (
-      woj === "kujawsko-pomorskie" || woj === "podlaskie" ||
-      woj === "pomorskie" || woj === "warmińsko-mazurskie" ||
-      woj === "zachodniopomorskie"
-    ) {
-      return far;
-    }
-    return null;
-  };
+    const automationUnits = automatic
+      ? Math.min(Number(countAutomatic) || 0, gates.nonSectionalCount)
+      : 0;
+    const filcPrice = filc
+      ? Number(depth) * (Number(width) + (carport ? Number(carportWidth) : 0)) * getAddon("filcPerM2")
+      : 0;
 
-  const gatePrice = () => {
-    let resault = 0;
-    const gateType = [gateType1, gateType2, gateType3];
-    const dwuPrice = getAddon("gateDwuskrzydlowa");
-    for (let i = 0; i <= gateCount; i++) {
-      if (gateType[i] === "dwuskrzydłowa") {
-        resault += dwuPrice;
-      }
-    }
-    return resault;
-  };
+    const nearRegions = [
+      "dolnoĹ›lÄ…skie", "lubelskie", "lubuskie", "Ĺ‚Ăłdzkie", "maĹ‚opolskie",
+      "mazowieckie", "opolskie", "podkarpackie", "Ĺ›lÄ…skie", "Ĺ›wiÄ™tokrzyskie", "wielkopolskie",
+    ];
+    const farRegions = ["kujawsko-pomorskie", "podlaskie", "pomorskie", "warmiĹ„sko-mazurskie", "zachodniopomorskie"];
+    const transportPrice = nearRegions.includes(wojewodztwo)
+      ? getAddon("transportNear")
+      : farRegions.includes(wojewodztwo)
+      ? getAddon("transportFar")
+      : 0;
 
-  const filcPrice = () => {
-    if (!filc) return 0;
-    const perM2 = getAddon("filcPerM2");
-    if (carport) {
-      return depth * (width + carportWidth) * perM2;
-    }
-    return depth * width * perM2;
-  };
-
-  const calculatePrice = () => {
     const fullPrice =
-      SoloGaragePrice +
+      Number(baseGaragePrice) +
       (roofKey === "spad tyl" ? getAddon("spadTyl") : 0) +
-      calcHeightPrice() +
-      gatePrice() +
-      (automatic ? getAddon("automatic") * countAutomatic : 0) +
-      (roofType === "blachodachówka" ? depth * width * getAddon("blachodachowkaPerM2") : 0) +
-      filcPrice() +
-      (door.length >= 0 ? door.length * getAddon("door") : 0) +
-      (window.length >= 0 ? window.length * getAddon("window") : 0) +
-      (carport ? calcCarportPrice() : 0) +
-      (gutter ? calcGutterPrice() : 0) +
-      transportPrice(wojewodztwo);
+      heightPrice +
+      gates.amount +
+      getAddon("automatic") * automationUnits +
+      (normalizeRoofKey(roofType) === "blachodachowka" ? Number(depth) * Number(width) * getAddon("blachodachowkaPerM2") : 0) +
+      filcPrice +
+      (door?.length || 0) * getAddon("door") +
+      (window?.length || 0) * getAddon("window") +
+      carportPrice +
+      gutterPrice +
+      transportPrice;
 
     setPrice(fullPrice);
-  };
-  calculatePrice();
+  }, [selectedOptions, baseGaragePrice, pricingRevision, setPrice]);
 
   if (!showPrice) return null;
+  if (price === null) {
+    return <p className="text-base md:text-lg text-red-800 font-bold">{t("sectionalPriceUnavailable")}</p>;
+  }
+
+  const isCzechPdf = pdfLanguage === "cs";
+  const displayPrice = isCzechPdf
+    ? Math.round((Number(price) || 0) * pdfCzkExchangeRate).toLocaleString("cs-CZ").replace(/\s/g, " ")
+    : Math.round(Number(price) || 0).toLocaleString("pl-PL").replace(/\s/g, " ");
+  const displayCurrency = isCzechPdf ? "CZK" : "zł";
 
   return (
     <div>
       <p className="text-4xl max-sm:text-base md:pt-5 text-red-800 font-bold">
         {t("priceLabel")}:
-        <span className="underline ml-5 font-black">{price} zł</span>
+        <span className="underline ml-5 font-black">{displayPrice} {displayCurrency}</span>
       </p>
-      <p className="md:text-sm text-xs md:pb-2">
-        {t("priceNotice")}
-      </p>
+      <p className="md:text-sm text-xs md:pb-2">{t("priceNotice")}</p>
     </div>
   );
 }

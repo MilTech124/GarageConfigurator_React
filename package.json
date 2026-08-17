@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:wp": "set BUILD_TARGET=wp&& vite build && node -e \"const fs=require('fs');const p=require('path');['data.json','dataOcynk.json'].forEach(f=>{const src=p.join('src','components','configurator','calculate',f);const dst=p.join('wordpress-plugin','configurator-plugin','defaults',f);fs.mkdirSync(p.dirname(dst),{recursive:true});fs.copyFileSync(src,dst);console.log('Copied',f)})\" && npm run package:wp",
+    "build:wp": "set BUILD_TARGET=wp&& vite build && node -e \"const fs=require('fs');const p=require('path');['data.json','dataOcynk.json','dataStandingSeam.json','sectionalGates.json'].forEach(f=>{const src=p.join('src','components','configurator','calculate',f);const dst=p.join('wordpress-plugin','configurator-plugin','defaults',f);fs.mkdirSync(p.dirname(dst),{recursive:true});fs.copyFileSync(src,dst);console.log('Copied',f)})\" && npm run package:wp",
     "package:wp": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-wp.ps1",
+    "test": "node --test src/**/*.test.js",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

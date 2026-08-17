@@ -50,6 +50,9 @@ function arrayBufferToBase64(buffer) {
 }
 
 function buildPdfPayload(data, lang) {
+  const wpConfig = window.__CONFIGURATOR_PLUGIN__ || {};
+  const pdfLang = wpConfig.pdfLanguage || lang;
+  const czkExchangeRate = wpConfig.pdfCzkExchangeRate || 6;
   const selectedOptions = data.data || {};
   const doc = generateOrderPdf({
     garage: {
@@ -72,11 +75,12 @@ function buildPdfPayload(data, lang) {
     },
     price: data.price,
     imageUrl: data.imageURL || "",
-    lang,
+    lang: pdfLang,
+    czkExchangeRate,
   });
 
   return {
-    filename: `zapytanie-garaz-${new Date().toISOString().slice(0, 10)}.pdf`,
+    filename: `${pdfLang === "cs" ? "poptavka-garaz" : "zapytanie-garaz"}-${new Date().toISOString().slice(0, 10)}.pdf`,
     mimeType: "application/pdf",
     contentBase64: arrayBufferToBase64(doc.output("arraybuffer")),
   };
@@ -142,14 +146,17 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
       gateColor1: data.data?.gateColor1,
       gateWidth1: data.data?.gateWidth1,
       gateHeight1: data.data?.gateHeight1,
+      gateDrive1: data.data?.gateDrive1,
       gateType2: data.data?.gateType2,
       gateColor2: data.data?.gateColor2,
       gateWidth2: data.data?.gateWidth2,
       gateHeight2: data.data?.gateHeight2,
+      gateDrive2: data.data?.gateDrive2,
       gateType3: data.data?.gateType3,
       gateColor3: data.data?.gateColor3,
       gateWidth3: data.data?.gateWidth3,
       gateHeight3: data.data?.gateHeight3,
+      gateDrive3: data.data?.gateDrive3,
       gatePositionValue1: data.data?.gatePositionValue1,
       gatePositionValue2: data.data?.gatePositionValue2,
       gatePositionValue3: data.data?.gatePositionValue3,
@@ -164,6 +171,14 @@ function SendEmailWP(data, templateType = "default", lang = "pl") {
       carportSides: data.carportSides || "",
       carportSides2: data.carportSides2 || "",
       gutter: data.data?.gutter,
+      roofFlashing: data.data?.roofFlashing,
+      roofFlashingColorMode: data.data?.roofFlashingColorMode,
+      roofFlashingColor: data.data?.roofFlashingColor,
+      roofFlashingColorRal: data.data?.roofFlashingColorRal,
+      garageFlashing: data.data?.garageFlashing,
+      garageFlashingColorMode: data.data?.garageFlashingColorMode,
+      garageFlashingColor: data.data?.garageFlashingColor,
+      garageFlashingColorRal: data.data?.garageFlashingColorRal,
       automatic: data.data?.automatic,
       countAutomatic: data.data?.countAutomatic,
       filc: data.data?.filc,
